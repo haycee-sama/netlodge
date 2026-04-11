@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Mobile safe area support ── */
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .h-safe-area-inset-bottom {
+    height: env(safe-area-inset-bottom);
+  }
+}
+
+/* ── Prevent content hiding behind mobile bottom nav ── */
+@layer base {
+  /* Give all pages breathing room at the bottom on mobile */
+  body {
+    @apply bg-gray-50;
+  }
+}
