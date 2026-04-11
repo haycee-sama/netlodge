@@ -1,12 +1,14 @@
-// app/layout.jsx
-// Root layout — conditionally shows footer
-// Dashboard pages use LandlordLayout which has its own sidebar
-// so we hide the footer on /dashboard, /landlord/*, /bookings, etc.
+// app/layout.js
+// Root layout — updated with:
+// 1. PageTransitionWrapper for route fade-in transitions
+// 2. Sora + DM Sans font preconnect hints
+// 3. All other existing logic preserved exactly
 
 import './globals.css'
 import { headers } from 'next/headers'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import PageTransitionWrapper from './components/PageTransitionWrapper'
 
 export const metadata = {
   title: 'Netlodge — Verified Student Housing',
@@ -14,7 +16,6 @@ export const metadata = {
 }
 
 // Pages that should NOT show the public navbar or footer
-// These have their own layout (LandlordLayout or are self-contained)
 const NO_CHROME_PREFIXES = [
   '/landlord',
   '/login',
@@ -23,7 +24,6 @@ const NO_CHROME_PREFIXES = [
 ]
 
 // Pages that show navbar but NOT footer
-// (they have their own dashboard UI)
 const NO_FOOTER_PREFIXES = [
   '/dashboard',
   '/bookings',
@@ -33,33 +33,36 @@ const NO_FOOTER_PREFIXES = [
 ]
 
 export default async function RootLayout({ children }) {
+  const headersList = await headers()
+  const pathname    = headersList.get('x-pathname') || ''
 
-  const headersList  = await headers()
-  const pathname     = headersList.get('x-pathname') || ''
-
-  // Check if this page should hide navbar + footer entirely
   const hideChrome = NO_CHROME_PREFIXES.some((prefix) =>
     pathname.startsWith(prefix)
   )
 
-  // Check if this page should hide only the footer
   const hideFooter = NO_FOOTER_PREFIXES.some((prefix) =>
     pathname.startsWith(prefix)
   )
 
   return (
     <html lang="en">
-      <body className="bg-gray-50 font-body antialiased">
+      {/* Preconnect hints for Google Fonts — reduces font load latency */}
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
+      <body className="bg-gray-50 antialiased">
 
-        {/* Show navbar on public pages only */}
         {!hideChrome && <Navbar />}
 
-        {/* Page content */}
+        {/* PageTransitionWrapper re-mounts on each route change,
+            triggering the page-enter CSS animation */}
         <main>
-          {children}
+          <PageTransitionWrapper>
+            {children}
+          </PageTransitionWrapper>
         </main>
 
-        {/* Show footer on public pages only, and not on student portal */}
         {!hideChrome && !hideFooter && <Footer />}
 
       </body>

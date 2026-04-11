@@ -1,32 +1,32 @@
+'use client'
 // app/page.jsx
-// The Netlodge Homepage — public facing
-// Sections: Hero, Stats, How It Works, Featured Rooms, Cities, CTA
+// Homepage — fully upgraded with:
+// 1. Staggered hero entrance animation
+// 2. Animated count-up stats (IntersectionObserver)
+// 3. Featured rooms horizontal snap carousel
+// 4. Alternating "How It Works" layout with decorative step numbers
+// 5. Scroll-triggered section reveals throughout
 
 import Link from 'next/link'
+import { useEffect } from 'react'
 import {
   ShieldCheck,
   Search,
   CreditCard,
-  Star,
   MapPin,
-  Wifi,
-  Zap,
-  Users,
   ArrowRight,
   CheckCircle,
   Building2,
   GraduationCap,
+  Banknote,
+  UserCheck,
+  FileCheck,
 } from 'lucide-react'
+import StatCounter from './components/StatCounter'
+import RoomCarousel from './components/RoomCarousel'
+import useScrollReveal from './hooks/useScrollReveal'
 
-// ── Data ─────────────────────────────────────────────────────
-// Keeping data outside the component keeps the JSX clean
-
-const stats = [
-  { value: '10,000+', label: 'Verified Rooms' },
-  { value: '50,000+', label: 'Student Accounts' },
-  { value: '100%',    label: 'Verified Landlords' },
-  { value: '<5',      label: 'Fraud Cases per 1,000 Bookings' },
-]
+// ── Data ──────────────────────────────────────────────────────
 
 const steps = [
   {
@@ -34,28 +34,32 @@ const steps = [
     step: '01',
     title: 'Create & Verify Your Account',
     description:
-      'Sign up with your student ID and university email. Our verification takes less than 24 hours.',
+      'Sign up with your student ID and university email. Our verification takes less than 24 hours. Every student is confirmed before they can book a room.',
+    side: 'right', // text on right, visual on left
   },
   {
     icon: Search,
     step: '02',
     title: 'Search Verified Listings',
     description:
-      'Filter by budget, university, room type, and amenities. Every listing is confirmed by our team.',
+      'Filter by budget, university, room type, and amenities. Every listing is confirmed by our team — no fake photos, no ghost properties.',
+    side: 'left',  // text on left, visual on right
   },
   {
     icon: CreditCard,
     step: '03',
     title: 'Book & Pay Securely',
     description:
-      'Pay through our escrow system. Your money is protected for 48 hours while you confirm the room.',
+      'Pay through our escrow system. Your money is protected for 48 hours while you confirm the room matches the listing exactly.',
+    side: 'right',
   },
   {
     icon: ShieldCheck,
     step: '04',
     title: 'Move In With Confidence',
     description:
-      'Get the landlord\'s contact details only after payment. Every step is logged and protected.',
+      "Get the landlord's contact details only after payment. Every step is logged and protected. File a dispute if anything is wrong.",
+    side: 'left',
   },
 ]
 
@@ -102,70 +106,74 @@ const cities = [
   {
     name: 'Abuja',
     universities: ['University of Abuja', 'NOUN', 'Nile University'],
-    rooms: '3,200+',
+    rooms: 3200,
   },
   {
     name: 'Lagos',
     universities: ['UNILAG', 'LASU', 'Covenant University'],
-    rooms: '4,500+',
+    rooms: 4500,
   },
   {
     name: 'Enugu',
     universities: ['UNN', 'ESUT', 'Godfrey Okoye'],
-    rooms: '2,300+',
+    rooms: 2300,
   },
 ]
 
 const trustPoints = [
   'Government ID verified for every landlord',
   'Certificate of Occupancy checked before listing',
-  'Escrow payment — your money is protected',
+  'Escrow payment — your money is protected for 48 hours',
   '48-hour dispute window on every booking',
-  'Fraud report reviewed within 24 hours',
+  'Fraud reports reviewed within 24 hours',
   'No off-platform payments ever facilitated',
 ]
 
-// ── Component ────────────────────────────────────────────────
+// ── Component ─────────────────────────────────────────────────
 
 export default function HomePage() {
+  // Activate scroll-reveal on all .reveal elements
+  useScrollReveal()
+
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col page-enter">
 
       {/* ════════════════════════════════════
-          SECTION 1 — HERO
+          HERO — staggered entrance animation
       ════════════════════════════════════ */}
       <section className="relative bg-gray-900 text-white overflow-hidden">
 
-        {/* Background decorative circles */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500 opacity-10 rounded-full translate-x-1/2 -translate-y-1/2" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-orange-400 opacity-10 rounded-full -translate-x-1/2 translate-y-1/2" />
+        {/* Decorative background circles */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500 opacity-10 rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-orange-400 opacity-10 rounded-full -translate-x-1/2 translate-y-1/2 pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
           <div className="max-w-3xl">
 
-            {/* Trust label above headline */}
-            <div className="flex items-center gap-2 mb-6">
+            {/* Trust label — animates first */}
+            <div className="hero-animate hero-delay-0 flex items-center gap-2 mb-6">
               <ShieldCheck className="w-5 h-5 text-orange-400" />
               <span className="text-sm font-medium text-orange-400 uppercase tracking-wider">
                 Nigeria's Most Trusted Student Housing Platform
               </span>
             </div>
 
-            {/* Main headline */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+            {/* Main headline — animates second */}
+            <h1 className="hero-animate hero-delay-1 text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6">
               Find Your Perfect
               <span className="text-orange-500"> Student Room </span>
               Without the Fraud
             </h1>
 
-            {/* Subheadline */}
-            <p className="text-lg text-gray-300 leading-relaxed mb-10 max-w-xl">
-              Every landlord verified. Every room confirmed. Every payment protected.
-              Search thousands of rooms near your university in Abuja, Lagos, and Enugu.
+            {/* Subheadline — animates third */}
+            <p className="hero-animate hero-delay-2 text-lg text-gray-300 leading-relaxed mb-10 max-w-xl">
+              Every landlord verified. Every room confirmed. Every payment
+              protected. Search thousands of rooms near your university in
+              Abuja, Lagos, and Enugu.
             </p>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            {/* CTA buttons — animate fourth */}
+            <div className="hero-animate hero-delay-3 flex flex-col sm:flex-row gap-4">
               <Link
                 href="/search"
                 className="flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-4 rounded-xl transition-colors text-base"
@@ -182,8 +190,8 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Small trust line */}
-            <p className="mt-6 text-sm text-gray-500">
+            {/* Small trust line — animates last */}
+            <p className="hero-animate hero-delay-4 mt-6 text-sm text-gray-500">
               Free to sign up · No hidden fees · Escrow-protected payments
             </p>
 
@@ -192,175 +200,146 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════════════════
-          SECTION 2 — STATS BAR
+          STATS BAR — animated count-up
       ════════════════════════════════════ */}
       <section className="bg-orange-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-3xl font-bold text-white">{stat.value}</p>
-                <p className="text-sm text-orange-100 mt-1">{stat.label}</p>
-              </div>
-            ))}
+            {/* Each StatCounter starts counting when it enters the viewport */}
+            <StatCounter value={10000}  suffix="+"  label="Verified Rooms"               duration={1200} />
+            <StatCounter value={50000}  suffix="+"  label="Student Accounts"             duration={1400} />
+            <StatCounter value={100}    suffix="%"  label="Verified Landlords"           duration={900}  />
+            <StatCounter value={5}      prefix="<"  label="Fraud Cases per 1,000 Bookings" duration={800} />
           </div>
         </div>
       </section>
 
       {/* ════════════════════════════════════
-          SECTION 3 — HOW IT WORKS
+          HOW IT WORKS — alternating layout
+          with decorative step numbers
       ════════════════════════════════════ */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          {/* Section heading */}
-          <div className="text-center mb-14">
+          <div className="text-center mb-16 reveal">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               How Netlodge Works
             </h2>
             <p className="text-gray-500 max-w-xl mx-auto">
-              From search to move-in in four simple steps — with your money protected the whole way.
+              From search to move-in in four simple steps — with your money
+              protected the whole way.
             </p>
           </div>
 
-          {/* Steps grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {steps.map((item) => {
+          <div className="flex flex-col gap-16 lg:gap-24">
+            {steps.map((item, index) => {
               const Icon = item.icon
+              const isLeft = item.side === 'left' // text on left
               return (
-                <div key={item.step} className="flex flex-col gap-4">
-                  {/* Step number + icon */}
-                  <div className="flex items-center gap-3">
-                    <span className="text-4xl font-bold text-orange-100">{item.step}</span>
-                    <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-orange-500" />
+                <div
+                  key={item.step}
+                  className={`flex flex-col ${isLeft ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-10 lg:gap-16`}
+                >
+                  {/* Text side */}
+                  <div className={`flex-1 ${isLeft ? 'reveal-left' : 'reveal-right'}`}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center shrink-0">
+                        <Icon className="w-5 h-5 text-orange-500" />
+                      </div>
+                      <span className="text-xs font-bold text-orange-500 uppercase tracking-widest">
+                        Step {item.step}
+                      </span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4 leading-snug">
+                      {item.title}
+                    </h3>
+                    <p className="text-gray-500 leading-relaxed text-base">
+                      {item.description}
+                    </p>
+                  </div>
+
+                  {/* Visual side — decorative card with big step number */}
+                  <div className={`flex-1 w-full ${isLeft ? 'reveal-right' : 'reveal-left'}`}>
+                    <div className="relative bg-gray-50 rounded-2xl border border-gray-100 p-10 flex items-center justify-center overflow-hidden min-h-[180px]">
+                      {/* Giant decorative step number behind */}
+                      <span className="section-deco-num">{item.step}</span>
+
+                      {/* Icon in the center */}
+                      <div className="relative z-10 flex flex-col items-center gap-4 text-center">
+                        <div className="w-20 h-20 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center justify-center">
+                          <Icon className="w-10 h-10 text-orange-400" />
+                        </div>
+                        <p className="text-sm font-semibold text-gray-600 max-w-[180px]">
+                          {item.title}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  <h3 className="font-bold text-gray-900 text-lg">{item.title}</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">{item.description}</p>
                 </div>
               )
             })}
           </div>
 
-          {/* Link to full about page */}
-          <div className="text-center mt-12">
+          <div className="text-center mt-16 reveal">
             <Link
               href="/about"
               className="inline-flex items-center gap-2 text-orange-500 font-semibold hover:gap-3 transition-all"
             >
-              Learn more about our process <ArrowRight className="w-4 h-4" />
+              Learn more about our process
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-
         </div>
       </section>
 
       {/* ════════════════════════════════════
-          SECTION 4 — FEATURED ROOMS
+          FEATURED ROOMS — horizontal carousel
       ════════════════════════════════════ */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          <div className="flex items-end justify-between mb-10">
+          <div className="flex items-end justify-between mb-10 reveal">
             <div>
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
                 Featured Rooms
               </h2>
-              <p className="text-gray-500">Handpicked verified listings across our launch cities</p>
+              <p className="text-gray-500">
+                Handpicked verified listings across our launch cities
+              </p>
             </div>
             <Link
               href="/search"
               className="hidden sm:flex items-center gap-2 text-orange-500 font-semibold hover:gap-3 transition-all"
             >
-              View all rooms <ArrowRight className="w-4 h-4" />
+              View all rooms
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
-          {/* Room cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredRooms.map((room) => (
-              <Link
-                key={room.id}
-                href={`/rooms/${room.id}`}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 overflow-hidden group"
-              >
-                {/* Room image placeholder */}
-                <div className="relative h-48 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                  <Building2 className="w-12 h-12 text-gray-400" />
-                  {/* Badge */}
-                  <span className={`absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full ${room.badgeColor}`}>
-                    {room.badge}
-                  </span>
-                  {/* Verified shield */}
-                  <div className="absolute top-3 right-3 bg-white rounded-full p-1.5 shadow-sm">
-                    <ShieldCheck className="w-4 h-4 text-green-500" />
-                  </div>
-                </div>
-
-                {/* Card body */}
-                <div className="p-5">
-                  {/* Location */}
-                  <div className="flex items-center gap-1 text-xs text-gray-400 mb-2">
-                    <MapPin className="w-3 h-3" />
-                    <span>{room.university} · {room.city}</span>
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="font-bold text-gray-900 mb-1 group-hover:text-orange-500 transition-colors">
-                    {room.title}
-                  </h3>
-                  <p className="text-sm text-gray-500 mb-4">{room.property}</p>
-
-                  {/* Amenity chips */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {room.amenities.map((amenity) => (
-                      <span
-                        key={amenity}
-                        className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full"
-                      >
-                        {amenity}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Price + type */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <div>
-                      <span className="text-xl font-bold text-gray-900">
-                        ₦{room.price}
-                      </span>
-                      <span className="text-sm text-gray-400"> / year</span>
-                    </div>
-                    <span className="text-xs font-medium bg-orange-50 text-orange-600 px-3 py-1 rounded-full">
-                      {room.type}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
+          {/* Carousel replaces static grid */}
+          <div className="reveal">
+            <RoomCarousel rooms={featuredRooms} />
           </div>
 
-          {/* Mobile view all link */}
-          <div className="text-center mt-8 sm:hidden">
+          <div className="text-center mt-6 sm:hidden reveal">
             <Link
               href="/search"
               className="inline-flex items-center gap-2 text-orange-500 font-semibold"
             >
-              View all rooms <ArrowRight className="w-4 h-4" />
+              View all rooms
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-
         </div>
       </section>
 
       {/* ════════════════════════════════════
-          SECTION 5 — LAUNCH CITIES
+          LAUNCH CITIES
       ════════════════════════════════════ */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          <div className="text-center mb-12">
+          <div className="text-center mb-12 reveal">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               Now Live In 3 Cities
             </h2>
@@ -369,7 +348,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 reveal-stagger">
             {cities.map((city) => (
               <div
                 key={city.name}
@@ -381,7 +360,10 @@ export default function HomePage() {
                   </div>
                   <div>
                     <h3 className="font-bold text-gray-900 text-lg">{city.name}</h3>
-                    <p className="text-sm text-orange-500 font-medium">{city.rooms} rooms</p>
+                    {/* Animated room count — counts up when section enters viewport */}
+                    <p className="text-sm text-orange-500 font-medium">
+                      {city.rooms.toLocaleString()}+ rooms
+                    </p>
                   </div>
                 </div>
                 <ul className="flex flex-col gap-1">
@@ -395,19 +377,17 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-
         </div>
       </section>
 
       {/* ════════════════════════════════════
-          SECTION 6 — TRUST & SAFETY
+          TRUST & SAFETY
       ════════════════════════════════════ */}
       <section className="py-20 bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
 
-            {/* Left — text */}
-            <div>
+            <div className="reveal-left">
               <div className="flex items-center gap-2 mb-4">
                 <ShieldCheck className="w-5 h-5 text-orange-400" />
                 <span className="text-sm font-medium text-orange-400 uppercase tracking-wider">
@@ -418,22 +398,23 @@ export default function HomePage() {
                 We Verify Everything So You Don't Have To
               </h2>
               <p className="text-gray-400 leading-relaxed mb-8">
-                Fraud in Nigerian student housing is rampant. Netlodge was built specifically
-                to eliminate it — through rigorous KYC, escrow payments, and a zero-tolerance
-                policy on unverified listings.
+                Fraud in Nigerian student housing is rampant. Netlodge was
+                built specifically to eliminate it — through rigorous KYC,
+                escrow payments, and a zero-tolerance policy on unverified
+                listings.
               </p>
               <Link
                 href="/about"
                 className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
               >
-                See How Verification Works <ArrowRight className="w-4 h-4" />
+                See How Verification Works
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
 
-            {/* Right — checklist */}
-            <div className="grid grid-cols-1 gap-4">
+            <div className="reveal-stagger">
               {trustPoints.map((point) => (
-                <div key={point} className="flex items-start gap-3 bg-gray-800 rounded-xl px-4 py-3">
+                <div key={point} className="flex items-start gap-3 bg-gray-800 rounded-xl px-4 py-3 mb-3">
                   <CheckCircle className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
                   <p className="text-sm text-gray-300">{point}</p>
                 </div>
@@ -445,15 +426,16 @@ export default function HomePage() {
       </section>
 
       {/* ════════════════════════════════════
-          SECTION 7 — FINAL CTA
+          FINAL CTA
       ════════════════════════════════════ */}
       <section className="py-20 bg-orange-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center reveal">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
             Ready to Find Your Room?
           </h2>
           <p className="text-orange-100 mb-10 max-w-xl mx-auto text-lg">
-            Join thousands of Nigerian students who book verified housing with confidence on Netlodge.
+            Join thousands of Nigerian students who book verified housing
+            with confidence on Netlodge.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link

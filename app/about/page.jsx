@@ -1,9 +1,13 @@
+'use client'
 // app/about/page.jsx
-// The About / How It Works page — /about
-// Explains verification process, escrow payment, and fraud prevention
-// Primary trust-building page for new visitors
+// About / How It Works page — upgraded with:
+// 1. Scroll-triggered section reveals (fade-up, left, right)
+// 2. Problem/Solution columns animate in from opposite directions
+// 3. Escrow timeline lights up steps sequentially on scroll
+// 4. Student & landlord step cards stagger in on scroll
 
 import Link from 'next/link'
+import { useEffect, useRef } from 'react'
 import {
   ShieldCheck,
   Search,
@@ -19,6 +23,7 @@ import {
   GraduationCap,
   Banknote,
 } from 'lucide-react'
+import useScrollReveal from '../hooks/useScrollReveal'
 
 // ── Data ──────────────────────────────────────────────────────
 
@@ -42,7 +47,7 @@ const studentSteps = [
     icon: Search,
     title: 'Search Verified Listings',
     description:
-      'Browse properties near your university. Filter by budget, room type, and amenities. Every property you see has been manually verified by our team.',
+      'Browse properties near your university. Filter by budget, room type, and amenities. Every property has been manually verified.',
   },
   {
     step: '04',
@@ -63,7 +68,7 @@ const studentSteps = [
     icon: ShieldCheck,
     title: 'Move In With Confidence',
     description:
-      'After payment your booking is confirmed, the room is reserved, and the landlord contact details are revealed. If anything is wrong, file a dispute within 48 hours.',
+      "After payment your booking is confirmed, the room is reserved, and the landlord's contact details are revealed. File a dispute within 48 hours if anything is wrong.",
   },
 ]
 
@@ -116,41 +121,102 @@ const netlodgeSolutions = [
   'Agents must be independently verified and linked to specific landlords',
 ]
 
+// The four escrow steps — each lights up sequentially on scroll
 const escrowSteps = [
   {
     icon: CreditCard,
     title: 'You Pay Online',
     description: 'Card, bank transfer, or USSD through our secure Paystack gateway.',
+    index: 0,
   },
   {
     icon: Lock,
     title: 'Funds Held in Escrow',
-    description: 'Money sits in our protected escrow account — not with the landlord yet.',
+    description: "Money sits in our protected escrow account — not with the landlord yet.",
+    index: 1,
   },
   {
     icon: Clock,
     title: '48-Hour Window',
     description: 'You have 48 hours to visit the room and confirm it matches the listing.',
+    index: 2,
   },
   {
     icon: CheckCircle,
     title: 'Funds Released',
     description: 'If no dispute is filed, funds are automatically released to the landlord.',
+    index: 3,
   },
 ]
+
+// ── Escrow timeline with sequential light-up ─────────────────
+
+function EscrowTimeline() {
+  const sectionRef = useRef(null)
+  const stepsRef   = useRef([])
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          // Light up each step with a staggered delay
+          stepsRef.current.forEach((el, i) => {
+            if (!el) return
+            setTimeout(() => {
+              el.classList.add('lit')
+            }, i * 220)
+          })
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.2 }
+    )
+
+    if (sectionRef.current) observer.observe(sectionRef.current)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div ref={sectionRef} className="relative">
+      {/* Connecting line — desktop horizontal, mobile hidden */}
+      <div className="hidden lg:block absolute top-12 left-0 right-0 h-0.5 bg-blue-100 z-0" style={{ top: '3rem' }} />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+        {escrowSteps.map((item) => {
+          const Icon = item.icon
+          return (
+            <div
+              key={item.title}
+              ref={(el) => (stepsRef.current[item.index] = el)}
+              className="escrow-step bg-white rounded-2xl border border-blue-100 p-6 flex flex-col gap-3"
+              style={{ animationDelay: `${item.index * 220}ms` }}
+            >
+              {/* Step dot on the connector line */}
+              <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center escrow-dot transition-all duration-300">
+                <Icon className="w-6 h-6 text-blue-500" />
+              </div>
+              <h3 className="font-bold text-gray-900">{item.title}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">{item.description}</p>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 // ── Component ─────────────────────────────────────────────────
 
 export default function AboutPage() {
-  return (
-    <div className="min-h-screen bg-white">
+  useScrollReveal()
 
-      {/* ════════════════════════════════════
-          HERO
-      ════════════════════════════════════ */}
+  return (
+    <div className="min-h-screen bg-white page-enter">
+
+      {/* ── HERO ── */}
       <section className="bg-gray-900 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl">
+          <div className="max-w-3xl hero-animate hero-delay-0">
             <div className="flex items-center gap-2 mb-4">
               <ShieldCheck className="w-5 h-5 text-orange-400" />
               <span className="text-sm font-medium text-orange-400 uppercase tracking-wider">
@@ -172,15 +238,14 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ════════════════════════════════════
-          THE PROBLEM
-      ════════════════════════════════════ */}
+      {/* ── THE PROBLEM / SOLUTION ── */}
+      {/* Left column reveals from left, right column reveals from right */}
       <section className="py-20 bg-red-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
 
-            {/* Problem list */}
-            <div>
+            {/* Problem list — slides in from left */}
+            <div className="reveal-left">
               <div className="flex items-center gap-2 mb-4">
                 <AlertTriangle className="w-5 h-5 text-red-500" />
                 <span className="text-sm font-semibold text-red-500 uppercase tracking-wider">
@@ -203,8 +268,8 @@ export default function AboutPage() {
               </ul>
             </div>
 
-            {/* Solution list */}
-            <div>
+            {/* Solution list — slides in from right */}
+            <div className="reveal-right">
               <div className="flex items-center gap-2 mb-4">
                 <ShieldCheck className="w-5 h-5 text-green-500" />
                 <span className="text-sm font-semibold text-green-600 uppercase tracking-wider">
@@ -231,13 +296,11 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ════════════════════════════════════
-          STUDENT JOURNEY
-      ════════════════════════════════════ */}
+      {/* ── STUDENT JOURNEY — staggered cards ── */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          <div className="text-center mb-14">
+          <div className="text-center mb-14 reveal">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               How It Works for Students
             </h2>
@@ -246,7 +309,8 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Steps stagger in as a group when section enters viewport */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 reveal-stagger">
             {studentSteps.map((item) => {
               const Icon = item.icon
               return (
@@ -255,7 +319,7 @@ export default function AboutPage() {
                   className="bg-gray-50 rounded-2xl border border-gray-100 p-6 flex flex-col gap-4"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-3xl font-bold text-orange-100">{item.step}</span>
+                    <span className="text-3xl font-bold text-orange-100 font-display">{item.step}</span>
                     <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
                       <Icon className="w-5 h-5 text-orange-500" />
                     </div>
@@ -267,7 +331,7 @@ export default function AboutPage() {
             })}
           </div>
 
-          <div className="text-center mt-10">
+          <div className="text-center mt-10 reveal">
             <Link
               href="/signup/student"
               className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-8 py-4 rounded-xl transition-colors"
@@ -280,13 +344,11 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ════════════════════════════════════
-          ESCROW EXPLAINED
-      ════════════════════════════════════ */}
+      {/* ── ESCROW EXPLAINED — sequential light-up timeline ── */}
       <section className="py-20 bg-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          <div className="text-center mb-14">
+          <div className="text-center mb-14 reveal">
             <div className="flex items-center justify-center gap-2 mb-3">
               <Lock className="w-5 h-5 text-blue-500" />
               <span className="text-sm font-semibold text-blue-500 uppercase tracking-wider">
@@ -302,39 +364,17 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {escrowSteps.map((item, index) => {
-              const Icon = item.icon
-              return (
-                <div key={item.title} className="relative">
-
-                  {/* Connector line between steps on desktop */}
-                  {index < escrowSteps.length - 1 && (
-                    <div className="hidden lg:block absolute top-8 left-full w-full h-0.5 bg-blue-200 z-0 -translate-x-6" />
-                  )}
-
-                  <div className="relative z-10 bg-white rounded-2xl border border-blue-100 p-6 flex flex-col gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center">
-                      <Icon className="w-6 h-6 text-blue-500" />
-                    </div>
-                    <h3 className="font-bold text-gray-900">{item.title}</h3>
-                    <p className="text-sm text-gray-500 leading-relaxed">{item.description}</p>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+          {/* Sequential light-up timeline */}
+          <EscrowTimeline />
 
         </div>
       </section>
 
-      {/* ════════════════════════════════════
-          LANDLORD JOURNEY
-      ════════════════════════════════════ */}
+      {/* ── LANDLORD JOURNEY — staggered cards ── */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          <div className="text-center mb-14">
+          <div className="text-center mb-14 reveal">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               How It Works for Landlords
             </h2>
@@ -344,7 +384,7 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 reveal-stagger">
             {landlordSteps.map((item) => {
               const Icon = item.icon
               return (
@@ -365,7 +405,7 @@ export default function AboutPage() {
             })}
           </div>
 
-          <div className="text-center mt-10">
+          <div className="text-center mt-10 reveal">
             <Link
               href="/signup/landlord"
               className="inline-flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-bold px-8 py-4 rounded-xl transition-colors"
@@ -378,11 +418,9 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ════════════════════════════════════
-          FINAL CTA
-      ════════════════════════════════════ */}
+      {/* ── FINAL CTA ── */}
       <section className="py-20 bg-orange-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center reveal">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
             Ready to Experience Safe Student Housing?
           </h2>
