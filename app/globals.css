@@ -282,3 +282,199 @@
   user-select: none;
   color: #f97316;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   STUDENT PORTAL — Animation & UI additions
+───────────────────────────────────────────────────────────── */
+
+/* ── Field validation micro-animations ── */
+@keyframes checkmarkPop {
+  0%   { transform: scale(0) rotate(-10deg); opacity: 0; }
+  60%  { transform: scale(1.2) rotate(4deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg);  opacity: 1; }
+}
+
+.field-check {
+  animation: checkmarkPop 0.18s ease-out forwards;
+}
+
+/* Password strength bar fill */
+.pw-bar {
+  height: 3px;
+  border-radius: 2px;
+  transition: width 0.3s ease-out, background-color 0.3s ease-out;
+}
+
+/* ── Drag-and-drop upload zone ── */
+.drop-zone {
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.15s ease;
+}
+
+.drop-zone.drag-over {
+  border-color: #f97316;
+  background-color: #fff7ed;
+  transform: scale(1.01);
+}
+
+@keyframes borderPulse {
+  0%, 100% { border-color: #f97316; }
+  50%       { border-color: #fb923c; }
+}
+
+.drop-zone.drag-over {
+  animation: borderPulse 0.8s ease-in-out infinite;
+}
+
+/* ── Verification status — pulsing radar ring ── */
+@keyframes radarPulse {
+  0%   { transform: scale(1);   opacity: 0.7; }
+  100% { transform: scale(2.2); opacity: 0;   }
+}
+
+.radar-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  animation: radarPulse 1.8s ease-out infinite;
+}
+
+.radar-ring:nth-child(2) { animation-delay: 0.6s; }
+.radar-ring:nth-child(3) { animation-delay: 1.2s; }
+
+/* ── Lease countdown ring ── */
+@keyframes ringFill {
+  from { stroke-dashoffset: 251; }
+}
+
+.countdown-ring {
+  transition: stroke-dashoffset 1.2s ease-out, stroke 0.4s ease;
+  animation: ringFill 1.2s ease-out forwards;
+}
+
+/* ── Notification bell badge bounce ── */
+@keyframes badgeBounce {
+  0%, 100% { transform: scale(1);    }
+  30%      { transform: scale(1.35); }
+  60%      { transform: scale(0.9);  }
+}
+
+.badge-bounce {
+  animation: badgeBounce 0.45s ease-out forwards;
+}
+
+/* ── Notification panel slide-down ── */
+@keyframes panelSlideDown {
+  from { opacity: 0; transform: translateY(-10px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)     scale(1);    }
+}
+
+.notif-panel {
+  animation: panelSlideDown 0.2s ease-out forwards;
+  transform-origin: top right;
+}
+
+/* ── Onboarding modal ── */
+@keyframes onboardingIn {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+.onboarding-modal {
+  animation: onboardingIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Step dot transition */
+.step-dot {
+  transition: background-color 0.25s ease, transform 0.25s ease, width 0.25s ease;
+}
+
+.step-dot.active {
+  background-color: #f97316;
+  transform: scale(1.1);
+}
+
+/* ── Escrow explainer modal ── */
+@keyframes escrowModalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);   }
+}
+
+.escrow-modal-content {
+  animation: escrowModalIn 0.22s ease-out forwards;
+}
+
+/* Escrow step connector line draw */
+@keyframes lineDraw {
+  from { width: 0%;   }
+  to   { width: 100%; }
+}
+
+.escrow-connector {
+  animation: lineDraw 0.6s ease-out 0.3s forwards;
+  width: 0%;
+}
+
+/* ── Booking success — SVG checkmark draw ── */
+@keyframes checkDraw {
+  from { stroke-dashoffset: 120; }
+  to   { stroke-dashoffset: 0;   }
+}
+
+.check-path {
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  animation: checkDraw 0.6s ease-out 0.2s forwards;
+}
+
+@keyframes circleDraw {
+  from { stroke-dashoffset: 314; }
+  to   { stroke-dashoffset: 0;   }
+}
+
+.check-circle {
+  stroke-dasharray: 314;
+  stroke-dashoffset: 314;
+  animation: circleDraw 0.5s ease-out forwards;
+}
+
+/* ── Confetti particles ── */
+@keyframes confettiFall {
+  0%   { transform: translateY(0)   rotate(0deg)   scale(1);   opacity: 1; }
+  100% { transform: translateY(160px) rotate(540deg) scale(0.6); opacity: 0; }
+}
+
+.confetti-particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  animation: confettiFall var(--duration, 0.9s) ease-in var(--delay, 0s) forwards;
+}
+
+/* ── Compare modal ── */
+@keyframes compareSlideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.compare-modal {
+  animation: compareSlideUp 0.28s ease-out forwards;
+}
+
+/* ── Save button success flash ── */
+@keyframes saveFlash {
+  0%   { background-color: #22c55e; }
+  70%  { background-color: #22c55e; }
+  100% { background-color: #f97316; }
+}
+
+/* ── Booking page sticky mini-bar ── */
+@keyframes miniBarSlideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+.mini-booking-bar {
+  animation: miniBarSlideDown 0.25s ease-out forwards;
+}
