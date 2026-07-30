@@ -166,7 +166,7 @@ export default function LandlordDashboardPage() {
                 <div>
                   <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{stat.sub}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{stat.sub}</p>
                 </div>
               </div>
             )
@@ -233,7 +233,7 @@ export default function LandlordDashboardPage() {
                       {/* Room counts */}
                       <div className="text-right shrink-0">
                         <p className="text-sm font-bold text-gray-900">{occupied}/{property.totalRooms}</p>
-                        <p className="text-xs text-gray-400">occupied</p>
+                        <p className="text-xs text-gray-500">occupied</p>
                         <p className="text-xs text-green-600 font-medium mt-0.5">
                           {property.availableRooms} free
                         </p>
@@ -356,7 +356,7 @@ export default function LandlordDashboardPage() {
                     }`}>
                       {notif.text}
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">{notif.time}</p>
+                    <p className="text-xs text-gray-500 mt-1">{notif.time}</p>
                   </div>
                 ))}
               </div>

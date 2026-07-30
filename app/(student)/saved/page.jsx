@@ -7,6 +7,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { motion, useReducedMotion } from 'framer-motion'
 import {
   Heart,
   MapPin,
@@ -69,6 +70,7 @@ const INITIAL_SAVED = [
 export default function SavedRoomsPage() {
 
   const [saved, setSaved] = useState(INITIAL_SAVED)
+  const shouldReduceMotion = useReducedMotion()
 
   // Remove a room from saved list
   function removeRoom(id) {
@@ -105,10 +107,22 @@ export default function SavedRoomsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {saved.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <motion.div
+            initial="hidden"
+            animate="show"
+            variants={{
+              show: { transition: { staggerChildren: shouldReduceMotion ? 0 : 0.06 } },
+            }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+          >
             {saved.map((room) => (
-              <div
+              <motion.div
                 key={room.id}
+                variants={{
+                  hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 12 },
+                  show: { opacity: 1, y: 0 },
+                }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col"
               >
                 {/* Image placeholder */}
@@ -194,9 +208,9 @@ export default function SavedRoomsPage() {
                   </div>
 
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         ) : (
           /* Empty state */
           <div className="flex flex-col items-center justify-center py-24 text-center">

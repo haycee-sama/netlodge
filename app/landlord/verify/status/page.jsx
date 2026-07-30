@@ -111,7 +111,7 @@ export default function LandlordVerifyStatusPage() {
                       ? <CheckCircle className="w-4 h-4 text-green-500" />
                       : <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
                     }
-                    <span className={`text-sm ${doc.done ? 'text-gray-700' : 'text-gray-400'}`}>
+                    <span className={`text-sm ${doc.done ? 'text-gray-700' : 'text-gray-500'}`}>
                       {doc.label}
                     </span>
                   </div>

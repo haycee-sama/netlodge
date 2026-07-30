@@ -62,7 +62,7 @@ export default function LandlordPropertiesPage() {
 
                   {/* Property image placeholder */}
                   <div className="sm:w-48 h-36 sm:h-auto bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center shrink-0 relative">
-                    <Building2 className="w-10 h-10 text-gray-400" />
+                    <Building2 className="w-10 h-10 text-gray-500" />
                     {/* Verified badge */}
                     <div className="absolute top-3 left-3 flex items-center gap-1 bg-white rounded-full px-2 py-1 shadow-sm">
                       <ShieldCheck className="w-3.5 h-3.5 text-green-500" />
@@ -173,13 +173,13 @@ export default function LandlordPropertiesPage() {
           className="flex flex-col items-center justify-center gap-3 border-2 border-dashed border-gray-200 hover:border-orange-300 hover:bg-orange-50 rounded-2xl py-12 transition-all group"
         >
           <div className="w-12 h-12 bg-gray-100 group-hover:bg-orange-100 rounded-2xl flex items-center justify-center transition-colors">
-            <Plus className="w-6 h-6 text-gray-400 group-hover:text-orange-500" />
+            <Plus className="w-6 h-6 text-gray-500 group-hover:text-orange-500" />
           </div>
           <div className="text-center">
             <p className="font-semibold text-gray-700 group-hover:text-orange-600 transition-colors">
               Add Another Property
             </p>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-500">
               Register a new hostel or property
             </p>
           </div>

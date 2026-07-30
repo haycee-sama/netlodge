@@ -5,6 +5,7 @@
 'use client'
 
 import { useState } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 import LandlordLayout from '../components/LandlordLayout'
 import {
   CheckCircle,
@@ -176,7 +177,6 @@ function BookingRow({ booking }) {
           </div>
 
           {/* Expand toggle */}
-          {/* Expand toggle */}
           <button
             onClick={() => setExpanded(!expanded)}
             aria-expanded={expanded}
@@ -288,6 +288,7 @@ export default function LandlordBookingsPage() {
 
   const [search, setSearch]     = useState('')
   const [filter, setFilter]     = useState('All')
+  const shouldReduceMotion = useReducedMotion()
 
   const FILTERS = ['All', 'Confirmed', 'Pending', 'Expired']
 
@@ -365,11 +366,27 @@ export default function LandlordBookingsPage() {
 
         {/* ── Bookings list ── */}
         {filtered.length > 0 ? (
-          <div className="flex flex-col gap-3">
+          <motion.div
+            initial="hidden"
+            animate="show"
+            variants={{
+              show: { transition: { staggerChildren: shouldReduceMotion ? 0 : 0.05 } },
+            }}
+            className="flex flex-col gap-3"
+          >
             {filtered.map((booking) => (
-              <BookingRow key={booking.id} booking={booking} />
+              <motion.div
+                key={booking.id}
+                variants={{
+                  hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 10 },
+                  show: { opacity: 1, y: 0 },
+                }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.25 }}
+              >
+                <BookingRow booking={booking} />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">

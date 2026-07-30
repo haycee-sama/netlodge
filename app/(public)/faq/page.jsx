@@ -1,14 +1,9 @@
-// app/faq/page.jsx
-// Frequently Asked Questions — /faq
-// Accordion-style FAQ split into Student and Landlord sections
-// 'use client' needed for the accordion open/close state
-
 'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { ChevronDown, ShieldCheck, GraduationCap, Building2 } from 'lucide-react'
-
 // ── FAQ Data ──────────────────────────────────────────────────
 
 const STUDENT_FAQS = [
@@ -107,6 +102,7 @@ function FAQItem({ question, answer, index, openIndex, setOpenIndex, sectionId }
   const isOpen = openIndex === index
   const buttonId = `faq-trigger-${sectionId}-${index}`
   const panelId  = `faq-panel-${sectionId}-${index}`
+  const shouldReduceMotion = useReducedMotion()
 
   return (
     <div className="border border-gray-100 rounded-xl overflow-hidden">
@@ -118,23 +114,30 @@ function FAQItem({ question, answer, index, openIndex, setOpenIndex, sectionId }
         className="w-full flex items-center justify-between px-5 py-4 text-left bg-white hover:bg-gray-50 transition-colors"
       >
         <span className="font-semibold text-gray-900 text-sm pr-4">{question}</span>
-        <ChevronDown
-          className={`w-5 h-5 text-gray-400 shrink-0 transition-transform duration-200 ${
-            isOpen ? 'rotate-180' : ''
-          }`}
-        />
+        <motion.span
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
+        >
+          <ChevronDown className="w-5 h-5 text-gray-400 shrink-0" />
+        </motion.span>
       </button>
 
-      {isOpen && (
-        <div
-          id={panelId}
-          role="region"
-          aria-labelledby={buttonId}
-          className="px-5 pb-5 bg-white border-t border-gray-100"
-        >
-          <p className="text-sm text-gray-600 leading-relaxed pt-4">{answer}</p>
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            id={panelId}
+            role="region"
+            aria-labelledby={buttonId}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeInOut' }}
+            className="bg-white border-t border-gray-100 overflow-hidden"
+          >
+            <p className="text-sm text-gray-600 leading-relaxed p-5">{answer}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

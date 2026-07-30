@@ -60,13 +60,13 @@ export default function NotFound() {
 
         {/* Help links */}
         <div className="flex items-center justify-center gap-6 mt-8 text-sm">
-          <Link href="/faq" className="text-gray-400 hover:text-orange-500 transition-colors">
+          <Link href="/faq" className="text-gray-500 hover:text-orange-500 transition-colors">
             FAQ
           </Link>
-          <Link href="/contact" className="text-gray-400 hover:text-orange-500 transition-colors">
+          <Link href="/contact" className="text-gray-500 hover:text-orange-500 transition-colors">
             Contact Support
           </Link>
-          <Link href="/about" className="text-gray-400 hover:text-orange-500 transition-colors">
+          <Link href="/about" className="text-gray-500 hover:text-orange-500 transition-colors">
             How It Works
           </Link>
         </div>

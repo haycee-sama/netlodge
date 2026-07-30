@@ -18,6 +18,7 @@ import {
   Lock,
 } from 'lucide-react'
 import { getRoomById, SERVICE_FEE_RATE } from '../../../lib/data'
+import BookingProgress from '../components/BookingProgress'
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -107,41 +108,7 @@ function BookingConfirmInner() {
     <div className="min-h-screen bg-gray-50">
 
       {/* ── Progress Bar ── */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-2">
-            {['Review & Confirm', 'Payment', 'Booking Complete'].map((step, index) => {
-              const isActive   = index === 0
-              const isComplete = index < 0
-              return (
-                <div key={step} className="flex items-center gap-2">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-                      isComplete
-                        ? 'bg-green-500 text-white'
-                        : isActive
-                        ? 'bg-orange-500 text-white'
-                        : 'bg-gray-100 text-gray-400'
-                    }`}>
-                      {isComplete ? <CheckCircle className="w-4 h-4" /> : index + 1}
-                    </div>
-                    <span className={`text-sm font-medium hidden sm:block ${
-                      isActive ? 'text-orange-500' : 'text-gray-400'
-                    }`}>
-                      {step}
-                    </span>
-                  </div>
-                  {index < 2 && (
-                    <div className={`h-0.5 w-8 sm:w-16 ${
-                      isComplete ? 'bg-green-500' : 'bg-gray-100'
-                    }`} />
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
+      <BookingProgress step={0} />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
@@ -163,7 +130,7 @@ function BookingConfirmInner() {
               <h2 className="font-bold text-gray-900 text-lg mb-4">Room You Are Booking</h2>
               <div className="flex items-start gap-4">
                 <div className="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl flex items-center justify-center shrink-0">
-                  <Building2 className="w-8 h-8 text-gray-400" />
+                  <Building2 className="w-8 h-8 text-gray-500" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
@@ -178,7 +145,7 @@ function BookingConfirmInner() {
                   <p className="text-sm text-gray-600 font-medium">
                     {property.name} · {block.name}
                   </p>
-                  <div className="flex items-center gap-1.5 text-sm text-gray-400 mt-1">
+                  <div className="flex items-center gap-1.5 text-sm text-gray-500 mt-1">
                     <MapPin className="w-3.5 h-3.5" />
                     {property.university} · {property.city}
                   </div>
@@ -191,7 +158,7 @@ function BookingConfirmInner() {
                   { label: 'Furnished', value: room.furnished === 'Yes' ? 'Yes' : 'No'},
                 ].map(({ label, value }) => (
                   <div key={label} className="bg-gray-50 rounded-xl p-3 text-center">
-                    <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+                    <p className="text-xs text-gray-500 mb-0.5">{label}</p>
                     <p className="text-sm font-semibold text-gray-800">{value}</p>
                   </div>
                 ))}
@@ -209,7 +176,7 @@ function BookingConfirmInner() {
                   <div className="px-4 py-3 bg-orange-50 border border-orange-200 rounded-xl">
                     <p className="text-sm font-bold text-orange-600">{leaseType}</p>
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-gray-500 mt-1">
                     To change duration go back to the room page
                   </p>
                 </div>
@@ -343,13 +310,13 @@ function BookingConfirmInner() {
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3 mb-5 flex flex-col gap-2">
                   <div className="flex justify-between text-xs">
-                    <span className="text-gray-400">Move-in</span>
+                    <span className="text-gray-500">Move-in</span>
                     <span className="font-semibold text-gray-700">
                       {moveInDate ? formatDate(moveInDate) : 'Not selected'}
                     </span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-gray-400">Lease ends</span>
+                    <span className="text-gray-500">Lease ends</span>
                     <span className="font-semibold text-gray-700">
                       {moveInDate ? getLeaseEndDate(moveInDate, leaseType) : '—'}
                     </span>
@@ -362,7 +329,7 @@ function BookingConfirmInner() {
                   Proceed to Payment
                   <ArrowRight className="w-5 h-5" />
                 </button>
-                <p className="text-center text-xs text-gray-400 mt-3">
+                <p className="text-center text-xs text-gray-500 mt-3">
                   You will review your payment on the next screen
                 </p>
               </div>

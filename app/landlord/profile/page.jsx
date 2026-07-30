@@ -82,7 +82,7 @@ function FormField({ label, name, type = 'text', value, onChange, placeholder })
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-400 transition-all"
+        className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-400 transition-all"
       />
     </div>
   )
@@ -93,7 +93,7 @@ function Toggle({ label, sublabel, checked, onChange }) {
     <div className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
       <div>
         <p className="text-sm font-medium text-gray-800">{label}</p>
-        {sublabel && <p className="text-xs text-gray-400 mt-0.5">{sublabel}</p>}
+        {sublabel && <p className="text-xs text-gray-500 mt-0.5">{sublabel}</p>}
       </div>
       <button
         role="switch"
@@ -306,16 +306,16 @@ export default function LandlordProfilePage() {
               <button
                 onClick={() => setReuploadFile(null)}
                 aria-label="Remove selected file"
-                className="text-gray-400 hover:text-red-500 transition-colors"
+                className="text-gray-500 hover:text-red-500 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
           ) : (
             <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-200 hover:border-orange-300 hover:bg-orange-50 rounded-xl py-6 cursor-pointer transition-all">
-              <Upload className="w-6 h-6 text-gray-400" />
+              <Upload className="w-6 h-6 text-gray-500" />
               <p className="text-sm font-medium text-gray-700">Click to re-upload a document</p>
-              <p className="text-xs text-gray-400">JPG, PNG, or PDF · Max 10MB</p>
+              <p className="text-xs text-gray-500">JPG, PNG, or PDF · Max 10MB</p>
               <input
                 type="file"
                 accept=".jpg,.jpeg,.png,.pdf"

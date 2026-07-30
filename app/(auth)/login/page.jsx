@@ -87,7 +87,7 @@ export default function LoginPage() {
               value={form.email}
               onChange={handleChange}
               placeholder="your@email.com"
-              className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-all ${
+              className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 transition-all ${
                 errors.email
                   ? 'border-red-300 focus:ring-red-100'
                   : 'border-gray-200 focus:ring-orange-100 focus:border-orange-400'
@@ -116,7 +116,7 @@ export default function LoginPage() {
                 value={form.password}
                 onChange={handleChange}
                 placeholder="Enter your password"
-                className={`w-full px-4 py-3 pr-12 rounded-xl border text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-all ${
+                className={`w-full px-4 py-3 pr-12 rounded-xl border text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 transition-all ${
                   errors.password
                     ? 'border-red-300 focus:ring-red-100'
                     : 'border-gray-200 focus:ring-orange-100 focus:border-orange-400'
@@ -125,7 +125,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-600"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -178,7 +178,7 @@ export default function LoginPage() {
         <div className="text-center">
           <button
             onClick={() => setRole(role === 'student' ? 'landlord' : 'student')}
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-xs text-gray-500 hover:text-gray-600 transition-colors"
           >
             Switch to {role === 'student' ? 'Landlord' : 'Student'} login →
           </button>

@@ -159,7 +159,7 @@ export default function LandlordKYCPage() {
                   <button
                     type="button"
                     onClick={() => removeFile(section.id)}
-                    className="text-gray-400 hover:text-red-500 transition-colors"
+                    className="text-gray-500 hover:text-red-500 transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -171,10 +171,10 @@ export default function LandlordKYCPage() {
                     ? 'border-red-300 bg-red-50'
                     : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50'
                 }`}>
-                  <Upload className="w-7 h-7 text-gray-400" />
+                  <Upload className="w-7 h-7 text-gray-500" />
                   <div className="text-center">
                     <p className="text-sm font-medium text-gray-700">Click to upload</p>
-                    <p className="text-xs text-gray-400 mt-0.5">JPG, PNG, or PDF · Max 10MB</p>
+                    <p className="text-xs text-gray-500 mt-0.5">JPG, PNG, or PDF · Max 10MB</p>
                   </div>
                   <input
                     type="file"
@@ -205,7 +205,7 @@ export default function LandlordKYCPage() {
                 if (errors.nin) setErrors((prev) => ({ ...prev, nin: '' }))
               }}
               placeholder="Enter your 11-digit NIN or BVN"
-              className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-all ${
+              className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 transition-all ${
                 errors.nin
                   ? 'border-red-300 focus:ring-red-100'
                   : 'border-gray-200 focus:ring-orange-100 focus:border-orange-400'
@@ -258,7 +258,7 @@ export default function LandlordKYCPage() {
             )}
           </button>
 
-          <p className="text-center text-xs text-gray-400">
+          <p className="text-center text-xs text-gray-500">
             Already submitted?{' '}
             <Link href="/landlord/verify/status" className="text-orange-500 hover:underline">
               Check your status

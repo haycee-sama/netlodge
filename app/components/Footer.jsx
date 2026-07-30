@@ -62,7 +62,7 @@ export default function Footer() {
           TABLET — Simple single-row footer
           Visible only on md screens
       ══════════════════════════════════════ */}
-      <footer className="hidden md:block lg:hidden bg-gray-900 text-gray-400">
+      <footer className="hidden md:block lg:hidden bg-gray-900 text-gray-500">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between flex-wrap gap-4">
 
@@ -95,7 +95,7 @@ export default function Footer() {
           DESKTOP — Full 4-column footer
           Visible only on lg+ screens
       ══════════════════════════════════════ */}
-      <footer className="hidden lg:block bg-gray-900 text-gray-400 pt-16 pb-8">
+      <footer className="hidden lg:block bg-gray-900 text-gray-500 pt-16 pb-8">
         <div className="max-w-7xl mx-auto px-8">
 
           {/* 4 columns */}

@@ -155,7 +155,7 @@ export default function StudentVerifyPage() {
               <button
                 type="button"
                 onClick={removeFile}
-                className="text-gray-400 hover:text-red-500 transition-colors"
+                className="text-gray-500 hover:text-red-500 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -167,12 +167,12 @@ export default function StudentVerifyPage() {
                 ? 'border-red-300 bg-red-50'
                 : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50'
             }`}>
-              <Upload className="w-8 h-8 text-gray-400" />
+              <Upload className="w-8 h-8 text-gray-500" />
               <div className="text-center">
                 <p className="text-sm font-medium text-gray-700">
                   Click to upload or drag and drop
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-gray-500 mt-1">
                   JPG, PNG, or PDF · Max 5MB
                 </p>
               </div>
@@ -205,7 +205,7 @@ export default function StudentVerifyPage() {
               if (errors.nin) setErrors((prev) => ({ ...prev, nin: '' }))
             }}
             placeholder="Enter your 11-digit NIN or BVN"
-            className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-all ${
+            className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 transition-all ${
               errors.nin
                 ? 'border-red-300 focus:ring-red-100'
                 : 'border-gray-200 focus:ring-orange-100 focus:border-orange-400'
@@ -214,7 +214,7 @@ export default function StudentVerifyPage() {
           {errors.nin ? (
             <p className="text-xs text-red-500 mt-1">{errors.nin}</p>
           ) : (
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-gray-500 mt-1">
               Your NIN/BVN is encrypted and used only for identity verification.
             </p>
           )}
@@ -224,14 +224,14 @@ export default function StudentVerifyPage() {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
             University Email
-            <span className="text-gray-400 font-normal ml-1">(optional but speeds up verification)</span>
+            <span className="text-gray-500 font-normal ml-1">(optional but speeds up verification)</span>
           </label>
           <input
             type="email"
             value={uniEmail}
             onChange={(e) => setUniEmail(e.target.value)}
             placeholder="e.g. amara@uniabuja.edu.ng"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-400 transition-all"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-400 transition-all"
           />
         </div>
 
@@ -272,7 +272,7 @@ export default function StudentVerifyPage() {
           )}
         </button>
 
-        <p className="text-center text-xs text-gray-400">
+        <p className="text-center text-xs text-gray-500">
           Already submitted?{' '}
           <Link href="/verify/status" className="text-orange-500 hover:underline">
             Check your verification status
