@@ -20,7 +20,7 @@ import {
   Phone,
   Mail,
 } from 'lucide-react'
-import { getRoomById, SERVICE_FEE_RATE } from '../../lib/data'
+import { getRoomById, SERVICE_FEE_RATE } from '../../../lib/data'
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -237,7 +237,7 @@ function BookingSuccessInner() {
                 the listing, file a dispute before the window closes.
               </p>
               <Link
-                href="/bookings"
+                href="/booking"
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:underline mt-3"
               >
                 Go to My Bookings <ArrowRight className="w-4 h-4" />

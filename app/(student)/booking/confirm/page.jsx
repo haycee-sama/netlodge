@@ -17,7 +17,7 @@ import {
   AlertCircle,
   Lock,
 } from 'lucide-react'
-import { getRoomById, SERVICE_FEE_RATE } from '../../lib/data'
+import { getRoomById, SERVICE_FEE_RATE } from '../../../lib/data'
 
 // ── Helpers ───────────────────────────────────────────────────
 

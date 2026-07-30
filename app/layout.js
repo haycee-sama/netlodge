@@ -1,67 +1,49 @@
-// app/layout.jsx
-// Root layout — conditionally shows footer
-// Dashboard pages use LandlordLayout which has its own sidebar
-// so we hide the footer on /dashboard, /landlord/*, /bookings, etc.
-
 import './globals.css'
-import { headers } from 'next/headers'
-import Navbar from './components/Navbar'
-import Footer from './components/Footer'
+
+const siteUrl = 'https://netlodge.ng'
+const defaultTitle = 'Netlodge — Verified Student Housing in Nigeria'
+const defaultDescription = 'Find verified student housing near Nigerian universities. Every landlord verified, every payment escrow-protected.'
 
 export const metadata = {
-  title: 'Netlodge — Verified Student Housing',
-  description: 'Find verified student housing near Nigerian universities.',
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: defaultTitle,
+    template: '%s | Netlodge',
+  },
+  description: defaultDescription,
+  openGraph: {
+    title: defaultTitle,
+    description: defaultDescription,
+    url: siteUrl,
+    siteName: 'Netlodge',
+    locale: 'en_NG',
+    type: 'website',
+    images: [
+      {
+        url: '/og-default.png',
+        width: 1200,
+        height: 630,
+        alt: 'Netlodge — Verified Student Housing',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: defaultTitle,
+    description: defaultDescription,
+    images: ['/og-default.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
-// Pages that should NOT show the public navbar or footer
-// These have their own layout (LandlordLayout or are self-contained)
-const NO_CHROME_PREFIXES = [
-  '/landlord',
-  '/login',
-  '/signup',
-  '/verify',
-]
-
-// Pages that show navbar but NOT footer
-// (they have their own dashboard UI)
-const NO_FOOTER_PREFIXES = [
-  '/dashboard',
-  '/bookings',
-  '/saved',
-  '/profile',
-  '/booking',
-]
-
-export default async function RootLayout({ children }) {
-
-  const headersList  = await headers()
-  const pathname     = headersList.get('x-pathname') || ''
-
-  // Check if this page should hide navbar + footer entirely
-  const hideChrome = NO_CHROME_PREFIXES.some((prefix) =>
-    pathname.startsWith(prefix)
-  )
-
-  // Check if this page should hide only the footer
-  const hideFooter = NO_FOOTER_PREFIXES.some((prefix) =>
-    pathname.startsWith(prefix)
-  )
-
+export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className="bg-gray-50 font-body antialiased">
-
-        {/* Show navbar on public pages only */}
-        {!hideChrome && <Navbar />}
-
-        {/* Page content */}
-        <main>
-          {children}
-        </main>
-
-        {/* Show footer on public pages only, and not on student portal */}
-        {!hideChrome && !hideFooter && <Footer />}
-
+        {children}
       </body>
     </html>
   )

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 
 // Import real data from central data file
-import { getPropertySummaries } from '../lib/data'
+import { getPropertySummaries } from '../../lib/data'
 
 const ALL_PROPERTIES = getPropertySummaries()
 

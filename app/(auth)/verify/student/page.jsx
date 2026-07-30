@@ -16,7 +16,7 @@ import {
   AlertCircle,
   CheckCircle,
 } from 'lucide-react'
-import AuthLayout from '../../components/AuthLayout'
+import AuthLayout from '../../../components/AuthLayout'
 
 // Document type options the student can choose from
 const DOC_TYPES = [
