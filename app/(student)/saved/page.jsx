@@ -118,8 +118,8 @@ export default function SavedRoomsPage() {
                   {/* Remove button */}
                   <button
                     onClick={() => removeRoom(room.id)}
-                    className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm hover:bg-red-50 hover:text-red-500 transition-colors text-gray-500"
-                    title="Remove from saved"
+                    aria-label={`Remove ${room.title} from saved rooms`}
+                    className="absolute top-3 right-3 w-11 h-11 bg-white rounded-full flex items-center justify-center shadow-sm hover:bg-red-50 hover:text-red-500 transition-colors text-gray-500"
                   >
                     <X className="w-4 h-4" />
                   </button>

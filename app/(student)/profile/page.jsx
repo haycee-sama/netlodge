@@ -137,6 +137,9 @@ function Toggle({ label, sublabel, checked, onChange }) {
         {sublabel && <p className="text-xs text-gray-400 mt-0.5">{sublabel}</p>}
       </div>
       <button
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
         onClick={onChange}
         className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
           checked ? 'bg-orange-500' : 'bg-gray-200'

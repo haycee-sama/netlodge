@@ -145,7 +145,9 @@ function BookingCard({ booking }) {
         {/* Expand toggle */}
         <button
           onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-1 text-xs text-gray-400 hover:text-orange-500 transition-colors mt-3"
+          aria-expanded={expanded}
+          aria-controls={`booking-details-${booking.id}`}
+          className="flex items-center gap-1 text-xs text-gray-400 hover:text-orange-500 transition-colors mt-3 min-h-[44px] py-2 -my-2"
         >
           {expanded ? (
             <>
@@ -161,7 +163,7 @@ function BookingCard({ booking }) {
 
       {/* ── Expanded Details ── */}
       {expanded && (
-        <div className="px-5 pb-5 border-t border-gray-100">
+        <div id={`booking-details-${booking.id}`} className="px-5 pb-5 border-t border-gray-100">
           <div className="pt-4 flex flex-col gap-4">
 
             {/* Payment breakdown */}
