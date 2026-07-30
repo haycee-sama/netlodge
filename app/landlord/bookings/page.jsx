@@ -176,9 +176,13 @@ function BookingRow({ booking }) {
           </div>
 
           {/* Expand toggle */}
+          {/* Expand toggle */}
           <button
             onClick={() => setExpanded(!expanded)}
-            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-orange-500 hover:bg-orange-50 transition-colors"
+            aria-expanded={expanded}
+            aria-controls={`landlord-booking-details-${booking.id}`}
+            aria-label={expanded ? `Collapse details for ${booking.student.name}` : `Expand details for ${booking.student.name}`}
+            className="shrink-0 w-11 h-11 flex items-center justify-center rounded-lg text-gray-400 hover:text-orange-500 hover:bg-orange-50 transition-colors"
           >
             {expanded
               ? <ChevronUp className="w-4 h-4" />
@@ -206,7 +210,7 @@ function BookingRow({ booking }) {
 
       {/* ── Expanded Details ── */}
       {expanded && (
-        <div className="border-t border-gray-100 p-5 bg-gray-50">
+        <div id={`landlord-booking-details-${booking.id}`} className="border-t border-gray-100 p-5 bg-gray-50">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
             {/* Student contact */}

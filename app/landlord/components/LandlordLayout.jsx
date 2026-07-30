@@ -4,7 +4,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -60,19 +60,65 @@ const LANDLORD = {
 
 export default function LandlordLayout({ children, title, subtitle }) {
 
-  const pathname    = usePathname()
+  const pathname       = usePathname()
   const [open, setOpen] = useState(false)
+  const drawerRef       = useRef(null)
 
+  // Escape-to-close + focus trap while the mobile drawer is open
+  useEffect(() => {
+    if (!open) return
+
+    function handleEscape(e) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+
+    function handleTabTrap(e) {
+      if (e.key !== 'Tab' || !drawerRef.current) return
+      const focusable = drawerRef.current.querySelectorAll(
+        'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      if (focusable.length === 0) return
+
+      const first = focusable[0]
+      const last  = focusable[focusable.length - 1]
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    document.addEventListener('keydown', handleTabTrap)
+
+    // Move focus into the drawer when it opens
+    const firstFocusable = drawerRef.current?.querySelector('a[href], button:not([disabled])')
+    firstFocusable?.focus()
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      document.removeEventListener('keydown', handleTabTrap)
+    }
+  }, [open])
   return (
     <div className="min-h-screen bg-gray-50 flex">
 
       {/* ── Sidebar — desktop always visible, mobile toggle ── */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-gray-900 text-white flex flex-col
-        transform transition-transform duration-200 ease-in-out
-        ${open ? 'translate-x-0' : '-translate-x-full'}
-        lg:relative lg:translate-x-0 lg:flex
-      `}>
+      <aside
+        ref={drawerRef}
+        role="dialog"
+        aria-modal={open}
+        aria-label="Landlord navigation menu"
+        className={`
+          fixed inset-y-0 left-0 z-40 w-64 bg-gray-900 text-white flex flex-col
+          transform transition-transform duration-200 ease-in-out
+          ${open ? 'translate-x-0' : '-translate-x-full'}
+          lg:relative lg:translate-x-0 lg:flex
+        `}
+      >
 
         {/* Logo */}
         <div className="flex items-center justify-between px-5 py-5 border-b border-gray-800">

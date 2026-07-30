@@ -276,8 +276,9 @@ function BookingConfirmInner() {
 
             {/* Terms Agreement */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6">
-              <h2 className="font-bold text-gray-900 text-lg mb-4">Before You Proceed</h2>
               <button
+                role="checkbox"
+                aria-checked={agreed}
                 onClick={() => {
                   setAgreed(!agreed)
                   setAgreeError('')

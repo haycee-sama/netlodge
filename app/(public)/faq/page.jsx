@@ -103,13 +103,18 @@ const LANDLORD_FAQS = [
 // openIndex and setOpenIndex are passed down from the parent
 // so only one item can be open at a time per section
 
-function FAQItem({ question, answer, index, openIndex, setOpenIndex }) {
+function FAQItem({ question, answer, index, openIndex, setOpenIndex, sectionId }) {
   const isOpen = openIndex === index
+  const buttonId = `faq-trigger-${sectionId}-${index}`
+  const panelId  = `faq-panel-${sectionId}-${index}`
 
   return (
     <div className="border border-gray-100 rounded-xl overflow-hidden">
       <button
+        id={buttonId}
         onClick={() => setOpenIndex(isOpen ? null : index)}
+        aria-expanded={isOpen}
+        aria-controls={panelId}
         className="w-full flex items-center justify-between px-5 py-4 text-left bg-white hover:bg-gray-50 transition-colors"
       >
         <span className="font-semibold text-gray-900 text-sm pr-4">{question}</span>
@@ -120,9 +125,13 @@ function FAQItem({ question, answer, index, openIndex, setOpenIndex }) {
         />
       </button>
 
-      {/* Answer panel — only renders content when open */}
       {isOpen && (
-        <div className="px-5 pb-5 bg-white border-t border-gray-100">
+        <div
+          id={panelId}
+          role="region"
+          aria-labelledby={buttonId}
+          className="px-5 pb-5 bg-white border-t border-gray-100"
+        >
           <p className="text-sm text-gray-600 leading-relaxed pt-4">{answer}</p>
         </div>
       )}
@@ -180,6 +189,7 @@ export default function FAQPage() {
               <FAQItem
                 key={index}
                 index={index}
+                sectionId="student"
                 question={faq.question}
                 answer={faq.answer}
                 openIndex={studentOpen}
@@ -206,6 +216,7 @@ export default function FAQPage() {
               <FAQItem
                 key={index}
                 index={index}
+                sectionId="landlord"
                 question={faq.question}
                 answer={faq.answer}
                 openIndex={landlordOpen}
