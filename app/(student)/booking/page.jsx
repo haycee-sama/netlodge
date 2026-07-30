@@ -69,7 +69,7 @@ const STATUS_CONFIG = {
   Expired: {
     badge: 'bg-gray-100 text-gray-600',
     icon:  Clock,
-    color: 'text-gray-400',
+    color: 'text-gray-500',
   },
   Cancelled: {
     badge: 'bg-red-100 text-red-600',
@@ -107,7 +107,7 @@ function BookingCard({ booking }) {
                 </span>
               </div>
               <p className="text-sm text-gray-500">{booking.property} · {booking.block}</p>
-              <div className="flex items-center gap-1 text-xs text-gray-400 mt-1">
+              <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                 <MapPin className="w-3 h-3" />
                 {booking.university} · {booking.city}
               </div>
@@ -119,7 +119,7 @@ function BookingCard({ booking }) {
             <p className="text-lg font-bold text-gray-900">
               ₦{booking.total.toLocaleString()}
             </p>
-            <p className="text-xs text-gray-400">Total paid</p>
+            <p className="text-xs text-gray-500">Total paid</p>
           </div>
         </div>
 
@@ -131,14 +131,14 @@ function BookingCard({ booking }) {
             <span className="font-semibold text-gray-800">{booking.moveIn}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <Calendar className="w-4 h-4 text-gray-400" />
+            <Calendar className="w-4 h-4 text-gray-500" />
             <span className="text-gray-500">Lease ends:</span>
             <span className="font-semibold text-gray-800">{booking.leaseEnd}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <CheckCircle className="w-4 h-4 text-green-500" />
             <span className="font-semibold text-green-600">{booking.paymentStatus}</span>
-            <span className="text-gray-400">· {booking.paidOn}</span>
+            <span className="text-gray-500">· {booking.paidOn}</span>
           </div>
         </div>
 
@@ -147,7 +147,7 @@ function BookingCard({ booking }) {
           onClick={() => setExpanded(!expanded)}
           aria-expanded={expanded}
           aria-controls={`booking-details-${booking.id}`}
-          className="flex items-center gap-1 text-xs text-gray-400 hover:text-orange-500 transition-colors mt-3 min-h-[44px] py-2 -my-2"
+          className="flex items-center gap-1 text-xs text-gray-500 hover:text-orange-500 transition-colors mt-3 min-h-[44px] py-2 -my-2"
         >
           {expanded ? (
             <>

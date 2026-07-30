@@ -117,7 +117,7 @@ function FormField({ label, name, type = 'text', value, onChange, error, placeho
         disabled={disabled}
         className={`w-full px-4 py-3 rounded-xl border text-sm transition-all
           ${disabled
-            ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed'
+            ? 'bg-gray-50 text-gray-500 border-gray-100 cursor-not-allowed'
             : error
             ? 'border-red-300 focus:ring-2 focus:ring-red-100 text-gray-800 focus:outline-none'
             : 'border-gray-200 focus:ring-2 focus:ring-orange-100 focus:border-orange-400 text-gray-800 focus:outline-none'
@@ -134,7 +134,7 @@ function Toggle({ label, sublabel, checked, onChange }) {
     <div className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
       <div>
         <p className="text-sm font-medium text-gray-800">{label}</p>
-        {sublabel && <p className="text-xs text-gray-400 mt-0.5">{sublabel}</p>}
+        {sublabel && <p className="text-xs text-gray-500 mt-0.5">{sublabel}</p>}
       </div>
       <button
         role="switch"
@@ -425,8 +425,8 @@ export default function ProfilePage() {
 
           {/* Read-only notice */}
           <div className="flex items-start gap-2 mb-6">
-            <AlertCircle className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-gray-400">
+            <AlertCircle className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
+            <p className="text-xs text-gray-500">
               University cannot be changed after verification. Contact support if you transferred schools.
             </p>
           </div>
@@ -465,7 +465,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => toggleShowPassword('current')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-600"
                 >
                   {showPasswords.current
                     ? <EyeOff className="w-4 h-4" />
@@ -499,7 +499,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => toggleShowPassword('newPass')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-600"
                 >
                   {showPasswords.newPass
                     ? <EyeOff className="w-4 h-4" />
@@ -533,7 +533,7 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => toggleShowPassword('confirm')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-600"
                 >
                   {showPasswords.confirm
                     ? <EyeOff className="w-4 h-4" />
@@ -715,7 +715,7 @@ export default function ProfilePage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-gray-800">Delete My Account</p>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-gray-500 mt-0.5">
                 Permanently delete your Netlodge account and all associated data.
                 This cannot be undone. Active bookings must be resolved first.
               </p>

@@ -166,9 +166,9 @@ export default function ContactPage() {
                     <Icon className="w-5 h-5 text-orange-500" />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400 mb-0.5">{item.label}</p>
+                    <p className="text-xs text-gray-500 mb-0.5">{item.label}</p>
                     <p className="text-sm font-semibold text-gray-800">{item.value}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{item.sub}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{item.sub}</p>
                   </div>
                 </div>
               )
@@ -261,7 +261,7 @@ export default function ContactPage() {
                         value={form.name}
                         onChange={handleChange}
                         placeholder="e.g. Amara Okonkwo"
-                        className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-all ${
+                        className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 transition-all ${
                           errors.name
                             ? 'border-red-300 focus:ring-red-100'
                             : 'border-gray-200 focus:ring-orange-100 focus:border-orange-400'
@@ -283,7 +283,7 @@ export default function ContactPage() {
                         value={form.email}
                         onChange={handleChange}
                         placeholder="e.g. amara@gmail.com"
-                        className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-all ${
+                        className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 transition-all ${
                           errors.email
                             ? 'border-red-300 focus:ring-red-100'
                             : 'border-gray-200 focus:ring-orange-100 focus:border-orange-400'
@@ -300,7 +300,7 @@ export default function ContactPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
                       Phone Number
-                      <span className="text-gray-400 font-normal ml-1">(optional)</span>
+                      <span className="text-gray-500 font-normal ml-1">(optional)</span>
                     </label>
                     <input
                       type="tel"
@@ -308,7 +308,7 @@ export default function ContactPage() {
                       value={form.phone}
                       onChange={handleChange}
                       placeholder="e.g. 08012345678"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-400 transition-all"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-400 transition-all"
                     />
                   </div>
 
@@ -349,7 +349,7 @@ export default function ContactPage() {
                       onChange={handleChange}
                       rows={5}
                       placeholder="Describe your issue or question in as much detail as possible..."
-                      className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-all resize-none ${
+                      className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 transition-all resize-none ${
                         errors.message
                           ? 'border-red-300 focus:ring-red-100'
                           : 'border-gray-200 focus:ring-orange-100 focus:border-orange-400'
@@ -369,7 +369,7 @@ export default function ContactPage() {
                     Send Message
                   </button>
 
-                  <p className="text-xs text-center text-gray-400">
+                  <p className="text-xs text-center text-gray-500">
                     We typically respond within 4 hours on weekdays.
                     For urgent payment issues call us directly.
                   </p>

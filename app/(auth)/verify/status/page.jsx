@@ -118,7 +118,7 @@ export default function VerifyStatusPage() {
                   ) : (
                     <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
                   )}
-                  <span className={`text-sm ${doc.done ? 'text-gray-700' : 'text-gray-400'}`}>
+                  <span className={`text-sm ${doc.done ? 'text-gray-700' : 'text-gray-500'}`}>
                     {doc.label}
                     {!doc.done && (
                       <span className="text-xs ml-1">(not submitted)</span>

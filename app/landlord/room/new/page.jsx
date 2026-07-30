@@ -155,7 +155,7 @@ export default function CreateRoomPage() {
   // ── Shared classes ────────────────────────────────────────
 
   function inputClass(hasError) {
-    return `w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-all bg-white ${
+    return `w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 transition-all bg-white ${
       hasError
         ? 'border-red-300 focus:ring-red-100'
         : 'border-gray-200 focus:ring-orange-100 focus:border-orange-400'
@@ -253,7 +253,7 @@ export default function CreateRoomPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     Dimensions
-                    <span className="text-gray-400 text-xs font-normal ml-1">(optional)</span>
+                    <span className="text-gray-500 text-xs font-normal ml-1">(optional)</span>
                   </label>
                   <input
                     type="text"
@@ -272,7 +272,7 @@ export default function CreateRoomPage() {
                   Annual Rent (₦) <span className="text-red-400">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-sm">
                     ₦
                   </span>
                   <input
@@ -287,7 +287,7 @@ export default function CreateRoomPage() {
                 {errors.price
                   ? <p className="text-xs text-red-500 mt-1">{errors.price}</p>
                   : form.price && (
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-500 mt-1">
                       = ₦{Number(form.price).toLocaleString()} per year
                     </p>
                   )
@@ -298,7 +298,7 @@ export default function CreateRoomPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Room Description
-                  <span className="text-gray-400 text-xs font-normal ml-1">(optional)</span>
+                  <span className="text-gray-500 text-xs font-normal ml-1">(optional)</span>
                 </label>
                 <textarea
                   name="description"
@@ -369,12 +369,12 @@ export default function CreateRoomPage() {
                   ? 'border-red-300 bg-red-50'
                   : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50'
               }`}>
-                <Upload className="w-8 h-8 text-gray-400" />
+                <Upload className="w-8 h-8 text-gray-500" />
                 <div className="text-center">
                   <p className="text-sm font-medium text-gray-700">
                     Click to upload photos
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-gray-500 mt-1">
                     JPG or PNG · Max 5MB each · Up to {10 - photos.length} more
                   </p>
                 </div>

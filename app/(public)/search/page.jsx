@@ -8,6 +8,7 @@ import {
   Search, SlidersHorizontal, MapPin, ShieldCheck,
   Building2, BedDouble, ChevronDown, X, Users, ArrowRight,
 } from 'lucide-react'
+import { motion, useReducedMotion } from 'framer-motion'
 
 // Import real data from central data file
 import { getPropertySummaries } from '../../lib/data'
@@ -30,6 +31,7 @@ const UNIVERSITIES = [
 export default function SearchPage() {
 
   const [searchQuery, setSearchQuery]   = useState('')
+  const shouldReduceMotion = useReducedMotion()
   const [selectedCity, setSelectedCity] = useState('All Cities')
   const [selectedType, setSelectedType] = useState('All Types')
   const [selectedUni, setSelectedUni]   = useState('All Universities')
@@ -195,7 +197,7 @@ export default function SearchPage() {
                     onChange={(e) => setMaxBudget(Number(e.target.value))}
                     className="w-full accent-orange-500"
                   />
-                  <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
                     <span>₦50,000</span>
                     <span>₦250,000</span>
                   </div>
@@ -210,18 +212,18 @@ export default function SearchPage() {
 
             {/* Search bar */}
             <div className="relative mb-6">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
               <input
                 type="text"
                 placeholder="Search by hostel name, university, or city..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 shadow-sm"
+                className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 shadow-sm"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-600"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -235,16 +237,32 @@ export default function SearchPage() {
 
             {/* Property Cards */}
             {filtered.length > 0 ? (
-              <div className="flex flex-col gap-5">
+              <motion.div
+                initial="hidden"
+                animate="show"
+                variants={{
+                  show: {
+                    transition: { staggerChildren: shouldReduceMotion ? 0 : 0.06 },
+                  },
+                }}
+                className="flex flex-col gap-5"
+              >
                 {filtered.map((property) => (
-                  <Link
+                  <motion.div
                     key={property.id}
-                    href={`/property/${property.id}`}
-                    className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden group flex flex-col sm:flex-row"
+                    variants={{
+                      hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 12 },
+                      show: { opacity: 1, y: 0 },
+                    }}
+                    transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
                   >
+                    <Link
+                      href={`/property/${property.id}`}
+                      className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden group flex flex-col sm:flex-row"
+                    >
                     {/* Property image placeholder */}
                     <div className="relative sm:w-56 h-48 sm:h-auto bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center shrink-0">
-                      <Building2 className="w-12 h-12 text-gray-400" />
+                      <Building2 className="w-12 h-12 text-gray-500" />
 
                       {/* Verified badge */}
                       <div className="absolute top-3 left-3 flex items-center gap-1 bg-white rounded-full px-2 py-1 shadow-sm">
@@ -273,7 +291,7 @@ export default function SearchPage() {
                           {property.university} · {property.city}
                         </div>
 
-                        <p className="text-xs text-gray-400 mb-3">
+                        <p className="text-xs text-gray-500 mb-3">
                           🚶 {property.distanceToGate} to university gate
                         </p>
 
@@ -320,10 +338,10 @@ export default function SearchPage() {
                         {/* Price range + CTA */}
                         <div className="flex items-center gap-4">
                           <div className="text-right">
-                            <p className="text-xs text-gray-400">Starting from</p>
+                            <p className="text-xs text-gray-500">Starting from</p>
                             <p className="font-bold text-gray-900">
                               ₦{property.priceFrom.toLocaleString()}
-                              <span className="text-sm font-normal text-gray-400"> /yr</span>
+                              <span className="text-sm font-normal text-gray-500"> /yr</span>
                             </p>
                           </div>
                           <div className="flex items-center gap-1 bg-orange-500 group-hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
@@ -335,13 +353,14 @@ export default function SearchPage() {
                       </div>
                     </div>
                   </Link>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             ) : (
               /* Empty state */
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-                  <Search className="w-7 h-7 text-gray-400" />
+                  <Search className="w-7 h-7 text-gray-500" />
                 </div>
                 <h3 className="font-bold text-gray-900 text-lg mb-2">No properties found</h3>
                 <p className="text-gray-500 text-sm mb-6 max-w-xs">

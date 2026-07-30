@@ -128,7 +128,7 @@ function BookingSuccessInner() {
 
           <div className="flex items-start gap-4 mb-6 pb-6 border-b border-gray-100">
             <div className="w-16 h-16 bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl flex items-center justify-center shrink-0">
-              <Building2 className="w-8 h-8 text-gray-400" />
+              <Building2 className="w-8 h-8 text-gray-500" />
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -140,7 +140,7 @@ function BookingSuccessInner() {
                 </div>
               </div>
               <p className="text-sm text-gray-600">{property.name} · {block.name}</p>
-              <div className="flex items-center gap-1 text-xs text-gray-400 mt-1">
+              <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                 <MapPin className="w-3 h-3" />
                 {property.university} · {property.city}
               </div>
@@ -158,7 +158,7 @@ function BookingSuccessInner() {
               { label: 'Payment',      value: 'Paid ✓'                            },
             ].map(({ label, value }) => (
               <div key={label} className="bg-gray-50 rounded-xl p-3">
-                <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+                <p className="text-xs text-gray-500 mb-0.5">{label}</p>
                 <p className="text-sm font-semibold text-gray-800">{value}</p>
               </div>
             ))}
@@ -282,7 +282,7 @@ function BookingSuccessInner() {
           </button>
         </div>
 
-        <p className="text-center text-sm text-gray-400">
+        <p className="text-center text-sm text-gray-500">
           Need help?{' '}
           <Link href="/contact" className="text-orange-500 hover:underline font-medium">
             Contact Support

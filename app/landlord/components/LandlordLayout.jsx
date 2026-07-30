@@ -131,7 +131,7 @@ export default function LandlordLayout({ children, title, subtitle }) {
           {/* Close button on mobile */}
           <button
             onClick={() => setOpen(false)}
-            className="lg:hidden text-gray-400 hover:text-white"
+            className="lg:hidden text-gray-500 hover:text-white"
           >
             <X className="w-5 h-5" />
           </button>
@@ -171,7 +171,7 @@ export default function LandlordLayout({ children, title, subtitle }) {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                   isActive
                     ? 'bg-orange-500 text-white'
-                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                    : 'text-gray-500 hover:bg-gray-800 hover:text-white'
                 }`}
               >
                 <Icon className="w-5 h-5 shrink-0" />
@@ -185,12 +185,12 @@ export default function LandlordLayout({ children, title, subtitle }) {
         <div className="px-3 py-4 border-t border-gray-800 flex flex-col gap-1">
           <Link
             href="/landlord/profile"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-800 hover:text-white transition-colors"
           >
             <Settings className="w-5 h-5" />
             Settings
           </Link>
-          <button className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-red-900 hover:text-red-300 transition-colors w-full text-left">
+          <button className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-red-900 hover:text-red-300 transition-colors w-full text-left">
             <LogOut className="w-5 h-5" />
             Log Out
           </button>

@@ -55,7 +55,7 @@ export default function AuthLayout({ children, title, subtitle }) {
           <h2 className="text-3xl font-bold mb-3">
             Nigeria's Most Trusted Student Housing Platform
           </h2>
-          <p className="text-gray-400 mb-8 leading-relaxed">
+          <p className="text-gray-500 mb-8 leading-relaxed">
             Every feature on Netlodge was built specifically to protect
             students from the fraud that has plagued off-campus housing for decades.
           </p>
@@ -75,7 +75,7 @@ export default function AuthLayout({ children, title, subtitle }) {
             {['Abuja', 'Lagos', 'Enugu'].map((city) => (
               <span
                 key={city}
-                className="text-xs bg-gray-800 text-gray-400 px-3 py-1.5 rounded-full"
+                className="text-xs bg-gray-800 text-gray-500 px-3 py-1.5 rounded-full"
               >
                 {city}
               </span>

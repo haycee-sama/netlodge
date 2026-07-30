@@ -194,11 +194,11 @@ export default function LeaseConfigPage() {
                     : 'border-gray-100 hover:border-orange-200'
                 }`}
               >
-                <Clock className={`w-5 h-5 mb-1 ${reminderDays === days ? 'text-orange-500' : 'text-gray-400'}`} />
+                <Clock className={`w-5 h-5 mb-1 ${reminderDays === days ? 'text-orange-500' : 'text-gray-500'}`} />
                 <p className={`text-lg font-bold ${reminderDays === days ? 'text-orange-600' : 'text-gray-800'}`}>
                   {days}
                 </p>
-                <p className={`text-xs ${reminderDays === days ? 'text-orange-500' : 'text-gray-400'}`}>
+                <p className={`text-xs ${reminderDays === days ? 'text-orange-500' : 'text-gray-500'}`}>
                   days before
                 </p>
               </button>

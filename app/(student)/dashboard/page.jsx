@@ -121,7 +121,7 @@ function SidebarLink({ href, icon: Icon, label, active }) {
           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
       }`}
     >
-      <Icon className={`w-5 h-5 ${active ? 'text-orange-500' : 'text-gray-400'}`} />
+      <Icon className={`w-5 h-5 ${active ? 'text-orange-500' : 'text-gray-500'}`} />
       {label}
     </Link>
   )
@@ -273,7 +273,7 @@ export default function DashboardPage() {
                       <div>
                         <p className="font-bold text-gray-900">{ACTIVE_BOOKING.room}</p>
                         <p className="text-sm text-gray-500">{ACTIVE_BOOKING.property} · {ACTIVE_BOOKING.block}</p>
-                        <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
+                        <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
                           <MapPin className="w-3 h-3" />
                           {ACTIVE_BOOKING.university} · {ACTIVE_BOOKING.city}
                         </div>
@@ -373,7 +373,7 @@ export default function DashboardPage() {
                       className="flex items-center gap-4 p-3 rounded-xl border border-gray-100 hover:border-orange-200 hover:bg-orange-50 transition-all group"
                     >
                       <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center shrink-0">
-                        <Building2 className="w-6 h-6 text-gray-400" />
+                        <Building2 className="w-6 h-6 text-gray-500" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-gray-900 group-hover:text-orange-600 transition-colors truncate">
@@ -385,7 +385,7 @@ export default function DashboardPage() {
                         <p className="text-sm font-bold text-gray-900">
                           ₦{room.price.toLocaleString()}
                         </p>
-                        <p className="text-xs text-gray-400">/year</p>
+                        <p className="text-xs text-gray-500">/year</p>
                       </div>
                     </Link>
                   ))}
@@ -433,7 +433,7 @@ export default function DashboardPage() {
                       <p className={`text-sm leading-relaxed ${notif.read ? 'text-gray-600' : 'text-gray-800 font-medium'}`}>
                         {notif.text}
                       </p>
-                      <p className="text-xs text-gray-400 mt-1">{notif.time}</p>
+                      <p className="text-xs text-gray-500 mt-1">{notif.time}</p>
                     </div>
                     {!notif.read && (
                       <div className="w-2 h-2 bg-orange-500 rounded-full shrink-0 mt-1.5" />

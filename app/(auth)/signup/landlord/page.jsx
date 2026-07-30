@@ -104,7 +104,7 @@ export default function LandlordSignUpPage() {
                 value={form[field]}
                 onChange={handleChange}
                 placeholder={field === 'firstName' ? 'Emeka' : 'Okafor'}
-                className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-all ${
+                className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 transition-all ${
                   errors[field]
                     ? 'border-red-300 focus:ring-red-100'
                     : 'border-gray-200 focus:ring-orange-100 focus:border-orange-400'
@@ -128,7 +128,7 @@ export default function LandlordSignUpPage() {
             value={form.email}
             onChange={handleChange}
             placeholder="emeka@gmail.com"
-            className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-all ${
+            className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 transition-all ${
               errors.email
                 ? 'border-red-300 focus:ring-red-100'
                 : 'border-gray-200 focus:ring-orange-100 focus:border-orange-400'
@@ -150,7 +150,7 @@ export default function LandlordSignUpPage() {
             value={form.phone}
             onChange={handleChange}
             placeholder="08012345678"
-            className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-all ${
+            className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 transition-all ${
               errors.phone
                 ? 'border-red-300 focus:ring-red-100'
                 : 'border-gray-200 focus:ring-orange-100 focus:border-orange-400'
@@ -202,7 +202,7 @@ export default function LandlordSignUpPage() {
                 value={form[field.name]}
                 onChange={handleChange}
                 placeholder={field.name === 'password' ? 'Minimum 8 characters' : 'Repeat password'}
-                className={`w-full px-4 py-3 pr-12 rounded-xl border text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-all ${
+                className={`w-full px-4 py-3 pr-12 rounded-xl border text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 transition-all ${
                   errors[field.name]
                     ? 'border-red-300 focus:ring-red-100'
                     : 'border-gray-200 focus:ring-orange-100 focus:border-orange-400'
@@ -211,7 +211,7 @@ export default function LandlordSignUpPage() {
               <button
                 type="button"
                 onClick={field.toggle}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-600"
               >
                 {field.show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -223,7 +223,7 @@ export default function LandlordSignUpPage() {
         ))}
 
         {/* Terms */}
-        <p className="text-xs text-gray-400 leading-relaxed">
+        <p className="text-xs text-gray-500 leading-relaxed">
           By registering you agree to Netlodge's{' '}
           <Link href="/terms" className="text-orange-500 hover:underline">Terms of Use</Link>
           {' '}and{' '}
@@ -257,7 +257,7 @@ export default function LandlordSignUpPage() {
           </Link>
         </p>
 
-        <p className="text-center text-xs text-gray-400">
+        <p className="text-center text-xs text-gray-500">
           Looking for a room instead?{' '}
           <Link href="/signup/student" className="text-gray-600 hover:underline">
             Sign up as a student

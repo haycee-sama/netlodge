@@ -137,7 +137,7 @@ export default function LandlordPaymentsPage() {
                 <div>
                   <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
-                  <p className="text-xs text-gray-400">{stat.sub}</p>
+                  <p className="text-xs text-gray-500">{stat.sub}</p>
                 </div>
               </div>
             )
@@ -228,7 +228,7 @@ export default function LandlordPaymentsPage() {
                     <p className="text-sm font-bold text-gray-900">
                       ₦{payment.amount.toLocaleString()}
                     </p>
-                    <button className="text-gray-400 hover:text-orange-500 transition-colors">
+                    <button className="text-gray-500 hover:text-orange-500 transition-colors">
                       <Download className="w-4 h-4" />
                     </button>
                   </div>

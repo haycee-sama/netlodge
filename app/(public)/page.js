@@ -287,7 +287,7 @@ export default function HomePage() {
               >
                 {/* Room image placeholder */}
                 <div className="relative h-48 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                  <Building2 className="w-12 h-12 text-gray-400" />
+                  <Building2 className="w-12 h-12 text-gray-500" />
                   {/* Badge */}
                   <span className={`absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full ${room.badgeColor}`}>
                     {room.badge}
@@ -301,7 +301,7 @@ export default function HomePage() {
                 {/* Card body */}
                 <div className="p-5">
                   {/* Location */}
-                  <div className="flex items-center gap-1 text-xs text-gray-400 mb-2">
+                  <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
                     <MapPin className="w-3 h-3" />
                     <span>{room.university} · {room.city}</span>
                   </div>
@@ -330,7 +330,7 @@ export default function HomePage() {
                       <span className="text-xl font-bold text-gray-900">
                         ₦{room.price}
                       </span>
-                      <span className="text-sm text-gray-400"> / year</span>
+                      <span className="text-sm text-gray-500"> / year</span>
                     </div>
                     <span className="text-xs font-medium bg-orange-50 text-orange-600 px-3 py-1 rounded-full">
                       {room.type}
@@ -387,7 +387,7 @@ export default function HomePage() {
                 <ul className="flex flex-col gap-1">
                   {city.universities.map((uni) => (
                     <li key={uni} className="text-sm text-gray-500 flex items-center gap-2">
-                      <GraduationCap className="w-3.5 h-3.5 text-gray-400" />
+                      <GraduationCap className="w-3.5 h-3.5 text-gray-500" />
                       {uni}
                     </li>
                   ))}
@@ -417,7 +417,7 @@ export default function HomePage() {
               <h2 className="text-3xl sm:text-4xl font-bold mb-6">
                 We Verify Everything So You Don't Have To
               </h2>
-              <p className="text-gray-400 leading-relaxed mb-8">
+              <p className="text-gray-500 leading-relaxed mb-8">
                 Fraud in Nigerian student housing is rampant. Netlodge was built specifically
                 to eliminate it — through rigorous KYC, escrow payments, and a zero-tolerance
                 policy on unverified listings.

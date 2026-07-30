@@ -21,6 +21,7 @@ import {
   MapPin,
 } from 'lucide-react'
 import { getRoomById, SERVICE_FEE_RATE } from '../../../lib/data'
+import BookingProgress from '../components/BookingProgress'
 
 // ── Payment method config ─────────────────────────────────────
 const PAYMENT_METHODS = [
@@ -165,44 +166,7 @@ function PaymentInner() {
     <div className="min-h-screen bg-gray-50">
 
       {/* ── Progress Bar ── */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-2">
-            {['Review & Confirm', 'Payment', 'Booking Complete'].map((step, index) => {
-              const isActive   = index === 1
-              const isComplete = index < 1
-              return (
-                <div key={step} className="flex items-center gap-2">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-                      isComplete
-                        ? 'bg-green-500 text-white'
-                        : isActive
-                        ? 'bg-orange-500 text-white'
-                        : 'bg-gray-100 text-gray-400'
-                    }`}>
-                      {isComplete
-                        ? <CheckCircle className="w-4 h-4" />
-                        : index + 1
-                      }
-                    </div>
-                    <span className={`text-sm font-medium hidden sm:block ${
-                      isActive ? 'text-orange-500' : isComplete ? 'text-green-600' : 'text-gray-400'
-                    }`}>
-                      {step}
-                    </span>
-                  </div>
-                  {index < 2 && (
-                    <div className={`h-0.5 w-8 sm:w-16 ${
-                      isComplete ? 'bg-green-500' : 'bg-gray-100'
-                    }`} />
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
+      <BookingProgress step={1} />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
@@ -258,14 +222,14 @@ function PaymentInner() {
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                         isSelected ? 'bg-orange-100' : 'bg-gray-100'
                       }`}>
-                        <Icon className={`w-5 h-5 ${isSelected ? 'text-orange-500' : 'text-gray-400'}`} />
+                        <Icon className={`w-5 h-5 ${isSelected ? 'text-orange-500' : 'text-gray-500'}`} />
                       </div>
 
                       <div>
                         <p className={`text-sm font-semibold ${isSelected ? 'text-orange-600' : 'text-gray-800'}`}>
                           {method.label}
                         </p>
-                        <p className="text-xs text-gray-400">{method.description}</p>
+                        <p className="text-xs text-gray-500">{method.description}</p>
                       </div>
                     </button>
                   )
@@ -288,6 +252,8 @@ function PaymentInner() {
                     <input
                       type="text"
                       name="number"
+                      autoComplete="cc-number"
+                      inputMode="numeric"
                       value={card.number}
                       onChange={handleCardChange}
                       placeholder="0000 0000 0000 0000"
@@ -310,6 +276,7 @@ function PaymentInner() {
                     <input
                       type="text"
                       name="name"
+                      autoComplete="cc-name"
                       value={card.name}
                       onChange={handleCardChange}
                       placeholder="As it appears on your card"
@@ -333,6 +300,8 @@ function PaymentInner() {
                       <input
                         type="text"
                         name="expiry"
+                        autoComplete="cc-exp"
+                        inputMode="numeric"
                         value={card.expiry}
                         onChange={handleCardChange}
                         placeholder="MM/YY"
@@ -351,11 +320,14 @@ function PaymentInner() {
                         CVV <span className="text-red-400">*</span>
                       </label>
                       <input
-                        type="password"
+                        type="text"
                         name="cvv"
+                        autoComplete="cc-csc"
+                        inputMode="numeric"
                         value={card.cvv}
                         onChange={handleCardChange}
                         placeholder="•••"
+                        maxLength={3}
                         className={`w-full px-4 py-3 rounded-xl border text-sm font-mono text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-all ${
                           cardErrors.cvv
                             ? 'border-red-300 focus:ring-red-100'
@@ -441,14 +413,14 @@ function PaymentInner() {
                 {/* Room info */}
                 <div className="flex items-start gap-3 mb-5 pb-5 border-b border-gray-100">
                   <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center shrink-0">
-                    <Building2 className="w-6 h-6 text-gray-400" />
+                    <Building2 className="w-6 h-6 text-gray-500" />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-gray-900">
                       Room {room.number} — {room.type}
                     </p>
                     <p className="text-xs text-gray-500">{property.name} · {block.name}</p>
-                    <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
+                    <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
                       <MapPin className="w-3 h-3" />
                       {property.city}
                     </div>
@@ -499,7 +471,7 @@ function PaymentInner() {
                   )}
                 </button>
 
-                <p className="text-center text-xs text-gray-400 mt-3">
+                <p className="text-center text-xs text-gray-500 mt-3">
                   🔒 Funds held in escrow for 48 hours after payment
                 </p>
               </div>

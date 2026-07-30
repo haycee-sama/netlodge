@@ -134,7 +134,7 @@ export default function CreatePropertyPage() {
 
   // ── Shared input style ────────────────────────────────────
   function inputClass(hasError) {
-    return `w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-all bg-white ${
+    return `w-full px-4 py-3 rounded-xl border text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 transition-all bg-white ${
       hasError
         ? 'border-red-300 focus:ring-red-100'
         : 'border-gray-200 focus:ring-orange-100 focus:border-orange-400'
@@ -161,12 +161,12 @@ export default function CreatePropertyPage() {
                       ? 'bg-green-500 text-white'
                       : isActive
                       ? 'bg-orange-500 text-white'
-                      : 'bg-gray-100 text-gray-400'
+                      : 'bg-gray-100 text-gray-500'
                   }`}>
                     {isComplete ? <CheckCircle className="w-5 h-5" /> : s.id}
                   </div>
                   <span className={`text-sm font-medium hidden sm:block ${
-                    isActive ? 'text-orange-500' : isComplete ? 'text-green-600' : 'text-gray-400'
+                    isActive ? 'text-orange-500' : isComplete ? 'text-green-600' : 'text-gray-500'
                   }`}>
                     {s.label}
                   </span>
@@ -282,7 +282,7 @@ export default function CreatePropertyPage() {
                     {field.label}
                     {field.required
                       ? <span className="text-red-400"> *</span>
-                      : <span className="text-gray-400 text-xs font-normal"> (optional)</span>
+                      : <span className="text-gray-500 text-xs font-normal"> (optional)</span>
                     }
                   </label>
                   <input
@@ -335,7 +335,7 @@ export default function CreatePropertyPage() {
                     {blocks.length > 1 && (
                       <button
                         onClick={() => removeBlock(index)}
-                        className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -395,12 +395,12 @@ export default function CreatePropertyPage() {
                       value={rule}
                       onChange={(e) => updateRule(index, e.target.value)}
                       placeholder={`Rule ${index + 1} — e.g. No loud music after 10pm`}
-                      className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-400 transition-all"
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-400 transition-all"
                     />
                     {rules.length > 1 && (
                       <button
                         onClick={() => removeRule(index)}
-                        className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -460,7 +460,7 @@ export default function CreatePropertyPage() {
                     { label: 'Distance to Faculty', value: info.distanceToFaculty || '—' },
                   ].map(({ label, value }) => (
                     <div key={label} className="bg-gray-50 rounded-xl p-3">
-                      <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+                      <p className="text-xs text-gray-500 mb-0.5">{label}</p>
                       <p className="text-sm font-semibold text-gray-800">{value || '—'}</p>
                     </div>
                   ))}
@@ -468,7 +468,7 @@ export default function CreatePropertyPage() {
 
                 {/* Blocks */}
                 <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-xs text-gray-400 mb-2">Blocks ({blocks.length})</p>
+                  <p className="text-xs text-gray-500 mb-2">Blocks ({blocks.length})</p>
                   <div className="flex flex-wrap gap-2">
                     {blocks.map((block) => (
                       <span key={block} className="text-sm font-medium bg-orange-100 text-orange-700 px-3 py-1 rounded-full">
@@ -481,7 +481,7 @@ export default function CreatePropertyPage() {
                 {/* Amenities */}
                 {selectedAmenities.length > 0 && (
                   <div className="bg-gray-50 rounded-xl p-4">
-                    <p className="text-xs text-gray-400 mb-2">
+                    <p className="text-xs text-gray-500 mb-2">
                       Amenities ({selectedAmenities.length})
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -497,7 +497,7 @@ export default function CreatePropertyPage() {
                 {/* Rules */}
                 {rules.filter((r) => r.trim()).length > 0 && (
                   <div className="bg-gray-50 rounded-xl p-4">
-                    <p className="text-xs text-gray-400 mb-2">House Rules</p>
+                    <p className="text-xs text-gray-500 mb-2">House Rules</p>
                     <ul className="flex flex-col gap-1">
                       {rules.filter((r) => r.trim()).map((rule, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
