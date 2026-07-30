@@ -7,7 +7,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, ArrowRight, Building2, CheckCircle } from 'lucide-react'
-import AuthLayout from '../../components/AuthLayout'
+import AuthLayout from '../../../components/AuthLayout'
 
 const TRUST_POINTS = [
   'Get a verified badge that builds student trust',

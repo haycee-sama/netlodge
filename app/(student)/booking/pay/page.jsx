@@ -20,7 +20,7 @@ import {
   ArrowRight,
   MapPin,
 } from 'lucide-react'
-import { getRoomById, SERVICE_FEE_RATE } from '../../lib/data'
+import { getRoomById, SERVICE_FEE_RATE } from '../../../lib/data'
 
 // ── Payment method config ─────────────────────────────────────
 const PAYMENT_METHODS = [

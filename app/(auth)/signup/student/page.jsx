@@ -9,7 +9,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, ArrowRight } from 'lucide-react'
-import AuthLayout from '../../components/AuthLayout'
+import AuthLayout from '../../../components/AuthLayout'
 
 // List of universities for the dropdown
 const UNIVERSITIES = [

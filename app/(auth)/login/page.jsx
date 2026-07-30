@@ -8,7 +8,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, ArrowRight, GraduationCap, Building2 } from 'lucide-react'
-import AuthLayout from '../components/AuthLayout'
+import AuthLayout from '../../components/AuthLayout'
 
 export default function LoginPage() {
 
