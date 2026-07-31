@@ -5,6 +5,48 @@
 // When you connect a real backend, you only change this file
 // ─────────────────────────────────────────────────────────────
 
+// ── ROOM IMAGE POOLS ─────────────────────────────────────────
+// Placeholder Unsplash imagery grouped by room type. Swap these
+// for real property photography before production — verify each
+// URL still resolves, since Unsplash occasionally retires photos.
+const GATE_IMAGES = {
+  'prop-1': { url: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80', alt: 'Sunrise Hostel building exterior and front gate' },
+  'prop-2': { url: 'https://images.unsplash.com/photo-1524230572899-a752b3835840?auto=format&fit=crop&w=1200&q=80', alt: 'Greenfield Lodge building exterior and front gate' },
+  'prop-3': { url: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=1200&q=80', alt: 'Campus View Hostel building exterior and front gate' },
+}
+
+const IMAGE_POOLS = {
+  Single: [
+    { url: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80', alt: 'Single bed with neutral bedding beside a window' },
+    { url: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=1200&q=80', alt: 'Compact study desk against the wall' },
+    { url: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1200&q=80', alt: 'Built-in wardrobe and storage space' },
+    { url: 'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=1200&q=80', alt: 'Study desk with lamp and chair' },
+  ],
+  Shared: [
+    { url: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1200&q=80', alt: 'Shared bedroom with two beds' },
+    { url: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?auto=format&fit=crop&w=1200&q=80', alt: 'Shared common living space' },
+    { url: 'https://images.unsplash.com/photo-1567016432779-094069958ea5?auto=format&fit=crop&w=1200&q=80', alt: 'Communal seating area' },
+    { url: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80', alt: 'Shared study desk area' },
+  ],
+  'Self-Contain': [
+    { url: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=1200&q=80', alt: 'Self-contained room with double bed' },
+    { url: 'https://images.unsplash.com/photo-1580480055273-228ff5388ef8?auto=format&fit=crop&w=1200&q=80', alt: 'En-suite bathroom with shower' },
+    { url: 'https://images.unsplash.com/photo-1505873242700-f289a29e1e0f?auto=format&fit=crop&w=1200&q=80', alt: 'Studio-style living and sleeping area' },
+    { url: 'https://images.unsplash.com/photo-1518481612222-68bbe828ecd1?auto=format&fit=crop&w=1200&q=80', alt: 'Private desk and workspace corner' },
+  ],
+}
+
+// Builds a room-specific images array from the shared type pool,
+// tagging each image with a unique id scoped to this room.
+function roomImages(type, roomId) {
+  const pool = IMAGE_POOLS[type] || IMAGE_POOLS.Single
+  return pool.map((image, index) => ({
+    id: `${roomId}-img-${index + 1}`,
+    url: image.url,
+    alt: image.alt,
+  }))
+}
+
 // ── PROPERTIES ───────────────────────────────────────────────
 // Each property contains blocks
 // Each block contains rooms
@@ -23,6 +65,7 @@ export const PROPERTIES = [
     totalRooms:       120,
     verified:         true,
     amenities:        ['24hr Power', 'WiFi', 'Borehole Water', '24hr Security', 'CCTV', 'Parking'],
+    gateImage:        GATE_IMAGES['prop-1'],
     rules: [
       'No loud music after 10pm',
       'No visitors after midnight',
@@ -51,6 +94,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'3m x 4m',
+            images: roomImages('Single', 'prop-1-block-a-room-1'),
             amenities: {
               power:    ['Generator Backup', 'Prepaid Meter'],
               water:    ['Constant Water Supply'],
@@ -69,6 +113,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'3m x 4m',
+            images: roomImages('Single', 'prop-1-block-a-room-2'),
             amenities: {
               power:    ['Generator Backup', 'Prepaid Meter'],
               water:    ['Constant Water Supply'],
@@ -87,6 +132,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'4m x 4m',
+            images: roomImages('Shared', 'prop-1-block-a-room-3'),
             amenities: {
               power:    ['Generator Backup'],
               water:    ['Overhead Tank'],
@@ -105,6 +151,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'4m x 4m',
+            images: roomImages('Shared', 'prop-1-block-a-room-4'),
             amenities: {
               power:    ['Generator Backup'],
               water:    ['Overhead Tank'],
@@ -123,6 +170,7 @@ export const PROPERTIES = [
             bathroom:  'En-suite',
             furnished: 'Yes',
             dimensions:'4m x 5m',
+            images: roomImages('Self-Contain', 'prop-1-block-a-room-5'),
             amenities: {
               power:    ['24hr Electricity', 'Backup Generator', 'Prepaid Meter'],
               water:    ['Constant Water Supply', 'Overhead Tank'],
@@ -141,6 +189,7 @@ export const PROPERTIES = [
             bathroom:  'En-suite',
             furnished: 'Yes',
             dimensions:'4m x 5m',
+            images: roomImages('Self-Contain', 'prop-1-block-a-room-6'),
             amenities: {
               power:    ['24hr Electricity', 'Backup Generator', 'Prepaid Meter'],
               water:    ['Constant Water Supply', 'Overhead Tank'],
@@ -159,6 +208,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'3m x 4m',
+            images: roomImages('Single', 'prop-1-block-a-room-7'),
             amenities: {
               power:    ['Generator Backup', 'Prepaid Meter'],
               water:    ['Constant Water Supply'],
@@ -177,6 +227,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'3m x 4m',
+            images: roomImages('Single', 'prop-1-block-a-room-8'),
             amenities: {
               power:    ['Generator Backup', 'Prepaid Meter'],
               water:    ['Constant Water Supply'],
@@ -202,6 +253,7 @@ export const PROPERTIES = [
             bathroom:  'En-suite',
             furnished: 'Yes',
             dimensions:'4m x 5m',
+            images: roomImages('Self-Contain', 'prop-1-block-b-room-1'),
             amenities: {
               power:    ['24hr Electricity', 'Backup Generator'],
               water:    ['Constant Water Supply'],
@@ -220,6 +272,7 @@ export const PROPERTIES = [
             bathroom:  'En-suite',
             furnished: 'Yes',
             dimensions:'4m x 5m',
+            images: roomImages('Self-Contain', 'prop-1-block-b-room-2'),
             amenities: {
               power:    ['24hr Electricity', 'Backup Generator'],
               water:    ['Constant Water Supply'],
@@ -238,6 +291,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'3m x 4m',
+            images: roomImages('Single', 'prop-1-block-b-room-3'),
             amenities: {
               power:    ['Generator Backup'],
               water:    ['Overhead Tank'],
@@ -256,6 +310,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'4m x 4m',
+            images: roomImages('Shared', 'prop-1-block-b-room-4'),
             amenities: {
               power:    ['Generator Backup'],
               water:    ['Overhead Tank'],
@@ -274,6 +329,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'4m x 4m',
+            images: roomImages('Shared', 'prop-1-block-b-room-5'),
             amenities: {
               power:    ['Generator Backup'],
               water:    ['Overhead Tank'],
@@ -292,6 +348,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'3m x 4m',
+            images: roomImages('Single', 'prop-1-block-b-room-6'),
             amenities: {
               power:    ['Generator Backup'],
               water:    ['Overhead Tank'],
@@ -317,6 +374,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'4m x 4m',
+            images: roomImages('Shared', 'prop-1-block-c-room-1'),
             amenities: {
               power:    ['Generator Backup'],
               water:    ['Constant Water Supply'],
@@ -335,6 +393,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'4m x 4m',
+            images: roomImages('Shared', 'prop-1-block-c-room-2'),
             amenities: {
               power:    ['Generator Backup'],
               water:    ['Constant Water Supply'],
@@ -353,6 +412,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'3m x 4m',
+            images: roomImages('Single', 'prop-1-block-c-room-3'),
             amenities: {
               power:    ['Generator Backup'],
               water:    ['Overhead Tank'],
@@ -371,6 +431,7 @@ export const PROPERTIES = [
             bathroom:  'En-suite',
             furnished: 'Yes',
             dimensions:'4m x 5m',
+            images: roomImages('Self-Contain', 'prop-1-block-c-room-4'),
             amenities: {
               power:    ['24hr Electricity', 'Backup Generator'],
               water:    ['Constant Water Supply', 'Overhead Tank'],
@@ -396,6 +457,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'3m x 4m',
+            images: roomImages('Single', 'prop-1-block-d-room-1'),
             amenities: {
               power:    ['Generator Backup'],
               water:    ['Overhead Tank'],
@@ -414,6 +476,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'3m x 4m',
+            images: roomImages('Single', 'prop-1-block-d-room-2'),
             amenities: {
               power:    ['Generator Backup'],
               water:    ['Overhead Tank'],
@@ -432,6 +495,7 @@ export const PROPERTIES = [
             bathroom:  'En-suite',
             furnished: 'Yes',
             dimensions:'4m x 5m',
+            images: roomImages('Self-Contain', 'prop-1-block-d-room-3'),
             amenities: {
               power:    ['24hr Electricity', 'Backup Generator'],
               water:    ['Constant Water Supply'],
@@ -450,6 +514,7 @@ export const PROPERTIES = [
             bathroom:  'En-suite',
             furnished: 'Yes',
             dimensions:'4m x 5m',
+            images: roomImages('Self-Contain', 'prop-1-block-d-room-4'),
             amenities: {
               power:    ['24hr Electricity', 'Backup Generator'],
               water:    ['Constant Water Supply'],
@@ -468,6 +533,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'4m x 4m',
+            images: roomImages('Shared', 'prop-1-block-d-room-5'),
             amenities: {
               power:    ['Generator Backup'],
               water:    ['Overhead Tank'],
@@ -492,6 +558,7 @@ export const PROPERTIES = [
     totalRooms:       80,
     verified:         true,
     amenities:        ['Generator', 'Security', 'Parking', 'Borehole Water', 'CCTV'],
+    gateImage:        GATE_IMAGES['prop-2'],
     rules: [
       'No loud music after 11pm',
       'Visitors must leave by 10pm',
@@ -519,6 +586,7 @@ export const PROPERTIES = [
             bathroom:  'En-suite',
             furnished: 'Yes',
             dimensions:'4m x 5m',
+            images: roomImages('Self-Contain', 'prop-2-block-a-room-1'),
             amenities: {
               power:    ['Generator Backup', 'Prepaid Meter'],
               water:    ['Constant Water Supply'],
@@ -537,6 +605,7 @@ export const PROPERTIES = [
             bathroom:  'En-suite',
             furnished: 'Yes',
             dimensions:'4m x 5m',
+            images: roomImages('Self-Contain', 'prop-2-block-a-room-2'),
             amenities: {
               power:    ['Generator Backup', 'Prepaid Meter'],
               water:    ['Constant Water Supply'],
@@ -555,6 +624,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'3m x 4m',
+            images: roomImages('Single', 'prop-2-block-a-room-3'),
             amenities: {
               power:    ['Generator Backup'],
               water:    ['Overhead Tank'],
@@ -573,6 +643,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'3m x 4m',
+            images: roomImages('Single', 'prop-2-block-a-room-4'),
             amenities: {
               power:    ['Generator Backup'],
               water:    ['Overhead Tank'],
@@ -598,6 +669,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'3m x 4m',
+            images: roomImages('Single', 'prop-2-block-b-room-1'),
             amenities: {
               power:    ['Generator Backup'],
               water:    ['Constant Water Supply'],
@@ -616,6 +688,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'3m x 4m',
+            images: roomImages('Single', 'prop-2-block-b-room-2'),
             amenities: {
               power:    ['Generator Backup'],
               water:    ['Constant Water Supply'],
@@ -634,6 +707,7 @@ export const PROPERTIES = [
             bathroom:  'En-suite',
             furnished: 'Yes',
             dimensions:'4m x 5m',
+            images: roomImages('Self-Contain', 'prop-2-block-b-room-3'),
             amenities: {
               power:    ['Generator Backup', 'Prepaid Meter'],
               water:    ['Constant Water Supply', 'Overhead Tank'],
@@ -658,6 +732,7 @@ export const PROPERTIES = [
     totalRooms:       60,
     verified:         true,
     amenities:        ['Solar Power', 'WiFi', 'Borehole Water', 'Kitchen', 'Security'],
+    gateImage:        GATE_IMAGES['prop-3'],
     rules: [
       'No loud noise after 10pm',
       'Keep common areas clean',
@@ -685,6 +760,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'4m x 4m',
+            images: roomImages('Shared', 'prop-3-block-a-room-1'),
             amenities: {
               power:    ['Solar Power', 'Generator Backup'],
               water:    ['Borehole Water'],
@@ -703,6 +779,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'4m x 4m',
+            images: roomImages('Shared', 'prop-3-block-a-room-2'),
             amenities: {
               power:    ['Solar Power', 'Generator Backup'],
               water:    ['Borehole Water'],
@@ -721,6 +798,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'3m x 4m',
+            images: roomImages('Single', 'prop-3-block-a-room-3'),
             amenities: {
               power:    ['Solar Power'],
               water:    ['Borehole Water'],
@@ -746,6 +824,7 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'3m x 4m',
+            images: roomImages('Single', 'prop-3-block-b-room-1'),
             amenities: {
               power:    ['Solar Power', 'Generator Backup'],
               water:    ['Borehole Water'],
@@ -764,6 +843,9 @@ export const PROPERTIES = [
             bathroom:  'Shared',
             furnished: 'No',
             dimensions:'4m x 4m',
+            // Deliberately empty — demonstrates the graceful
+            // no-images fallback path in RoomGallerySection.
+            images: [],
             amenities: {
               power:    ['Solar Power'],
               water:    ['Borehole Water'],
@@ -801,6 +883,13 @@ export function getRoomById(roomId) {
   return null
 }
 
+// Returns just the images array for a given room — used by
+// components that only need photos, not the full room record
+export function getRoomImages(roomId) {
+  const result = getRoomById(roomId)
+  return result?.room.images || []
+}
+
 // Get all available rooms across all properties — used for stats
 export function getAllAvailableRooms() {
   return PROPERTIES.flatMap((p) =>
@@ -828,6 +917,11 @@ export function getPropertySummaries() {
     const priceFrom     = Math.min(...prices)
     const priceTo       = Math.max(...prices)
 
+    // First image found on any room in this property — used as the
+    // property card thumbnail on the homepage and search results.
+    const roomWithImages = allRooms.find((r) => r.images && r.images.length > 0)
+    const thumbnail = roomWithImages ? roomWithImages.images[0] : null
+
     return {
       id:               p.id,
       name:             p.name,
@@ -844,6 +938,8 @@ export function getPropertySummaries() {
       verified:         p.verified,
       landlord:         p.landlord.name,
       amenities:        p.amenities,
+      thumbnail,
+      gateImage:        p.gateImage || null,
     }
   })
 }

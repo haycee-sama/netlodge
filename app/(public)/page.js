@@ -1,4 +1,4 @@
-// app/page.jsx
+// app/(public)/page.jsx
 // The Netlodge Homepage — public facing
 // Sections: Hero, Stats, How It Works, Featured Rooms, Cities, CTA
 
@@ -7,16 +7,16 @@ import {
   ShieldCheck,
   Search,
   CreditCard,
-  Star,
   MapPin,
-  Wifi,
-  Zap,
-  Users,
   ArrowRight,
   CheckCircle,
   Building2,
   GraduationCap,
 } from 'lucide-react'
+import { getPropertySummaries } from '../lib/data'
+import CountUpStat from './components/CountUpStat'
+import FeaturedCarousel from './components/FeaturedCarousel'
+import CityCoverageGrid from './components/CityCoverageGrid'
 
 // ── Data ─────────────────────────────────────────────────────
 // Keeping data outside the component keeps the JSX clean
@@ -59,45 +59,6 @@ const steps = [
   },
 ]
 
-const featuredRooms = [
-  {
-    id: '1',
-    title: 'Self-Contain Room — Block A',
-    property: 'Sunrise Hostel',
-    university: 'University of Abuja',
-    city: 'Abuja',
-    price: '180,000',
-    type: 'Self-Contain',
-    amenities: ['24hr Power', 'WiFi', 'Water'],
-    badge: 'Most Popular',
-    badgeColor: 'bg-orange-100 text-orange-700',
-  },
-  {
-    id: '2',
-    title: 'Single Room — Block C',
-    property: 'Greenfield Lodge',
-    university: 'UNILAG',
-    city: 'Lagos',
-    price: '150,000',
-    type: 'Single',
-    amenities: ['Generator', 'Shared Kitchen', 'Security'],
-    badge: 'Verified',
-    badgeColor: 'bg-green-100 text-green-700',
-  },
-  {
-    id: '3',
-    title: 'Shared Room — Block B',
-    property: 'Campus View Hostel',
-    university: 'UNN',
-    city: 'Enugu',
-    price: '90,000',
-    type: 'Shared',
-    amenities: ['Solar Power', 'WiFi', 'En-suite'],
-    badge: 'Best Value',
-    badgeColor: 'bg-blue-100 text-blue-700',
-  },
-]
-
 const cities = [
   {
     name: 'Abuja',
@@ -128,6 +89,24 @@ const trustPoints = [
 // ── Component ────────────────────────────────────────────────
 
 export default function HomePage() {
+
+  // Real, bookable properties — fixes the old hardcoded array whose
+  // /rooms/1, /rooms/2, /rooms/3 links didn't correspond to real rooms
+  const properties = getPropertySummaries()
+  const featuredProperties = properties.slice(0, 3)
+
+  // Derive per-city room coverage from real property data for the
+  // "Now Live In 3 Cities" section
+  const citiesWithCoverage = cities.map((city) => {
+    const cityProperties = properties.filter((p) => p.city === city.name)
+    const totalRoomsInCity = cityProperties.reduce((sum, p) => sum + p.totalRooms, 0)
+    const availableInCity  = cityProperties.reduce((sum, p) => sum + p.availableRooms, 0)
+    const coveragePercent  = totalRoomsInCity > 0
+      ? Math.round((availableInCity / totalRoomsInCity) * 100)
+      : 0
+    return { ...city, coveragePercent }
+  })
+
   return (
     <div className="flex flex-col">
 
@@ -198,10 +177,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-3xl font-bold text-white">{stat.value}</p>
-                <p className="text-sm text-orange-100 mt-1">{stat.label}</p>
-              </div>
+              <CountUpStat key={stat.label} value={stat.value} label={stat.label} />
             ))}
           </div>
         </div>
@@ -277,69 +253,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Room cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredRooms.map((room) => (
-              <Link
-                key={room.id}
-                href={`/rooms/${room.id}`}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 overflow-hidden group"
-              >
-                {/* Room image placeholder */}
-                <div className="relative h-48 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                  <Building2 className="w-12 h-12 text-gray-500" />
-                  {/* Badge */}
-                  <span className={`absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full ${room.badgeColor}`}>
-                    {room.badge}
-                  </span>
-                  {/* Verified shield */}
-                  <div className="absolute top-3 right-3 bg-white rounded-full p-1.5 shadow-sm">
-                    <ShieldCheck className="w-4 h-4 text-green-500" />
-                  </div>
-                </div>
-
-                {/* Card body */}
-                <div className="p-5">
-                  {/* Location */}
-                  <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
-                    <MapPin className="w-3 h-3" />
-                    <span>{room.university} · {room.city}</span>
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="font-bold text-gray-900 mb-1 group-hover:text-orange-500 transition-colors">
-                    {room.title}
-                  </h3>
-                  <p className="text-sm text-gray-500 mb-4">{room.property}</p>
-
-                  {/* Amenity chips */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {room.amenities.map((amenity) => (
-                      <span
-                        key={amenity}
-                        className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full"
-                      >
-                        {amenity}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Price + type */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <div>
-                      <span className="text-xl font-bold text-gray-900">
-                        ₦{room.price}
-                      </span>
-                      <span className="text-sm text-gray-500"> / year</span>
-                    </div>
-                    <span className="text-xs font-medium bg-orange-50 text-orange-600 px-3 py-1 rounded-full">
-                      {room.type}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <FeaturedCarousel properties={featuredProperties} />
 
           {/* Mobile view all link */}
           <div className="text-center mt-8 sm:hidden">
@@ -369,32 +283,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {cities.map((city) => (
-              <div
-                key={city.name}
-                className="bg-gray-50 rounded-2xl p-6 border border-gray-100 hover:border-orange-200 hover:bg-orange-50 transition-all group"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-orange-100 group-hover:bg-orange-200 rounded-xl flex items-center justify-center transition-colors">
-                    <MapPin className="w-5 h-5 text-orange-500" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 text-lg">{city.name}</h3>
-                    <p className="text-sm text-orange-500 font-medium">{city.rooms} rooms</p>
-                  </div>
-                </div>
-                <ul className="flex flex-col gap-1">
-                  {city.universities.map((uni) => (
-                    <li key={uni} className="text-sm text-gray-500 flex items-center gap-2">
-                      <GraduationCap className="w-3.5 h-3.5 text-gray-500" />
-                      {uni}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+          <CityCoverageGrid cities={citiesWithCoverage} />
 
         </div>
       </section>
@@ -417,7 +306,7 @@ export default function HomePage() {
               <h2 className="text-3xl sm:text-4xl font-bold mb-6">
                 We Verify Everything So You Don't Have To
               </h2>
-              <p className="text-gray-500 leading-relaxed mb-8">
+              <p className="text-gray-400 leading-relaxed mb-8">
                 Fraud in Nigerian student housing is rampant. Netlodge was built specifically
                 to eliminate it — through rigorous KYC, escrow payments, and a zero-tolerance
                 policy on unverified listings.

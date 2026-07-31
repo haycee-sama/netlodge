@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import { getRoomById } from '../../../lib/data'
 import RoomBookingPanel from './RoomBookingPanel'
+import RoomImageCarousel from './RoomImageCarousel'
 
 const AMENITY_ICONS = { power: Zap, water: Droplets, internet: Wifi, security: Lock, extras: CheckCircle }
 const AMENITY_LABELS = {
@@ -91,20 +92,8 @@ export default async function RoomDetailPage({ params }) {
 
           <div className="lg:col-span-2 flex flex-col gap-6">
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2 sm:col-span-1 h-64 bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl flex items-center justify-center relative overflow-hidden">
-                <Building2 className="w-16 h-16 text-gray-400" />
-                <span className="absolute bottom-3 left-3 bg-black/50 text-white text-xs px-2 py-1 rounded-full">Photo 1 of 5</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {[2, 3, 4, 5].map((n) => (
-                  <div key={n} className="h-[118px] bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl flex items-center justify-center relative">
-                    <Building2 className="w-8 h-8 text-gray-400" />
-                    <span className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-1.5 py-0.5 rounded-full">{n}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Photo Gallery */}
+            <RoomImageCarousel images={room.images} />
 
             <div className="bg-white rounded-2xl border border-gray-100 p-6">
               <div className="flex items-center gap-2 mb-3">

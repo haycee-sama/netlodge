@@ -12,6 +12,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 
 // Import real data from central data file
 import { getPropertySummaries } from '../../lib/data'
+import Image from 'next/image'
 
 const ALL_PROPERTIES = getPropertySummaries()
 
@@ -261,18 +262,45 @@ export default function SearchPage() {
                       className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden group flex flex-col sm:flex-row"
                     >
                     {/* Property image placeholder */}
-                    <div className="relative sm:w-56 h-48 sm:h-auto bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center shrink-0">
-                      <Building2 className="w-12 h-12 text-gray-500" />
-
-                      {/* Verified badge */}
-                      <div className="absolute top-3 left-3 flex items-center gap-1 bg-white rounded-full px-2 py-1 shadow-sm">
-                        <ShieldCheck className="w-3.5 h-3.5 text-green-500" />
-                        <span className="text-xs font-medium text-green-600">Verified</span>
+                    {/* Property images — main room shot + gate/exterior */}
+                    <div className="relative sm:w-56 h-48 sm:h-auto shrink-0 grid grid-rows-2 gap-0.5">
+                      <div className="relative bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center overflow-hidden">
+                        {property.thumbnail ? (
+                          <Image
+                            src={property.thumbnail.url}
+                            alt={`${property.name} — sample room interior`}
+                            fill
+                            sizes="(max-width: 640px) 100vw, 224px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <Building2 className="w-10 h-10 text-gray-400" />
+                        )}
+                        {/* Verified badge */}
+                        <div className="absolute top-3 left-3 flex items-center gap-1 bg-white rounded-full px-2 py-1 shadow-sm">
+                          <ShieldCheck className="w-3.5 h-3.5 text-green-500" />
+                          <span className="text-xs font-medium text-green-600">Verified</span>
+                        </div>
+                        {/* Available rooms count */}
+                        <div className="absolute bottom-2 left-3 bg-orange-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                          {property.availableRooms} rooms free
+                        </div>
                       </div>
-
-                      {/* Available rooms count */}
-                      <div className="absolute bottom-3 left-3 bg-orange-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                        {property.availableRooms} rooms free
+                      <div className="relative bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center overflow-hidden">
+                        {property.gateImage ? (
+                          <Image
+                            src={property.gateImage.url}
+                            alt={property.gateImage.alt}
+                            fill
+                            sizes="(max-width: 640px) 100vw, 224px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <Building2 className="w-8 h-8 text-gray-300" />
+                        )}
+                        <span className="absolute bottom-2 left-3 text-xs text-white/90 font-medium bg-black/30 px-2 py-0.5 rounded-full">
+                          Exterior
+                        </span>
                       </div>
                     </div>
 
