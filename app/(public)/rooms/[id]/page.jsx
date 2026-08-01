@@ -1,9 +1,10 @@
+// app/(public)/rooms/[id]/page.jsx
 import Link from 'next/link'
 import {
   ShieldCheck, MapPin, Wifi, Zap, Droplets,
   ChevronLeft, Building2, Lock, CheckCircle, AlertCircle,
 } from 'lucide-react'
-import { getRoomById } from '../../../lib/data'
+import { getRoomById } from '../../../../lib/db/queries'
 import RoomBookingPanel from './RoomBookingPanel'
 import RoomImageCarousel from './RoomImageCarousel'
 
@@ -33,11 +34,8 @@ function DetailRow({ label, value }) {
 
 export async function generateMetadata({ params }) {
   const { id } = await params
-  const result = getRoomById(id)
-
-  if (!result) {
-    return { title: 'Room Not Found' }
-  }
+  const result = await getRoomById(id)
+  if (!result) return { title: 'Room Not Found' }
 
   const { room, property } = result
   const title = `Room ${room.number} — ${room.type} at ${property.name}`
@@ -45,8 +43,7 @@ export async function generateMetadata({ params }) {
   const url = `https://netlodge.ng/rooms/${id}`
 
   return {
-    title,
-    description,
+    title, description,
     alternates: { canonical: url },
     openGraph: { title, description, url, siteName: 'Netlodge', type: 'website' },
     twitter: { card: 'summary_large_image', title, description },
@@ -55,7 +52,7 @@ export async function generateMetadata({ params }) {
 
 export default async function RoomDetailPage({ params }) {
   const { id } = await params
-  const result = getRoomById(id)
+  const result = await getRoomById(id)
 
   if (!result) {
     return (
@@ -92,7 +89,6 @@ export default async function RoomDetailPage({ params }) {
 
           <div className="lg:col-span-2 flex flex-col gap-6">
 
-            {/* Photo Gallery */}
             <RoomImageCarousel images={room.images} />
 
             <div className="bg-white rounded-2xl border border-gray-100 p-6">
@@ -113,8 +109,12 @@ export default async function RoomDetailPage({ params }) {
                 <div className="flex items-center gap-1.5"><Building2 className="w-4 h-4 text-orange-500" />{property.university}</div>
               </div>
               <div className="flex flex-wrap gap-2 mt-4">
-                <span className="text-xs bg-blue-50 text-blue-600 font-medium px-3 py-1 rounded-full">🚶 {property.distanceToGate} to gate</span>
-                <span className="text-xs bg-blue-50 text-blue-600 font-medium px-3 py-1 rounded-full">🏫 {property.distanceToFaculty} to faculty</span>
+                {property.distanceToGate && (
+                  <span className="text-xs bg-blue-50 text-blue-600 font-medium px-3 py-1 rounded-full">🚶 {property.distanceToGate} to gate</span>
+                )}
+                {property.distanceToFaculty && (
+                  <span className="text-xs bg-blue-50 text-blue-600 font-medium px-3 py-1 rounded-full">🏫 {property.distanceToFaculty} to faculty</span>
+                )}
               </div>
             </div>
 
@@ -126,22 +126,24 @@ export default async function RoomDetailPage({ params }) {
                 <DetailRow label="Floor" value={`${room.floor} Floor`} />
                 <DetailRow label="Dimensions" value={room.dimensions} />
                 <DetailRow label="Bathroom" value={room.bathroom} />
-                <DetailRow label="Furnished" value={room.furnished === 'Yes' ? 'Yes' : 'No'} />
+                <DetailRow label="Furnished" value={room.furnished} />
               </div>
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-100 p-6">
               <h2 className="font-bold text-gray-900 text-lg mb-5">Amenities</h2>
               {Object.entries(room.amenities).map(([category, items]) => (
-                <div key={category} className="mb-5">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{AMENITY_LABELS[category]}</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {items.map((item) => {
-                      const Icon = AMENITY_ICONS[category]
-                      return <AmenityChip key={item} icon={Icon} label={item} />
-                    })}
+                items.length > 0 && (
+                  <div key={category} className="mb-5">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{AMENITY_LABELS[category]}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {items.map((item) => {
+                        const Icon = AMENITY_ICONS[category]
+                        return <AmenityChip key={item} icon={Icon} label={item} />
+                      })}
+                    </div>
                   </div>
-                </div>
+                )
               ))}
             </div>
 

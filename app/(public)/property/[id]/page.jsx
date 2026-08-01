@@ -1,23 +1,20 @@
+// app/(public)/property/[id]/page.jsx
 import Link from 'next/link'
 import { ShieldCheck, MapPin, Building2, ChevronLeft } from 'lucide-react'
-import { getPropertyById } from '../../../lib/data'
+import { getPropertyById } from '../../../../lib/db/queries'
 import PropertyBookingPanel from './PropertyBookingPanel'
 
 export async function generateMetadata({ params }) {
   const { id } = await params
-  const property = getPropertyById(id)
-
-  if (!property) {
-    return { title: 'Property Not Found' }
-  }
+  const property = await getPropertyById(id)
+  if (!property) return { title: 'Property Not Found' }
 
   const title = `${property.name} — Verified Rooms Near ${property.university}`
   const description = `Book a verified room at ${property.name}, ${property.distanceToGate} from ${property.university} in ${property.city}. Escrow-protected payments, landlord verified.`
   const url = `https://netlodge.ng/property/${id}`
 
   return {
-    title,
-    description,
+    title, description,
     alternates: { canonical: url },
     openGraph: { title, description, url, siteName: 'Netlodge', type: 'website' },
     twitter: { card: 'summary_large_image', title, description },
@@ -26,7 +23,7 @@ export async function generateMetadata({ params }) {
 
 export default async function PropertyPage({ params }) {
   const { id } = await params
-  const property = getPropertyById(id)
+  const property = await getPropertyById(id)
 
   if (!property) {
     return (
@@ -36,6 +33,11 @@ export default async function PropertyPage({ params }) {
       </div>
     )
   }
+
+  // Property page shows a flat amenity badge row, unlike the room page's
+  // grouped-by-category layout — flattened here, at the one call site
+  // that needs it, rather than changing the query's grouped return shape.
+  const flatAmenities = Object.values(property.amenities).flat()
 
   const allRooms = property.blocks.flatMap((b) => b.rooms)
   const totalAvailable = allRooms.filter((r) => r.status === 'Available').length
@@ -83,9 +85,12 @@ export default async function PropertyPage({ params }) {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2 mt-3">
-                <span className="text-xs bg-blue-50 text-blue-600 font-medium px-3 py-1 rounded-full">🚶 {property.distanceToGate} to gate</span>
-                <span className="text-xs bg-blue-50 text-blue-600 font-medium px-3 py-1 rounded-full">🏫 {property.distanceToFaculty} to faculty</span>
-                <span className="text-xs bg-blue-50 text-blue-600 font-medium px-3 py-1 rounded-full">🛒 {property.distanceToMarket} to market</span>
+                {property.distanceToGate && (
+                  <span className="text-xs bg-blue-50 text-blue-600 font-medium px-3 py-1 rounded-full">🚶 {property.distanceToGate} to gate</span>
+                )}
+                {property.distanceToFaculty && (
+                  <span className="text-xs bg-blue-50 text-blue-600 font-medium px-3 py-1 rounded-full">🏫 {property.distanceToFaculty} to faculty</span>
+                )}
               </div>
             </div>
 
@@ -109,7 +114,7 @@ export default async function PropertyPage({ params }) {
           </div>
 
           <div className="flex flex-wrap gap-2 mt-5 pt-5 border-t border-gray-100">
-            {property.amenities.map((a) => (
+            {flatAmenities.map((a) => (
               <span key={a} className="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-full">{a}</span>
             ))}
           </div>
