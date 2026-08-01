@@ -18,8 +18,6 @@ Live cities at launch: **Abuja · Lagos · Enugu**
 - [Accessibility](#accessibility)
 - [SEO](#seo)
 - [Getting Started](#getting-started)
-- [Environment / Backend Notes](#environment--backend-notes)
-- [Roadmap](#roadmap)
 
 ---
 
