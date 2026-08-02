@@ -1,12 +1,12 @@
 // app/components/LandlordLayout.jsx
 // Shared sidebar layout for all landlord portal pages
-// Import this into every landlord dashboard page
 
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import {
   ShieldCheck,
   LayoutDashboard,
@@ -22,48 +22,30 @@ import {
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 
-// Navigation items for the landlord sidebar
 const NAV_ITEMS = [
-  {
-    href:  '/landlord/dashboard',
-    icon:  LayoutDashboard,
-    label: 'Dashboard',
-  },
-  {
-    href:  '/landlord/properties',
-    icon:  Building2,
-    label: 'My Properties',
-  },
-  {
-    href:  '/landlord/bookings',
-    icon:  Calendar,
-    label: 'Booking Requests',
-  },
-  {
-    href:  '/landlord/payments',
-    icon:  CreditCard,
-    label: 'Payments',
-  },
-  {
-    href:  '/landlord/lease-config',
-    icon:  FileCheck,
-    label: 'Lease Config',
-  },
+  { href: '/landlord/dashboard',    icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/landlord/properties',   icon: Building2,        label: 'My Properties' },
+  { href: '/landlord/bookings',     icon: Calendar,         label: 'Booking Requests' },
+  { href: '/landlord/payments',     icon: CreditCard,       label: 'Payments' },
+  { href: '/landlord/lease-config', icon: FileCheck,        label: 'Lease Config' },
 ]
 
-// Mock landlord data
-const LANDLORD = {
-  name:     'Mr. Emeka Okafor',
-  email:    'emeka@gmail.com',
-  verified: true,
-  avatar:   'E',
-}
-
 export default function LandlordLayout({ children, title, subtitle }) {
-
   const pathname       = usePathname()
   const [open, setOpen] = useState(false)
   const drawerRef       = useRef(null)
+  const { data: session } = useSession()
+
+  // Real logged-in landlord, not a hardcoded seed-data placeholder.
+  const firstName = session?.user?.firstName ?? ''
+  const lastName  = session?.user?.lastName ?? ''
+  const displayName = firstName ? `${firstName} ${lastName}`.trim() : 'Landlord'
+  const avatarLetter = firstName ? firstName.charAt(0).toUpperCase() : '?'
+  const email = session?.user?.email ?? ''
+  // isEmailVerified is on the session already; true KYC approval status
+  // (landlords.verificationStatus) isn't in the JWT yet — treat email
+  // verification as the minimum signal until that's added to the session.
+  const isVerified = !!session?.user?.isEmailVerified
 
   // Escape-to-close + focus trap while the mobile drawer is open
   useEffect(() => {
@@ -95,7 +77,6 @@ export default function LandlordLayout({ children, title, subtitle }) {
     document.addEventListener('keydown', handleEscape)
     document.addEventListener('keydown', handleTabTrap)
 
-    // Move focus into the drawer when it opens
     const firstFocusable = drawerRef.current?.querySelector('a[href], button:not([disabled])')
     firstFocusable?.focus()
 
@@ -104,10 +85,10 @@ export default function LandlordLayout({ children, title, subtitle }) {
       document.removeEventListener('keydown', handleTabTrap)
     }
   }, [open])
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
 
-      {/* ── Sidebar — desktop always visible, mobile toggle ── */}
       <aside
         ref={drawerRef}
         role="dialog"
@@ -121,7 +102,6 @@ export default function LandlordLayout({ children, title, subtitle }) {
         `}
       >
 
-        {/* Logo */}
         <div className="flex items-center justify-between px-5 py-5 border-b border-gray-800">
           <Link href="/" className="flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-orange-500" />
@@ -129,7 +109,6 @@ export default function LandlordLayout({ children, title, subtitle }) {
               Net<span className="text-orange-500">lodge</span>
             </span>
           </Link>
-          {/* Close button on mobile */}
           <button
             onClick={() => setOpen(false)}
             className="lg:hidden text-gray-500 hover:text-white"
@@ -138,27 +117,27 @@ export default function LandlordLayout({ children, title, subtitle }) {
           </button>
         </div>
 
-        {/* Landlord profile */}
         <div className="px-5 py-4 border-b border-gray-800">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-orange-500 flex items-center justify-center shrink-0">
-              <span className="text-sm font-bold text-white">{LANDLORD.avatar}</span>
+              <span className="text-sm font-bold text-white">{avatarLetter}</span>
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-white truncate">
-                {LANDLORD.name}
+                {displayName}
               </p>
-              {LANDLORD.verified && (
+              {isVerified ? (
                 <div className="flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3 text-green-400" />
                   <p className="text-xs text-green-400">Verified Landlord</p>
                 </div>
+              ) : (
+                <p className="text-xs text-gray-500 truncate">{email}</p>
               )}
             </div>
           </div>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 px-3 py-4 flex flex-col gap-1 overflow-y-auto">
           {NAV_ITEMS.map((item) => {
             const Icon     = item.icon
@@ -182,7 +161,6 @@ export default function LandlordLayout({ children, title, subtitle }) {
           })}
         </nav>
 
-        {/* Bottom actions */}
         <div className="px-3 py-4 border-t border-gray-800 flex flex-col gap-1">
           <Link
             href="/landlord/profile"
@@ -202,7 +180,6 @@ export default function LandlordLayout({ children, title, subtitle }) {
 
       </aside>
 
-      {/* Mobile overlay */}
       {open && (
         <div
           className="fixed inset-0 z-30 bg-black/50 lg:hidden"
@@ -210,13 +187,10 @@ export default function LandlordLayout({ children, title, subtitle }) {
         />
       )}
 
-      {/* ── Main Content Area ── */}
       <div className="flex-1 flex flex-col min-w-0">
 
-        {/* Top bar */}
         <header className="bg-white border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between sticky top-0 z-20">
 
-          {/* Mobile menu button */}
           <button
             onClick={() => setOpen(true)}
             className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
@@ -224,7 +198,6 @@ export default function LandlordLayout({ children, title, subtitle }) {
             <Menu className="w-5 h-5" />
           </button>
 
-          {/* Page title */}
           <div className="lg:flex-1">
             {title && (
               <div>
@@ -236,7 +209,6 @@ export default function LandlordLayout({ children, title, subtitle }) {
             )}
           </div>
 
-          {/* Quick actions */}
           <div className="flex items-center gap-3">
             <Link
               href="/landlord/property/new"
@@ -248,7 +220,6 @@ export default function LandlordLayout({ children, title, subtitle }) {
 
         </header>
 
-        {/* Page content */}
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
           {children}
         </main>

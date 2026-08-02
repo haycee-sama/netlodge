@@ -5,10 +5,6 @@ import { auth } from '../../../lib/auth'
 
 const f = createUploadthing()
 
-// Shared auth check — both routes require a logged-in landlord.
-// This runs server-side before any upload is accepted; a client
-// forging the endpoint call with no session, or a student session,
-// gets rejected here before Uploadthing ever stores a byte.
 async function requireLandlordSession() {
   const session = await auth()
   if (!session?.user || session.user.role !== 'landlord') {
@@ -18,6 +14,20 @@ async function requireLandlordSession() {
     throw new UploadThingError('Complete your landlord account setup first.')
   }
   return { userId: session.user.id, landlordId: session.user.roleRecordId }
+}
+
+// Shared by student identity verification (verify/student page) and
+// landlord KYC — both need to upload identity/ownership documents,
+// gated only on being an authenticated user with a completed role profile.
+async function requireStudentOrLandlordSession() {
+  const session = await auth()
+  if (!session?.user || (session.user.role !== 'landlord' && session.user.role !== 'student')) {
+    throw new UploadThingError('Unauthorized — you must be logged in.')
+  }
+  if (!session.user.roleRecordId) {
+    throw new UploadThingError('Complete your account setup first.')
+  }
+  return { userId: session.user.id, roleRecordId: session.user.roleRecordId, role: session.user.role }
 }
 
 export const ourFileRouter = {
@@ -37,11 +47,11 @@ export const ourFileRouter = {
     pdf: { maxFileSize: '8MB', maxFileCount: 5 },
   })
     .middleware(async () => {
-      return await requireLandlordSession()
+      return await requireStudentOrLandlordSession()
     })
     .onUploadComplete(async ({ metadata, file }) => {
-      console.log(`KYC document uploaded by landlord ${metadata.landlordId}: ${file.url}`)
-      return { uploadedBy: metadata.landlordId }
+      console.log(`KYC document uploaded by ${metadata.role} ${metadata.roleRecordId}: ${file.url}`)
+      return { uploadedBy: metadata.roleRecordId }
     }),
 } satisfies FileRouter
 

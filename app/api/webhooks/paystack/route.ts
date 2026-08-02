@@ -17,7 +17,21 @@ export async function POST(req: Request) {
   const signature = req.headers.get('x-paystack-signature')
   const expectedSignature = crypto.createHmac('sha512', secretKey).update(rawBody).digest('hex')
 
-  if (!signature || signature !== expectedSignature) {
+  // Timing-safe comparison — a plain `!==` string comparison short-circuits
+  // on the first mismatched byte, which leaks timing information about
+  // how many leading hex characters of a guessed signature are correct.
+  // crypto.timingSafeEqual takes constant time regardless of where the
+  // mismatch occurs. Buffers must be equal length before comparing, or
+  // timingSafeEqual itself throws.
+  const signatureBuffer = Buffer.from(signature ?? '', 'hex')
+  const expectedBuffer = Buffer.from(expectedSignature, 'hex')
+
+  const isValidSignature =
+    !!signature &&
+    signatureBuffer.length === expectedBuffer.length &&
+    crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
+
+  if (!isValidSignature) {
     console.error('Paystack webhook signature mismatch — rejecting')
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }

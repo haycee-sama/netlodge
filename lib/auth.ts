@@ -35,29 +35,55 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null
+        try {
+          console.log('1. Starting authorize...');
+          if (!credentials?.email || !credentials?.password) {
+            console.log('❌ Failed: Missing email or password');
+            return null;
+          }
 
-        const email = String(credentials.email).toLowerCase().trim()
-        const password = String(credentials.password)
+          const email = String(credentials.email).toLowerCase().trim();
+          const password = String(credentials.password);
+          console.log('2. Looking up user:', email);
 
-        const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1)
-        if (!user || !user.passwordHash) return null
+          const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+          
+          if (!user) {
+            console.log('❌ Failed: User not found in database');
+            return null;
+          }
+          
+          if (!user.passwordHash) {
+            console.log('❌ Failed: User exists but has no password (OAuth account)');
+            return null;
+          }
 
-        const passwordMatches = await bcrypt.compare(password, user.passwordHash)
-        if (!passwordMatches) return null
+          console.log('3. User found. Comparing passwords...');
+          const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+          
+          if (!passwordMatches) {
+            console.log('❌ Failed: Password does not match hash');
+            return null;
+          }
 
-        await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id))
+          console.log('4. Password matched! Resolving role...');
+          const roleRecordId = await resolveRoleRecordId(user);
 
-        return {
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          isEmailVerified: user.isEmailVerified,
-          roleRecordId: await resolveRoleRecordId(user),
+          console.log('✅ Login successful for:', email);
+          return {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            isEmailVerified: user.isEmailVerified,
+            roleRecordId: roleRecordId,
+          };
+        } catch (error) {
+          console.error('❌ AUTHORIZE CRASHED:', error);
+          return null;
         }
-      },
+      }
     }),
   ],
   callbacks: {

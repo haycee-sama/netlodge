@@ -408,6 +408,65 @@ export const getPropertiesByLandlord = cache(async (landlordId: string) => {
   })
 })
 
+// ════════════════════════════════════════════════════════════
+// getBookingsByLandlord — /landlord/bookings and /landlord/payments
+// Batched: one query for the landlord's properties, one for all their
+// rooms, one for all bookings against those rooms, one for all
+// students/users involved — never one query per booking.
+// ════════════════════════════════════════════════════════════
+export const getBookingsByLandlord = cache(async (landlordId: string) => {
+  const propertyRows = await db.select().from(properties).where(eq(properties.landlordId, landlordId))
+  if (propertyRows.length === 0) return []
+  const propertiesMap = new Map(propertyRows.map((p) => [p.id, p]))
+
+  const propertyIds = propertyRows.map((p) => p.id)
+  const roomRows = await db.select().from(rooms).where(inArray(rooms.propertyId, propertyIds))
+  if (roomRows.length === 0) return []
+  const roomsMap = new Map(roomRows.map((r) => [r.id, r]))
+
+  const roomIds = roomRows.map((r) => r.id)
+  const bookingRows = await db.select().from(bookings)
+    .where(inArray(bookings.roomId, roomIds))
+    .orderBy(desc(bookings.createdAt))
+  if (bookingRows.length === 0) return []
+
+  const studentIds = [...new Set(bookingRows.map((b) => b.studentId))]
+  const studentRows = await db.select().from(students).where(inArray(students.id, studentIds))
+  const studentsMap = new Map(studentRows.map((s) => [s.id, s]))
+
+  const userIds = studentRows.map((s) => s.userId)
+  const userRows = userIds.length ? await db.select().from(users).where(inArray(users.id, userIds)) : []
+  const usersByUserId = new Map(userRows.map((u) => [u.id, u]))
+
+  return bookingRows.map((b) => {
+    const room = roomsMap.get(b.roomId)
+    const property = room ? propertiesMap.get(room.propertyId) : undefined
+    const student = studentsMap.get(b.studentId)
+    const user = student ? usersByUserId.get(student.userId) : undefined
+
+    return {
+      id: b.id,
+      bookingRef: b.bookingRef,
+      studentName: user ? `${user.firstName} ${user.lastName}` : 'Unknown Student',
+      studentPhone: user?.phone ?? '',
+      studentEmail: user?.email ?? '',
+      roomLabel: room ? `Room ${room.roomNumber} — ${formatRoomType(room.roomType)}` : '',
+      blockName: room?.blockName ?? '',
+      propertyName: property?.name ?? '',
+      moveInDate: b.moveInDate,
+      leaseEndDate: b.leaseEndDate,
+      leaseType: b.leaseType === 'full_year' ? '1 Year' : b.leaseType === 'per_semester' ? 'Per Semester' : 'Half Year',
+      roomPrice: Number(b.roomPrice),
+      serviceFee: Number(b.serviceFee),
+      totalAmount: Number(b.totalAmount),
+      status: b.status,               // 'draft' | 'pending_payment' | 'confirmed' | 'cancelled'
+      paymentStatus: b.paymentStatus, // 'unpaid' | 'paid' | 'failed'
+      paidAt: b.paidAt ? b.paidAt.toISOString() : null,
+      createdAt: b.createdAt.toISOString(),
+    }
+  })
+})
+
 // Server-only ownership check. Never returned to a client component
 // directly; callers use this purely to compare against session.user.roleRecordId.
 export const getPropertyLandlordId = cache(async (propertyId: string): Promise<string | null> => {
@@ -556,6 +615,8 @@ export async function getBookingById(bookingId: string) {
   }
 }
 
+// REPLACE the existing getStudentProfileById with this extended version
+// — the profile page now needs email/phone/notification prefs too.
 export const getStudentProfileById = cache(async (studentId: string) => {
   const [student] = await db.select().from(students).where(eq(students.id, studentId))
   if (!student) return null
@@ -563,12 +624,21 @@ export const getStudentProfileById = cache(async (studentId: string) => {
   const [university] = await db.select().from(universities).where(eq(universities.id, student.universityId))
 
   return {
+    userId: student.userId,
     firstName: user?.firstName ?? '',
     lastName: user?.lastName ?? '',
+    email: user?.email ?? '',
+    phone: user?.phone ?? '',
+    hasPassword: !!user?.passwordHash,
+    notificationPreferences: (user?.notificationPreferences as Record<string, boolean>) ?? {
+      bookingUpdates: true, paymentReceipts: true, leaseReminders: true,
+      newListings: false, promotions: false, smsAlerts: true,
+    },
     university: university?.name ?? '',
     course: student.course,
     yearLevel: student.yearLevel,
     verified: student.verificationStatus === 'approved',
+    verificationStatus: student.verificationStatus, // 'pending' | 'approved' | 'rejected'
   }
 })
 

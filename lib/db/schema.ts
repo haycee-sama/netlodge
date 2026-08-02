@@ -30,6 +30,15 @@ export const users = pgTable('users', {
   firstName:       varchar('first_name', { length: 100 }).notNull(),
   lastName:        varchar('last_name', { length: 100 }).notNull(),
   isEmailVerified: boolean('is_email_verified').notNull().default(false),
+  // NEW — persists the student profile "Notification Preferences" section.
+  notificationPreferences: jsonb('notification_preferences').notNull().default(sql`'{
+    "bookingUpdates": true,
+    "paymentReceipts": true,
+    "leaseReminders": true,
+    "newListings": false,
+    "promotions": false,
+    "smsAlerts": true
+  }'::jsonb`),
   lastLoginAt:     timestamp('last_login_at', { withTimezone: true }),
   createdAt:       timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:       timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -37,7 +46,7 @@ export const users = pgTable('users', {
   roleIdx: index('idx_users_role').on(t.role),
 }))
 
-// ── verification_tokens (new) ───────────────────────────────────
+// ── verification_tokens ─────────────────────────────────────────
 export const emailOtps = pgTable('email_otps', {
   id:         uuid('id').primaryKey().defaultRandom(),
   userId:     uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -90,6 +99,10 @@ export const students = pgTable('students', {
   verificationStatus:     kycStatusEnum('verification_status').notNull().default('pending'),
   verificationProvider:   varchar('verification_provider', { length: 50 }),
   verificationReference:  varchar('verification_reference', { length: 150 }),
+  // NEW — supports submitStudentVerification (item 9)
+  universityEmail:        varchar('university_email', { length: 255 }),
+  ninBvnEncrypted:        text('nin_bvn_encrypted'),
+  kycDocuments:           jsonb('kyc_documents').notNull().default(sql`'[]'::jsonb`), // [{type, url, name}]
   reviewedBy:             uuid('reviewed_by').references(() => users.id, { onDelete: 'set null' }),
   reviewedAt:             timestamp('reviewed_at', { withTimezone: true }),
   createdAt:              timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -165,6 +178,9 @@ export const rooms = pgTable('rooms', {
   propertyIdx: index('idx_rooms_property').on(t.propertyId),
   statusIdx: index('idx_rooms_status').on(t.status),
   typeIdx: index('idx_rooms_type').on(t.roomType),
+  // NEW — composite index: most queries filter rooms by propertyId AND status together
+  // (availability counts on property/search pages) rather than status alone.
+  propertyStatusIdx: index('idx_rooms_property_status').on(t.propertyId, t.status),
   uniqRoom: uniqueIndex('uniq_property_block_room').on(t.propertyId, t.blockName, t.roomNumber),
 }))
 
@@ -208,9 +224,17 @@ export const bookings = pgTable('bookings', {
   statusIdx: index('idx_bookings_status').on(t.status),
   paymentStatusIdx: index('idx_bookings_payment_status').on(t.paymentStatus),
   paymentRefIdx: uniqueIndex('uniq_bookings_payment_ref').on(t.paymentReference),
+  // NEW — DB-level guard against the double-booking race condition.
+  // Postgres partial unique index: only one row per roomId may be in
+  // 'pending_payment' or 'confirmed' at a time. This is enforced even
+  // if application code has a bug or two requests race past the
+  // application-level check in finalizeConfirmedBooking.
+  activeBookingPerRoom: uniqueIndex('uniq_active_booking_per_room')
+    .on(t.roomId)
+    .where(sql`status IN ('pending_payment','confirmed')`),
 }))
 
-// ── 11. SAVED_ROOMS (added — required by getSavedRoomsByStudent) ──
+// ── 11. SAVED_ROOMS ──────────────────────────────────────────
 export const savedRooms = pgTable('saved_rooms', {
   id:        uuid('id').primaryKey().defaultRandom(),
   studentId: uuid('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),

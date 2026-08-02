@@ -1,10 +1,10 @@
 // lib/actions/landlord.ts
 'use server'
 
-import { eq, and } from 'drizzle-orm'
+import { eq, and, inArray } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { db } from '../db'
-import { properties, rooms, roomLeaseOptions, landlords } from '../db/schema'
+import { properties, rooms, roomLeaseOptions, landlords, bookings } from '../db/schema'
 import { auth } from '../auth'
 import { encryptAccountNumber } from '../crypto/bankAccount'
 import { encryptAccountNumberToBase64 } from '../crypto/bankAccount'
@@ -175,12 +175,28 @@ export async function updateRoomLeaseOptions(
 
 // ════════════════════════════════════════════════════════════
 // updateRoomStatus
+//
+// FIX: a room with an active confirmed booking can no longer be
+// flipped back to 'available' or 'maintenance' by the landlord.
+// Previously this action trusted the caller entirely and let a
+// landlord (or anyone replaying their session) re-list an occupied
+// room as bookable, or hide it from the tenant's view via
+// 'maintenance' with zero guard. The client-side disabled-button in
+// LandlordRoomsClient.jsx was cosmetic only — this is the real check.
 // ════════════════════════════════════════════════════════════
 export async function updateRoomStatus(roomId: string, status: 'available' | 'booked' | 'maintenance') {
   const authResult = await requireLandlord()
   if ('error' in authResult) return authResult
 
   if (!(await ownsRoom(authResult.landlordId, roomId))) return { error: 'You do not own this room.' }
+
+  const [activeBooking] = await db.select({ id: bookings.id }).from(bookings)
+    .where(and(eq(bookings.roomId, roomId), eq(bookings.status, 'confirmed')))
+    .limit(1)
+
+  if (activeBooking && status !== 'booked') {
+    return { error: 'This room has an active tenant and cannot be changed. The status will update automatically once the lease ends or is cancelled.' }
+  }
 
   try {
     await db.update(rooms).set({ status }).where(eq(rooms.id, roomId))
@@ -227,12 +243,7 @@ export async function updateLandlordProfile(data: {
 }
 
 // ════════════════════════════════════════════════════════════
-// submitLandlordKyc — stores uploaded document URLs, leaves
-// verificationStatus at its existing value ('pending' by default)
-// for manual admin review. No NIN/BVN is collected or stored here
-// — see types/next-auth.d.ts-adjacent architecture notes: Phase 1
-// deliberately stores only a verification provider reference, never
-// raw NIN/BVN, and no automated provider is wired up yet.
+// submitLandlordKyc
 // ════════════════════════════════════════════════════════════
 export async function submitLandlordKyc(documents: {
   govId: { url: string; name: string } | null

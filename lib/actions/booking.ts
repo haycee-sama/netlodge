@@ -132,11 +132,21 @@ export async function confirmBookingPayment(bookingId: string, paymentMethod: st
       return { error: 'Could not initiate payment. Please try again.' }
     }
 
-    await db.update(bookings).set({
-      status: 'pending_payment',
-      paymentMethod: paymentMethod as any,
-      paymentReference: paystackData.data.reference,
-    }).where(eq(bookings.id, bookingId))
+    try {
+      await db.update(bookings).set({
+        status: 'pending_payment',
+        paymentMethod: paymentMethod as any,
+        paymentReference: paystackData.data.reference,
+      }).where(eq(bookings.id, bookingId))
+    } catch (err: any) {
+      // Hits the partial unique index (uniq_active_booking_per_room) if
+      // another booking for this room is already pending_payment/confirmed.
+      const pgCode = err?.code ?? err?.cause?.code
+      if (pgCode === '23505') {
+        return { error: 'This room was just reserved by another student. Please choose a different room.' }
+      }
+      throw err
+    }
 
     return { success: true, authorizationUrl: paystackData.data.authorization_url }
   } catch (err) {
@@ -153,6 +163,13 @@ export async function confirmBookingPayment(bookingId: string, paymentMethod: st
 // trusting a caller-supplied claim. Called by both the webhook and the
 // /booking/success page fallback; idempotent, safe to call twice for
 // the same event.
+//
+// RACE-CONDITION FIX: the room's status is flipped to 'booked' with a
+// WHERE status = 'available' guard. If a concurrent booking already
+// claimed the room (e.g. two students paid within seconds of each
+// other), this update returns zero rows, we detect that as a genuine
+// conflict, and we do NOT confirm the second booking — instead we
+// cancel it and flag it for a manual refund review.
 // ════════════════════════════════════════════════════════════
 export async function finalizeConfirmedBooking(reference: string): Promise<{ success: true; bookingRef: string; alreadyConfirmed?: boolean } | { error: string }> {
   if (!reference) return { error: 'Missing payment reference.' }
@@ -198,20 +215,51 @@ export async function finalizeConfirmedBooking(reference: string): Promise<{ suc
   }
 
   try {
+    let conflict = false
+
     // NOTE: neon-http does not provide the same hard rollback guarantee
     // as a pooled connection. See earlier note — drizzle-orm/neon-serverless
     // is the upgrade path if this two-table write ever needs a true
     // atomic rollback guarantee.
     await db.transaction(async (tx) => {
+      // Conditional update — only succeeds if the room is still 'available'.
+      // If another confirmed booking already claimed this room, this
+      // returns zero rows and we treat it as a conflict rather than
+      // silently confirming a double-booking.
+      const claimedRoom = await tx.update(rooms)
+        .set({ status: 'booked' })
+        .where(and(eq(rooms.id, booking.roomId), eq(rooms.status, 'available')))
+        .returning({ id: rooms.id })
+
+      if (claimedRoom.length === 0) {
+        conflict = true
+        return
+      }
+
       await tx.update(bookings).set({
         status: 'confirmed',
         paymentStatus: 'paid',
         paymentReference: reference,
         paidAt: new Date(),
       }).where(eq(bookings.id, bookingId))
-
-      await tx.update(rooms).set({ status: 'booked' }).where(eq(rooms.id, booking.roomId))
     })
+
+    if (conflict) {
+      console.error('CONFLICT: room already booked, payment succeeded — flagging for manual refund', {
+        bookingId, roomId: booking.roomId, reference,
+      })
+      // Mark this booking clearly as paid-but-cancelled so it surfaces
+      // in admin/ops queries as needing a manual refund, instead of
+      // silently double-confirming the room.
+      await db.update(bookings).set({
+        status: 'cancelled',
+        paymentStatus: 'paid',
+        paymentReference: reference,
+        paidAt: new Date(),
+      }).where(eq(bookings.id, bookingId))
+
+      return { error: 'This room was booked by someone else moments before your payment completed. Your payment was successful and will be refunded — our support team has been notified. Please contact support with your reference for a fast-tracked refund.' }
+    }
 
     revalidatePath('/booking')
     revalidatePath('/dashboard')
