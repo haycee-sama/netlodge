@@ -6,7 +6,14 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Building2, Expand } from 'lucide-react'
 import ImageGalleryModal from './ImageGalleryModal'
 
-export default function RoomImageCarousel({ images }) {
+export default function RoomImageCarousel({ images: rawImages }) {
+  // Guarantee every image has a stable, unique key regardless of
+  // whether the DB-stored images array includes an `id` field.
+  const images = (rawImages || []).map((img, index) => ({
+    ...img,
+    id: img.id ?? `img-${index}`,
+  }))
+
   const [activeIndex, setActiveIndex] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
   const thumbRefs = useRef([])
@@ -42,13 +49,10 @@ export default function RoomImageCarousel({ images }) {
 
   return (
     <div>
-      {/* Live region — announces the current photo for keyboard/SR
-          users the same way a sighted user sees the swipe update */}
       <div aria-live="polite" className="sr-only">
         Photo {activeIndex + 1} of {images.length}: {activeImage.alt}
       </div>
 
-      {/* Main carousel */}
       <div
         role="region"
         aria-roledescription="carousel"
@@ -92,7 +96,6 @@ export default function RoomImageCarousel({ images }) {
         </button>
       </div>
 
-      {/* Thumbnail strip — horizontally scrollable, never wraps */}
       {images.length > 1 && (
         <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
           {images.map((image, index) => {

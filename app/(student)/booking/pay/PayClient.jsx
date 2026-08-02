@@ -8,7 +8,7 @@ import {
   ShieldCheck, ChevronLeft, CreditCard, Building2, Smartphone,
   Lock, AlertCircle, MapPin,
 } from 'lucide-react'
-import { confirmBookingPayment, verifyBookingPayment } from '../../../../lib/actions/booking'
+import { confirmBookingPayment } from '../../../../lib/actions/booking'
 import BookingProgress from '../components/BookingProgress'
 
 const PAYMENT_METHODS = [
@@ -17,43 +17,29 @@ const PAYMENT_METHODS = [
   { id: 'ussd', icon: Smartphone, label: 'USSD', description: "Pay with your bank's USSD code" },
 ]
 
-export default function PayClient({ booking }) {
-  const router = useRouter()
+  export default function PayClient({ booking }) {
+    const router = useRouter()
 
-  const [selectedMethod, setSelectedMethod] = useState('card')
-  const [loading, setLoading] = useState(false)
-  const [submitError, setSubmitError] = useState('')
+    const [selectedMethod, setSelectedMethod] = useState('card')
+    const [loading, setLoading] = useState(false)
+    const [submitError, setSubmitError] = useState('')
 
   async function handlePay() {
-    setLoading(true)
-    setSubmitError('')
+      setLoading(true)
+      setSubmitError('')
 
-    // Step 1 — mark the booking pending_payment and get the (placeholder)
-    // gateway authorization URL. In production this is where the browser
-    // would redirect to Paystack's hosted checkout.
-    const confirmResult = await confirmBookingPayment(booking.id, selectedMethod)
-    if ('error' in confirmResult) {
-      setLoading(false)
-      setSubmitError(confirmResult.error)
-      return
+      const result = await confirmBookingPayment(booking.id, selectedMethod)
+
+      if ('error' in result) {
+        setLoading(false)
+        setSubmitError(result.error)
+        return
+      }
+
+      // Full browser navigation to Paystack's hosted checkout — this needs
+      // to leave the Next.js app entirely, not a client-side router push.
+      window.location.assign(result.authorizationUrl)
     }
-
-    // Step 2 — simulate the gateway round-trip. Paystack would redirect
-    // back with a real transaction reference; we fabricate one here since
-    // there is no live integration yet.
-    await new Promise((resolve) => setTimeout(resolve, 1800))
-    const simulatedReference = `SIMULATED-${Date.now()}`
-
-    const verifyResult = await verifyBookingPayment(booking.id, simulatedReference)
-    setLoading(false)
-
-    if ('error' in verifyResult) {
-      setSubmitError(verifyResult.error)
-      return
-    }
-
-    router.push(`/booking/success?bookingId=${booking.id}`)
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -118,11 +104,10 @@ export default function PayClient({ booking }) {
               </div>
             </div>
 
-            <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-700">
-                Phase 1 note: no live payment gateway is connected yet. Clicking "Pay" below simulates a
-                successful transaction so the booking flow can be tested end-to-end against the database.
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-2">
+              <ShieldCheck className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-blue-700">
+                You'll be redirected to Paystack's secure checkout to complete this payment.
               </p>
             </div>
 

@@ -8,6 +8,7 @@ import {
   Calendar, CheckCircle, Clock, AlertCircle, Building2, User, LogOut,
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
 // Static for Phase B — no notifications table exists yet (Phase 2 concern).
 const NOTIFICATIONS = [
@@ -87,7 +88,7 @@ export default function DashboardClient({
 
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <button
-                  onClick={() => signOut({ callbackUrl: '/login' })}
+                  onClick={() => signOut({ callbackUrl: '/login', redirect: true })}
                   className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors w-full"
                 >
                   <LogOut className="w-5 h-5" />

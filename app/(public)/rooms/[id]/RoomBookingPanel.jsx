@@ -1,26 +1,66 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useOptimistic, useTransition } from 'react'
 import Link from 'next/link'
-import { ShieldCheck, ArrowRight } from 'lucide-react'
-import { SERVICE_FEE_RATE } from '../../../lib/data'
+import { useRouter } from 'next/navigation'
+import { ShieldCheck, ArrowRight, Heart } from 'lucide-react'
+import { SERVICE_FEE_RATE } from '../../../../lib/constants'
+import { toggleSaveRoom } from '../../../../lib/actions/student'
 
 const LEASE_OPTIONS = ['1 Year', 'Per Semester', 'Half Year']
 
-export default function RoomBookingPanel({ room, property }) {
-  const [selectedLease, setSelectedLease]   = useState('1 Year')
+export default function RoomBookingPanel({ room, property, canSave, initialSaved }) {
+  const router = useRouter()
+  const [selectedLease, setSelectedLease] = useState('1 Year')
   const [showEscrowInfo, setShowEscrowInfo] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const [optimisticSaved, setOptimisticSaved] = useOptimistic(initialSaved)
+  const [saveError, setSaveError] = useState('')
 
   const serviceFee = Math.round(room.price * SERVICE_FEE_RATE)
-  const total      = room.price + serviceFee
+  const total = room.price + serviceFee
+
+  function handleToggleSave() {
+    if (!canSave) {
+      router.push(`/login?callbackUrl=${encodeURIComponent(`/rooms/${room.id}`)}`)
+      return
+    }
+    setSaveError('')
+    startTransition(async () => {
+      setOptimisticSaved(!optimisticSaved)
+      const result = await toggleSaveRoom(room.id)
+      if ('error' in result) setSaveError(result.error)
+      // Re-syncs the true saved state from the server after the mutation
+      // settles — useOptimistic's local flip is purely for instant
+      // feedback during the pending transition.
+      router.refresh()
+    })
+  }
 
   return (
     <div className="sticky top-24 flex flex-col gap-4">
       <div className="bg-white rounded-2xl border border-gray-100 shadow-md p-6">
-        <div className="mb-5">
-          <span className="text-3xl font-bold text-gray-900">₦{room.price.toLocaleString()}</span>
-          <span className="text-gray-400 text-sm"> / year</span>
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <span className="text-3xl font-bold text-gray-900">₦{room.price.toLocaleString()}</span>
+            <span className="text-gray-400 text-sm"> / year</span>
+          </div>
+          <button
+            onClick={handleToggleSave}
+            disabled={isPending}
+            aria-pressed={optimisticSaved}
+            aria-label={optimisticSaved ? 'Remove from saved rooms' : 'Save this room'}
+            className={`w-11 h-11 flex items-center justify-center rounded-full border transition-colors shrink-0 disabled:opacity-60 ${
+              optimisticSaved
+                ? 'bg-red-50 border-red-200 text-red-500'
+                : 'bg-white border-gray-200 text-gray-400 hover:text-red-400 hover:border-red-200'
+            }`}
+          >
+            <Heart className={`w-5 h-5 ${optimisticSaved ? 'fill-current' : ''}`} />
+          </button>
         </div>
+
+        {saveError && <p className="text-xs text-red-500 mb-3">{saveError}</p>}
 
         {room.status !== 'Available' && (
           <div className="bg-red-50 border border-red-100 rounded-xl p-3 mb-4">

@@ -4,9 +4,11 @@ import {
   ShieldCheck, MapPin, Wifi, Zap, Droplets,
   ChevronLeft, Building2, Lock, CheckCircle, AlertCircle,
 } from 'lucide-react'
-import { getRoomById } from '../../../../lib/db/queries'
+import { getRoomById, isRoomSavedByStudent } from '../../../../lib/db/queries'
 import RoomBookingPanel from './RoomBookingPanel'
 import RoomImageCarousel from './RoomImageCarousel'
+import { auth } from '../../../../lib/auth'
+
 
 const AMENITY_ICONS = { power: Zap, water: Droplets, internet: Wifi, security: Lock, extras: CheckCircle }
 const AMENITY_LABELS = {
@@ -64,7 +66,9 @@ export default async function RoomDetailPage({ params }) {
   }
 
   const { room, block, property } = result
-
+  const session = await auth()
+  const canSave = !!(session?.user && session.user.role === 'student' && session.user.roleRecordId)
+  const initialSaved = canSave ? await isRoomSavedByStudent(session.user.roleRecordId, room.id) : false
   return (
     <div className="min-h-screen bg-gray-50">
 
@@ -186,7 +190,7 @@ export default async function RoomDetailPage({ params }) {
           </div>
 
           <div className="lg:col-span-1">
-            <RoomBookingPanel room={room} property={property} />
+            <RoomBookingPanel room={room} property={property} canSave={canSave} initialSaved={initialSaved} />
           </div>
 
         </div>

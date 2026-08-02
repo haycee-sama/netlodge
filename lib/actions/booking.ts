@@ -6,9 +6,11 @@ import { revalidatePath } from 'next/cache'
 import { db } from '../db'
 import { bookings, rooms, roomLeaseOptions } from '../db/schema'
 import { auth } from '../auth'
+import { SERVICE_FEE_RATE } from '../constants'
 
-const SERVICE_FEE_RATE = 0.07
+
 const VALID_PAYMENT_METHODS = ['card', 'bank_transfer', 'ussd', 'opay', 'moniepoint', 'qr', 'mobile_money']
+const PAYSTACK_BASE_URL = 'https://api.paystack.co'
 
 function addMonths(date: Date, months: number) {
   const d = new Date(date)
@@ -28,7 +30,7 @@ function toDateString(d: Date) {
 }
 
 // ════════════════════════════════════════════════════════════
-// createBooking — replaces the /booking/confirm → /booking/pay URL-param handoff
+// createBooking — creates a draft booking row
 // ════════════════════════════════════════════════════════════
 export async function createBooking(
   roomId: string,
@@ -84,7 +86,8 @@ export async function createBooking(
 }
 
 // ════════════════════════════════════════════════════════════
-// confirmBookingPayment — moves draft → pending_payment, records method
+// confirmBookingPayment — draft → pending_payment, initializes a real
+// Paystack transaction, returns the hosted checkout URL to redirect to.
 // ════════════════════════════════════════════════════════════
 export async function confirmBookingPayment(bookingId: string, paymentMethod: string) {
   const session = await auth()
@@ -97,17 +100,45 @@ export async function confirmBookingPayment(bookingId: string, paymentMethod: st
   if (booking.status !== 'draft') return { error: 'This booking cannot be modified.' }
   if (!VALID_PAYMENT_METHODS.includes(paymentMethod)) return { error: 'Invalid payment method.' }
 
+  const secretKey = process.env.PAYSTACK_SECRET_KEY
+  if (!secretKey) {
+    console.error('PAYSTACK_SECRET_KEY not set')
+    return { error: 'Payments are not configured. Please contact support.' }
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const amountKobo = Math.round(Number(booking.totalAmount) * 100)
+
   try {
+    const paystackRes = await fetch(`${PAYSTACK_BASE_URL}/transaction/initialize`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: session.user.email,
+        amount: amountKobo,
+        currency: 'NGN',
+        callback_url: `${appUrl}/booking/success?bookingId=${bookingId}`,
+        metadata: { bookingId, studentId },
+      }),
+    })
+
+    const paystackData = await paystackRes.json()
+
+    if (!paystackRes.ok || !paystackData.status) {
+      console.error('Paystack initialize failed', paystackData)
+      return { error: 'Could not initiate payment. Please try again.' }
+    }
+
     await db.update(bookings).set({
       status: 'pending_payment',
       paymentMethod: paymentMethod as any,
+      paymentReference: paystackData.data.reference,
     }).where(eq(bookings.id, bookingId))
 
-    // Placeholder — real implementation calls Paystack's
-    // /transaction/initialize endpoint and returns its authorization_url.
-    const authorizationUrl = `https://checkout.paystack.com/placeholder/${bookingId}`
-
-    return { success: true, authorizationUrl }
+    return { success: true, authorizationUrl: paystackData.data.authorization_url }
   } catch (err) {
     console.error('confirmBookingPayment failed', err)
     return { error: 'Could not initiate payment. Please try again.' }
@@ -115,28 +146,67 @@ export async function confirmBookingPayment(bookingId: string, paymentMethod: st
 }
 
 // ════════════════════════════════════════════════════════════
-// verifyBookingPayment — pending_payment → confirmed, room → booked
+// finalizeConfirmedBooking — the ONLY path that ever marks a booking
+// paid/confirmed. Takes a reference, not a bookingId — always
+// independently re-verifies with Paystack's /transaction/verify
+// endpoint and pulls bookingId out of PAYSTACK's own response, never
+// trusting a caller-supplied claim. Called by both the webhook and the
+// /booking/success page fallback; idempotent, safe to call twice for
+// the same event.
 // ════════════════════════════════════════════════════════════
-export async function verifyBookingPayment(bookingId: string, paymentReference: string) {
-  const session = await auth()
-  if (!session?.user || session.user.role !== 'student') return { error: 'Unauthorized.' }
-  const studentId = session.user.roleRecordId
+export async function finalizeConfirmedBooking(reference: string): Promise<{ success: true; bookingRef: string; alreadyConfirmed?: boolean } | { error: string }> {
+  if (!reference) return { error: 'Missing payment reference.' }
+
+  const secretKey = process.env.PAYSTACK_SECRET_KEY
+  if (!secretKey) return { error: 'Payments are not configured.' }
+
+  let verifyData: any
+  try {
+    const verifyRes = await fetch(`${PAYSTACK_BASE_URL}/transaction/verify/${encodeURIComponent(reference)}`, {
+      headers: { Authorization: `Bearer ${secretKey}` },
+    })
+    verifyData = await verifyRes.json()
+  } catch (err) {
+    console.error('Paystack verify request failed', err)
+    return { error: 'Could not verify payment with Paystack.' }
+  }
+
+
+  if (!verifyData?.status || verifyData.data?.status !== 'success') {
+    return { error: 'Payment was not successful.' }
+  }
+
+  const bookingId = verifyData.data?.metadata?.bookingId
+  if (!bookingId) return { error: 'Payment reference is missing booking information.' }
 
   const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId))
-  if (!booking) return { error: 'Booking not found.' }
-  if (booking.studentId !== studentId) return { error: 'You do not have access to this booking.' }
-  if (booking.status !== 'pending_payment') return { error: 'This booking is not awaiting payment.' }
+  if (!booking) return { error: 'Booking not found for this payment.' }
+
+  if (booking.status === 'confirmed' && booking.paymentStatus === 'paid') {
+    return { success: true, bookingRef: booking.bookingRef, alreadyConfirmed: true }
+  }
+
+  if (booking.paymentReference !== reference) {
+    console.error('Paystack reference mismatch', { bookingId, stored: booking.paymentReference, got: reference })
+    return { error: 'Payment reference does not match this booking.' }
+  }
+
+  const expectedKobo = Math.round(Number(booking.totalAmount) * 100)
+  if (verifyData.data.amount !== expectedKobo) {
+    console.error('Paystack amount mismatch', { expected: expectedKobo, got: verifyData.data.amount, bookingId })
+    return { error: 'Payment amount does not match this booking.' }
+  }
 
   try {
     // NOTE: neon-http does not provide the same hard rollback guarantee
-    // as a pooled connection. If a partial failure here (booking updates
-    // but room update fails) becomes a real risk, switch this action to
-    // drizzle-orm/neon-serverless for a true pooled transaction.
+    // as a pooled connection. See earlier note — drizzle-orm/neon-serverless
+    // is the upgrade path if this two-table write ever needs a true
+    // atomic rollback guarantee.
     await db.transaction(async (tx) => {
       await tx.update(bookings).set({
         status: 'confirmed',
         paymentStatus: 'paid',
-        paymentReference,
+        paymentReference: reference,
         paidAt: new Date(),
       }).where(eq(bookings.id, bookingId))
 
@@ -144,15 +214,16 @@ export async function verifyBookingPayment(bookingId: string, paymentReference: 
     })
 
     revalidatePath('/booking')
+    revalidatePath('/dashboard')
     return { success: true, bookingRef: booking.bookingRef }
   } catch (err) {
-    console.error('verifyBookingPayment failed', err)
-    return { error: 'Could not verify payment. Please contact support.' }
+    console.error('finalizeConfirmedBooking write failed', err)
+    return { error: 'Could not finalize booking. Please contact support.' }
   }
 }
 
 // ════════════════════════════════════════════════════════════
-// cancelBooking
+// cancelBooking — unchanged
 // ════════════════════════════════════════════════════════════
 export async function cancelBooking(bookingId: string) {
   const session = await auth()

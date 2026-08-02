@@ -6,7 +6,6 @@ import {
   amenities, landlords, users, bookings, savedRooms, students,
 } from './schema'
 
-export const SERVICE_FEE_RATE = 0.07
 
 // ── Formatting helpers — DB stores machine values, UI expects display strings ──
 function formatRoomType(t: string) {
@@ -416,6 +415,14 @@ export async function getStudentProfileById(studentId: string) {
 // ════════════════════════════════════════════════════════════
 // getSavedRoomsByStudent — /saved page
 // ════════════════════════════════════════════════════════════
+// lib/db/queries.ts — NEW function
+export async function isRoomSavedByStudent(studentId: string, roomId: string): Promise<boolean> {
+  const [row] = await db.select({ id: savedRooms.id }).from(savedRooms)
+    .where(and(eq(savedRooms.studentId, studentId), eq(savedRooms.roomId, roomId)))
+  return !!row
+}
+
+// lib/db/queries.ts — REPLACE getSavedRoomsByStudent with this version
 export async function getSavedRoomsByStudent(studentId: string) {
   const savedRows = await db.select().from(savedRooms)
     .where(eq(savedRooms.studentId, studentId))
@@ -424,19 +431,26 @@ export async function getSavedRoomsByStudent(studentId: string) {
   const results = []
   for (const s of savedRows) {
     const [room] = await db.select().from(rooms).where(eq(rooms.id, s.roomId))
-    if (!room) continue
+    if (!room) continue // room was deleted — skip gracefully rather than crash the page
 
     const property = (await db.select().from(properties).where(eq(properties.id, room.propertyId)))[0]
+    const city = property ? (await db.select().from(cities).where(eq(cities.id, property.cityId)))[0] : null
+    const university = property ? (await db.select().from(universities).where(eq(universities.id, property.universityId)))[0] : null
     const price = await getFullYearPrice(room.id)
 
     results.push({
       id: s.id,
+      roomId: room.id,
       propertyName: property?.name ?? '',
       roomNumber: room.roomNumber,
       roomType: formatRoomType(room.roomType),
+      bathroom: formatBathroom(room.bathroomType),
+      university: university?.name ?? '',
+      city: city?.name ?? '',
       price,
       status: formatStatus(room.status),
       images: room.images ?? [],
+      savedAt: s.savedAt.toISOString(),
     })
   }
 

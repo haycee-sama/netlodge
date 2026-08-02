@@ -8,6 +8,7 @@ const nextConfig = {
       },
     ],
   },
+  allowedDevOrigins: ['dimness-humid-anatomy.ngrok-free.dev'],
 }
 
 export default nextConfig

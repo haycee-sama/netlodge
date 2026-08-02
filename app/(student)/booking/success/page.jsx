@@ -3,10 +3,11 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import {
   CheckCircle, ShieldCheck, MapPin, Building2, Clock,
-  Download, AlertCircle, ArrowRight, Phone, Mail,
+  Download, ArrowRight, RefreshCw,
 } from 'lucide-react'
 import { auth } from '../../../../lib/auth'
 import { getBookingById } from '../../../../lib/db/queries'
+import { finalizeConfirmedBooking } from '../../../../lib/actions/booking'
 
 export default async function BookingSuccessPage({ searchParams }) {
   const session = await auth()
@@ -14,17 +15,42 @@ export default async function BookingSuccessPage({ searchParams }) {
 
   const params = await searchParams
   const bookingId = params?.bookingId
+  // Paystack's callback appends both — either name may be present depending on integration path.
+  const reference = params?.reference || params?.trxref
   if (!bookingId) redirect('/dashboard')
 
-  const booking = await getBookingById(bookingId)
+  let booking = await getBookingById(bookingId)
+  if (!booking || booking.studentId !== session.user.roleRecordId) redirect('/dashboard')
 
-  if (!booking || booking.studentId !== session.user.roleRecordId) {
-    redirect('/dashboard')
+  // Fallback path: Paystack's browser redirect can arrive before the
+  // webhook does (or the webhook can't reach localhost during dev without
+  // a tunnel). If the booking isn't confirmed yet and Paystack gave us a
+  // reference, verify synchronously — this independently re-checks with
+  // Paystack, it does not just trust the URL parameter.
+  if (booking.status !== 'confirmed' && reference) {
+    await finalizeConfirmedBooking(reference)
+    booking = await getBookingById(bookingId)
   }
 
-  if (booking.status !== 'confirmed') {
-    // Payment never completed for this booking — don't show a fake success screen.
-    redirect(`/booking/pay?bookingId=${booking.id}`)
+  if (!booking || booking.status !== 'confirmed') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4 text-center px-4">
+        <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center">
+          <Clock className="w-8 h-8 text-amber-500" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-900">Confirming your payment...</h2>
+        <p className="text-gray-500 text-sm max-w-sm">
+          This usually takes a few seconds. If this doesn't update shortly, refresh —
+          your status will sync automatically once Paystack confirms it.
+        </p>
+        <Link
+          href={`/booking/success?bookingId=${bookingId}${reference ? `&reference=${reference}` : ''}`}
+          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 py-3 rounded-xl transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" /> Refresh Status
+        </Link>
+      </div>
+    )
   }
 
   return (

@@ -34,11 +34,16 @@ export default function CompleteProfileClient({ universities, email, firstName }
     }
 
     // Force the JWT/session to refresh with the newly created
-    // roleRecordId — without this, proxy.ts keeps redirecting back
-    // here using the stale token from before profile completion.
+    // roleRecordId before navigating anywhere.
     await update()
-    setLoading(false)
-    router.push('/dashboard')
+
+    // Hard navigation instead of router.push(). router.push() uses
+    // Next.js's client-side router, which can race with the session
+    // cookie write from update() above — proxy.ts then reads a still-stale
+    // cookie and bounces back to this page. window.location.assign forces
+    // a full browser navigation, guaranteeing proxy.ts sees the fresh
+    // cookie on that request.
+    window.location.assign('/dashboard')
   }
 
   return (

@@ -20,6 +20,7 @@ import {
   X,
   FileCheck,
 } from 'lucide-react'
+import { signOut } from 'next-auth/react'
 
 // Navigation items for the landlord sidebar
 const NAV_ITEMS = [
@@ -190,7 +191,10 @@ export default function LandlordLayout({ children, title, subtitle }) {
             <Settings className="w-5 h-5" />
             Settings
           </Link>
-          <button className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-red-900 hover:text-red-300 transition-colors w-full text-left">
+          <button
+            onClick={() => signOut({ callbackUrl: '/login', redirect: true })}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-800 hover:text-white transition-colors w-full text-left"
+          >
             <LogOut className="w-5 h-5" />
             Log Out
           </button>
