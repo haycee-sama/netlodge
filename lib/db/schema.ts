@@ -110,8 +110,9 @@ export const landlords = pgTable('landlords', {
   reviewedBy:              uuid('reviewed_by').references(() => users.id, { onDelete: 'set null' }),
   reviewedAt:              timestamp('reviewed_at', { withTimezone: true }),
   bankName:                varchar('bank_name', { length: 100 }),
-  bankAccountNumberEncrypted: text('bank_account_number_encrypted'), // AES-256-GCM ciphertext, base64/bytea
+  bankAccountNumberEncrypted: text('bank_account_number_encrypted'),
   bankAccountName:         varchar('bank_account_name', { length: 200 }),
+  kycDocuments:            jsonb('kyc_documents').notNull().default(sql`'[]'::jsonb`), // [{type, url, name}]
   createdAt:               timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:               timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({

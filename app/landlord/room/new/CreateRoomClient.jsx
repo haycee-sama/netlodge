@@ -4,7 +4,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import LandlordLayout from '../../components/LandlordLayout'
-import { CheckCircle, ArrowRight, AlertCircle } from 'lucide-react'
+import FileUpload from '../../../components/FileUpload'
+import { CheckCircle, ArrowRight, AlertCircle, X, ImageIcon } from 'lucide-react'
 import { createRoom, updateRoomLeaseOptions } from '../../../../lib/actions/landlord'
 
 const ROOM_TYPE_OPTIONS = [
@@ -30,6 +31,7 @@ export default function CreateRoomClient({ properties, amenities, initialPropert
     blockName: '', roomNumber: '', roomType: '', floor: '', bathroomType: '', furnished: '', dimensions: '',
   })
   const [selectedAmenityIds, setSelectedAmenityIds] = useState([])
+  const [images, setImages] = useState([]) // [{url, alt}]
   const [leasePrices, setLeasePrices] = useState({ full_year: '', per_semester: '', half_year: '' })
   const [enabledLeases, setEnabledLeases] = useState(['full_year'])
 
@@ -48,8 +50,22 @@ export default function CreateRoomClient({ properties, amenities, initialPropert
   }
 
   function toggleLease(id) {
-    if (id === 'full_year') return // always required
+    if (id === 'full_year') return
     setEnabledLeases((prev) => (prev.includes(id) ? prev.filter((l) => l !== id) : [...prev, id]))
+  }
+
+  function handleImagesUploaded(uploaded) {
+    setImages((prev) => {
+      const combined = [...prev, ...uploaded]
+      // Generic sequential alt text — landlords can refine copy later
+      // once a proper room-editing flow exists; this just needs to be
+      // non-empty and reasonably descriptive for accessibility today.
+      return combined.map((img, i) => ({ url: img.url, alt: `Room photo ${i + 1}` }))
+    })
+  }
+
+  function removeImage(index) {
+    setImages((prev) => prev.filter((_, i) => i !== index).map((img, i) => ({ ...img, alt: `Room photo ${i + 1}` })))
   }
 
   function validate() {
@@ -86,6 +102,7 @@ export default function CreateRoomClient({ properties, amenities, initialPropert
       furnished: form.furnished,
       dimensions: form.dimensions.trim(),
       amenityIds: selectedAmenityIds,
+      images,
     })
 
     if ('error' in roomResult) {
@@ -212,6 +229,44 @@ export default function CreateRoomClient({ properties, amenities, initialPropert
               </div>
 
             </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <h2 className="font-bold text-gray-900 text-lg mb-1">Room Photos</h2>
+            <p className="text-sm text-gray-500 mb-4">Upload up to 10 photos. Clear, well-lit photos get booked faster.</p>
+
+            <FileUpload
+              endpoint="roomImage"
+              multiple
+              accept="image/*"
+              label="JPG or PNG · Up to 10 photos, 4MB each"
+              onClientUploadComplete={handleImagesUploaded}
+            />
+
+            {images.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4">
+                {images.map((img, i) => (
+                  <div key={img.url} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(i)}
+                      className="absolute top-1.5 right-1.5 w-7 h-7 bg-black/60 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {images.length === 0 && (
+              <div className="flex items-center gap-2 mt-3 text-xs text-gray-500">
+                <ImageIcon className="w-4 h-4" />
+                No photos uploaded yet — you can still create the room and add photos later.
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
