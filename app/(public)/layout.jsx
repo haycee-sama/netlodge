@@ -1,13 +1,23 @@
 // app/(public)/layout.jsx
-// Wraps all public marketing/browsing pages with Navbar + Footer
-
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import { auth } from '../../lib/auth'
+import { getNotificationsByUser, getUnreadNotificationCount } from '../../lib/db/queries'
 
-export default function PublicLayout({ children }) {
+export default async function PublicLayout({ children }) {
+  const session = await auth()
+  const isLoggedIn = !!session?.user?.id
+
+  const [notifications, unreadCount] = isLoggedIn
+    ? await Promise.all([
+        getNotificationsByUser(session.user.id),
+        getUnreadNotificationCount(session.user.id),
+      ])
+    : [[], 0]
+
   return (
     <>
-      <Navbar />
+      <Navbar isLoggedIn={isLoggedIn} initialNotifications={notifications} initialUnreadCount={unreadCount} />
       <main>{children}</main>
       <Footer />
     </>

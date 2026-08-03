@@ -18,6 +18,11 @@ export const paymentStatusEnum   = pgEnum('payment_status', ['unpaid', 'paid', '
 export const paymentMethodEnum   = pgEnum('payment_method', ['card', 'bank_transfer', 'ussd', 'opay', 'moniepoint', 'qr', 'mobile_money'])
 export const amenityCategoryEnum = pgEnum('amenity_category', ['power', 'water', 'internet', 'security', 'extras'])
 export const otpPurposeEnum = pgEnum('otp_purpose', ['email_verification', 'password_reset'])
+export const disputeStatusEnum = pgEnum('dispute_status', ['none', 'pending', 'resolved_refund', 'resolved_release'])
+export const notificationTypeEnum = pgEnum('notification_type', [
+  'booking_confirmed', 'new_booking', 'dispute_filed', 'dispute_resolved',
+  'kyc_approved', 'kyc_rejected', 'general',
+])
 
 // ── 1. USERS ───────────────────────────────────────────────────
 export const users = pgTable('users', {
@@ -200,7 +205,7 @@ export const roomLeaseOptions = pgTable('room_lease_options', {
 export const bookings = pgTable('bookings', {
   id:                uuid('id').primaryKey().defaultRandom(),
   bookingRef:        varchar('booking_ref', { length: 30 }).notNull().unique()
-                        .default(sql`generate_booking_ref()`), // requires the SQL fn from Phase 1 schema
+                        .default(sql`generate_booking_ref()`),
   studentId:         uuid('student_id').notNull().references(() => students.id, { onDelete: 'restrict' }),
   roomId:            uuid('room_id').notNull().references(() => rooms.id, { onDelete: 'restrict' }),
   leaseType:         leaseDurationEnum('lease_type').notNull(),
@@ -216,6 +221,14 @@ export const bookings = pgTable('bookings', {
   paymentProvider:   varchar('payment_provider', { length: 50 }).default('paystack'),
   paymentReference:  varchar('payment_reference', { length: 150 }),
   paidAt:            timestamp('paid_at', { withTimezone: true }),
+
+  // ── Escrow / dispute lifecycle (Phase F) ──────────────────────
+  disputeStatus:          disputeStatusEnum('dispute_status').notNull().default('none'),
+  disputeReason:          text('dispute_reason'),
+  disputedAt:             timestamp('disputed_at', { withTimezone: true }),
+  escrowReleasedAt:       timestamp('escrow_released_at', { withTimezone: true }),
+  landlordPayoutReference: varchar('landlord_payout_reference', { length: 150 }),
+
   createdAt:         timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:         timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
@@ -224,15 +237,12 @@ export const bookings = pgTable('bookings', {
   statusIdx: index('idx_bookings_status').on(t.status),
   paymentStatusIdx: index('idx_bookings_payment_status').on(t.paymentStatus),
   paymentRefIdx: uniqueIndex('uniq_bookings_payment_ref').on(t.paymentReference),
-  // NEW — DB-level guard against the double-booking race condition.
-  // Postgres partial unique index: only one row per roomId may be in
-  // 'pending_payment' or 'confirmed' at a time. This is enforced even
-  // if application code has a bug or two requests race past the
-  // application-level check in finalizeConfirmedBooking.
+  disputeStatusIdx: index('idx_bookings_dispute_status').on(t.disputeStatus),
   activeBookingPerRoom: uniqueIndex('uniq_active_booking_per_room')
     .on(t.roomId)
     .where(sql`status IN ('pending_payment','confirmed')`),
 }))
+
 
 // ── 11. SAVED_ROOMS ──────────────────────────────────────────
 export const savedRooms = pgTable('saved_rooms', {
@@ -243,4 +253,18 @@ export const savedRooms = pgTable('saved_rooms', {
 }, (t) => ({
   studentIdx: index('idx_saved_rooms_student').on(t.studentId),
   uniqStudentRoom: uniqueIndex('uniq_saved_room_student_room').on(t.studentId, t.roomId),
+}))
+
+// ── 12. NOTIFICATIONS ─────────────────────────────────────────
+export const notifications = pgTable('notifications', {
+  id:        uuid('id').primaryKey().defaultRandom(),
+  userId:    uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  message:   text('message').notNull(),
+  type:      notificationTypeEnum('type').notNull().default('general'),
+  isRead:    boolean('is_read').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  userIdx:     index('idx_notifications_user').on(t.userId),
+  isReadIdx:   index('idx_notifications_is_read').on(t.isRead),
+  userReadIdx: index('idx_notifications_user_read').on(t.userId, t.isRead),
 }))

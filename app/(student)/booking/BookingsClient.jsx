@@ -1,12 +1,14 @@
 // app/(student)/booking/BookingsClient.jsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   Calendar, CheckCircle, Clock, XCircle, MapPin, Building2,
-  Download, AlertCircle, ChevronDown, ChevronUp, Search,
+  Download, AlertCircle, ChevronDown, ChevronUp, Search, ShieldAlert,
 } from 'lucide-react'
+import { fileDispute } from '../../../lib/actions/dispute'
 
 const STATUS_CONFIG = {
   Active:    { badge: 'bg-green-100 text-green-700', icon: CheckCircle },
@@ -15,10 +17,70 @@ const STATUS_CONFIG = {
   Cancelled: { badge: 'bg-red-100 text-red-600',      icon: XCircle },
 }
 
+const DISPUTE_STATUS_CONFIG = {
+  pending:          { label: 'Dispute Under Review', badge: 'bg-amber-100 text-amber-700' },
+  resolved_refund:  { label: 'Dispute Resolved — Refunded', badge: 'bg-blue-100 text-blue-700' },
+  resolved_release: { label: 'Dispute Resolved — Funds Released', badge: 'bg-green-100 text-green-700' },
+}
+
+function DisputeForm({ bookingId, onSubmitted }) {
+  const router = useRouter()
+  const [reason, setReason] = useState('')
+  const [error, setError] = useState('')
+  const [isPending, startTransition] = useTransition()
+
+  function handleSubmit() {
+    if (reason.trim().length < 10) {
+      setError('Please describe the issue in at least 10 characters.')
+      return
+    }
+    setError('')
+    startTransition(async () => {
+      const result = await fileDispute(bookingId, reason)
+      if ('error' in result) {
+        setError(result.error)
+        return
+      }
+      onSubmitted?.()
+      router.refresh()
+    })
+  }
+
+  return (
+    <div className="bg-red-50 border border-red-100 rounded-xl p-4 mt-3">
+      <p className="text-sm font-semibold text-red-700 mb-2">File a Dispute</p>
+      <p className="text-xs text-red-600 mb-3">
+        Explain how the room did not match the listing. Our team reviews disputes within 24 hours.
+      </p>
+      <textarea
+        value={reason}
+        onChange={(e) => { setReason(e.target.value); if (error) setError('') }}
+        rows={3}
+        placeholder="e.g. The room shown in photos was not the actual room I was given..."
+        className="w-full px-3 py-2.5 rounded-xl border border-red-200 text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all resize-none"
+      />
+      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+      <div className="flex justify-end mt-3">
+        <button
+          onClick={handleSubmit}
+          disabled={isPending}
+          className="flex items-center gap-2 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+        >
+          {isPending ? 'Submitting...' : 'Submit Dispute'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function BookingCard({ booking }) {
   const [expanded, setExpanded] = useState(false)
+  const [disputeFormOpen, setDisputeFormOpen] = useState(false)
   const config = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.Pending
   const Icon = config.icon
+  const disputeInfo = booking.disputeStatus && booking.disputeStatus !== 'none'
+    ? DISPUTE_STATUS_CONFIG[booking.disputeStatus]
+    : null
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -29,12 +91,18 @@ function BookingCard({ booking }) {
               <Building2 className="w-6 h-6 text-orange-400" />
             </div>
             <div>
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <h3 className="font-bold text-gray-900 text-base">{booking.roomLabel}</h3>
                 <span className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full ${config.badge}`}>
                   <Icon className="w-3 h-3" />
                   {booking.status}
                 </span>
+                {disputeInfo && (
+                  <span className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full ${disputeInfo.badge}`}>
+                    <ShieldAlert className="w-3 h-3" />
+                    {disputeInfo.label}
+                  </span>
+                )}
               </div>
               <p className="text-sm text-gray-500">{booking.propertyName} · {booking.blockName}</p>
               <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
@@ -67,6 +135,15 @@ function BookingCard({ booking }) {
             </span>
           </div>
         </div>
+
+        {booking.escrowWindowOpen && (
+          <div className="flex items-center gap-2 mt-3 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2">
+            <Clock className="w-4 h-4 text-blue-500 shrink-0" />
+            <p className="text-xs text-blue-700">
+              Escrow window open — you can still file a dispute if the room doesn't match the listing.
+            </p>
+          </div>
+        )}
 
         <button
           onClick={() => setExpanded(!expanded)}
@@ -108,16 +185,29 @@ function BookingCard({ booking }) {
                 <Download className="w-4 h-4" />
                 Download Receipt
               </button>
-              {booking.status === 'Active' && (
-                <Link
-                  href="/contact"
+              {booking.escrowWindowOpen && !disputeFormOpen && (
+                <button
+                  onClick={() => setDisputeFormOpen(true)}
                   className="flex items-center gap-2 border border-red-100 text-red-500 hover:bg-red-50 font-medium text-sm px-4 py-2.5 rounded-xl transition-colors"
                 >
                   <AlertCircle className="w-4 h-4" />
                   File a Dispute
+                </button>
+              )}
+              {!booking.escrowWindowOpen && !disputeInfo && booking.status === 'Active' && (
+                <Link
+                  href="/contact"
+                  className="flex items-center gap-2 border border-gray-200 text-gray-500 hover:bg-gray-50 font-medium text-sm px-4 py-2.5 rounded-xl transition-colors"
+                >
+                  <AlertCircle className="w-4 h-4" />
+                  Contact Support
                 </Link>
               )}
             </div>
+
+            {disputeFormOpen && (
+              <DisputeForm bookingId={booking.id} onSubmitted={() => setDisputeFormOpen(false)} />
+            )}
           </div>
         </div>
       )}

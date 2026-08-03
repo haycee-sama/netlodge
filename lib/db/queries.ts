@@ -5,6 +5,7 @@ import { db } from './index'
 import {
   properties, rooms, roomLeaseOptions, cities, universities,
   amenities, landlords, users, bookings, savedRooms, students,
+  notifications,
 } from './schema'
 
 // ── Formatting helpers — DB stores machine values, UI expects display strings ──
@@ -410,9 +411,6 @@ export const getPropertiesByLandlord = cache(async (landlordId: string) => {
 
 // ════════════════════════════════════════════════════════════
 // getBookingsByLandlord — /landlord/bookings and /landlord/payments
-// Batched: one query for the landlord's properties, one for all their
-// rooms, one for all bookings against those rooms, one for all
-// students/users involved — never one query per booking.
 // ════════════════════════════════════════════════════════════
 export const getBookingsByLandlord = cache(async (landlordId: string) => {
   const propertyRows = await db.select().from(properties).where(eq(properties.landlordId, landlordId))
@@ -459,10 +457,14 @@ export const getBookingsByLandlord = cache(async (landlordId: string) => {
       roomPrice: Number(b.roomPrice),
       serviceFee: Number(b.serviceFee),
       totalAmount: Number(b.totalAmount),
-      status: b.status,               // 'draft' | 'pending_payment' | 'confirmed' | 'cancelled'
-      paymentStatus: b.paymentStatus, // 'unpaid' | 'paid' | 'failed'
+      status: b.status,
+      paymentStatus: b.paymentStatus,
       paidAt: b.paidAt ? b.paidAt.toISOString() : null,
       createdAt: b.createdAt.toISOString(),
+      disputeStatus: b.disputeStatus,
+      disputeReason: b.disputeReason,
+      disputedAt: b.disputedAt ? b.disputedAt.toISOString() : null,
+      escrowReleasedAt: b.escrowReleasedAt ? b.escrowReleasedAt.toISOString() : null,
     }
   })
 })
@@ -552,6 +554,17 @@ export const getBookingsByStudent = cache(async (studentId: string) => {
       displayStatus = new Date(b.leaseEndDate) < today ? 'Expired' : 'Active'
     }
 
+    // Escrow window is open only while: paid, no dispute yet, funds not
+    // already released, and less than 48h have passed since payment.
+    const hoursSincePaid = b.paidAt ? (Date.now() - new Date(b.paidAt).getTime()) / (1000 * 60 * 60) : null
+    const escrowWindowOpen =
+      b.status === 'confirmed' &&
+      b.paymentStatus === 'paid' &&
+      b.disputeStatus === 'none' &&
+      !b.escrowReleasedAt &&
+      hoursSincePaid !== null &&
+      hoursSincePaid < 48
+
     return {
       id: b.id,
       bookingRef: b.bookingRef,
@@ -570,6 +583,9 @@ export const getBookingsByStudent = cache(async (studentId: string) => {
       leaseEndDate: b.leaseEndDate,
       paidAt: b.paidAt ? b.paidAt.toISOString() : null,
       createdAt: b.createdAt.toISOString(),
+      disputeStatus: b.disputeStatus,
+      escrowWindowOpen,
+      escrowReleasedAt: b.escrowReleasedAt ? b.escrowReleasedAt.toISOString() : null,
     }
   })
 })
@@ -700,4 +716,28 @@ export const getSavedRoomsByStudent = cache(async (studentId: string) => {
   }
 
   return results
+})
+
+// ════════════════════════════════════════════════════════════
+// getNotificationsByUser / getUnreadNotificationCount
+// ════════════════════════════════════════════════════════════
+export const getNotificationsByUser = cache(async (userId: string, limit = 20) => {
+  const rows = await db.select().from(notifications)
+    .where(eq(notifications.userId, userId))
+    .orderBy(desc(notifications.createdAt))
+    .limit(limit)
+
+  return rows.map((n) => ({
+    id: n.id,
+    message: n.message,
+    type: n.type,
+    isRead: n.isRead,
+    createdAt: n.createdAt.toISOString(),
+  }))
+})
+
+export const getUnreadNotificationCount = cache(async (userId: string): Promise<number> => {
+  const rows = await db.select({ id: notifications.id }).from(notifications)
+    .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)))
+  return rows.length
 })

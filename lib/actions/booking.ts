@@ -4,9 +4,11 @@
 import { eq, and } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { db } from '../db'
-import { bookings, rooms, roomLeaseOptions } from '../db/schema'
+import { bookings, rooms, roomLeaseOptions, properties, landlords, students, users } from '../db/schema'
 import { auth } from '../auth'
 import { SERVICE_FEE_RATE } from '../constants'
+import { createNotification } from '../notifications/create'
+import { sendEmail, bookingConfirmedEmailHtml, newBookingEmailHtml } from '../email/sendEmail'
 
 
 const VALID_PAYMENT_METHODS = ['card', 'bank_transfer', 'ussd', 'opay', 'moniepoint', 'qr', 'mobile_money']
@@ -188,7 +190,6 @@ export async function finalizeConfirmedBooking(reference: string): Promise<{ suc
     return { error: 'Could not verify payment with Paystack.' }
   }
 
-
   if (!verifyData?.status || verifyData.data?.status !== 'success') {
     return { error: 'Payment was not successful.' }
   }
@@ -217,15 +218,7 @@ export async function finalizeConfirmedBooking(reference: string): Promise<{ suc
   try {
     let conflict = false
 
-    // NOTE: neon-http does not provide the same hard rollback guarantee
-    // as a pooled connection. See earlier note — drizzle-orm/neon-serverless
-    // is the upgrade path if this two-table write ever needs a true
-    // atomic rollback guarantee.
     await db.transaction(async (tx) => {
-      // Conditional update — only succeeds if the room is still 'available'.
-      // If another confirmed booking already claimed this room, this
-      // returns zero rows and we treat it as a conflict rather than
-      // silently confirming a double-booking.
       const claimedRoom = await tx.update(rooms)
         .set({ status: 'booked' })
         .where(and(eq(rooms.id, booking.roomId), eq(rooms.status, 'available')))
@@ -248,9 +241,6 @@ export async function finalizeConfirmedBooking(reference: string): Promise<{ suc
       console.error('CONFLICT: room already booked, payment succeeded — flagging for manual refund', {
         bookingId, roomId: booking.roomId, reference,
       })
-      // Mark this booking clearly as paid-but-cancelled so it surfaces
-      // in admin/ops queries as needing a manual refund, instead of
-      // silently double-confirming the room.
       await db.update(bookings).set({
         status: 'cancelled',
         paymentStatus: 'paid',
@@ -259,6 +249,51 @@ export async function finalizeConfirmedBooking(reference: string): Promise<{ suc
       }).where(eq(bookings.id, bookingId))
 
       return { error: 'This room was booked by someone else moments before your payment completed. Your payment was successful and will be refunded — our support team has been notified. Please contact support with your reference for a fast-tracked refund.' }
+    }
+
+    // ── Notifications & emails — best-effort, never fails the booking ──
+    // Runs exactly once: the alreadyConfirmed short-circuit above prevents
+    // this from re-firing on webhook/success-page double-calls for the
+    // same booking.
+    try {
+      const [room] = await db.select().from(rooms).where(eq(rooms.id, booking.roomId))
+      if (room) {
+        const [property] = await db.select().from(properties).where(eq(properties.id, room.propertyId))
+        const [studentRow] = await db.select().from(students).where(eq(students.id, booking.studentId))
+        const studentUser = studentRow
+          ? (await db.select().from(users).where(eq(users.id, studentRow.userId)))[0]
+          : undefined
+
+        let landlordUser: typeof users.$inferSelect | undefined
+        if (property) {
+          const [landlordRow] = await db.select().from(landlords).where(eq(landlords.id, property.landlordId))
+          if (landlordRow) {
+            landlordUser = (await db.select().from(users).where(eq(users.id, landlordRow.userId)))[0]
+          }
+        }
+
+        const roomLabel = `Room ${room.roomNumber}${property ? ` at ${property.name}` : ''}`
+
+        if (studentUser) {
+          await createNotification(studentUser.id, `Your booking for ${roomLabel} is confirmed! 🎉`, 'booking_confirmed')
+          sendEmail({
+            to: studentUser.email,
+            subject: 'Your Netlodge booking is confirmed!',
+            html: bookingConfirmedEmailHtml(studentUser.firstName, roomLabel, booking.bookingRef),
+          }).catch((err) => console.error('booking confirmation email failed', err))
+        }
+
+        if (landlordUser) {
+          await createNotification(landlordUser.id, `You have a new confirmed booking for ${roomLabel}.`, 'new_booking')
+          sendEmail({
+            to: landlordUser.email,
+            subject: 'New booking on Netlodge',
+            html: newBookingEmailHtml(landlordUser.firstName, roomLabel, booking.bookingRef),
+          }).catch((err) => console.error('new booking email failed', err))
+        }
+      }
+    } catch (notifyErr) {
+      console.error('finalizeConfirmedBooking: post-confirm notification failed', notifyErr)
     }
 
     revalidatePath('/booking')

@@ -1,5 +1,5 @@
 // lib/auth.ts
-import NextAuth from 'next-auth'
+import NextAuth, { CredentialsSignin } from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import Google from 'next-auth/providers/google'
 import bcrypt from 'bcryptjs'
@@ -7,6 +7,14 @@ import { eq } from 'drizzle-orm'
 import { db } from './db'
 import { users, students, landlords } from './db/schema'
 import { sendEmail, welcomeEmailHtml } from './email/sendEmail'
+
+// Distinct error code so the login page (or any future caller) can special-case
+// "your account exists but isn't verified yet" instead of a generic invalid-
+// credentials message. Auth.js v5 surfaces AuthError subclasses' `code` via
+// the `error` field returned from signIn({ redirect: false }).
+class EmailNotVerifiedError extends CredentialsSignin {
+  code = 'email_not_verified'
+}
 
 async function resolveRoleRecordId(dbUser: typeof users.$inferSelect): Promise<string | null> {
   if (dbUser.role === 'student') {
@@ -35,53 +43,46 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        try {
-          console.log('1. Starting authorize...');
-          if (!credentials?.email || !credentials?.password) {
-            console.log('❌ Failed: Missing email or password');
-            return null;
-          }
+        if (!credentials?.email || !credentials?.password) {
+          return null
+        }
 
-          const email = String(credentials.email).toLowerCase().trim();
-          const password = String(credentials.password);
-          console.log('2. Looking up user:', email);
+        const email = String(credentials.email).toLowerCase().trim()
+        const password = String(credentials.password)
 
-          const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
-          
-          if (!user) {
-            console.log('❌ Failed: User not found in database');
-            return null;
-          }
-          
-          if (!user.passwordHash) {
-            console.log('❌ Failed: User exists but has no password (OAuth account)');
-            return null;
-          }
+        const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1)
 
-          console.log('3. User found. Comparing passwords...');
-          const passwordMatches = await bcrypt.compare(password, user.passwordHash);
-          
-          if (!passwordMatches) {
-            console.log('❌ Failed: Password does not match hash');
-            return null;
-          }
+        if (!user) {
+          return null
+        }
 
-          console.log('4. Password matched! Resolving role...');
-          const roleRecordId = await resolveRoleRecordId(user);
+        if (!user.passwordHash) {
+          // OAuth-only account, no password to check against.
+          return null
+        }
 
-          console.log('✅ Login successful for:', email);
-          return {
-            id: user.id,
-            email: user.email,
-            role: user.role,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            isEmailVerified: user.isEmailVerified,
-            roleRecordId: roleRecordId,
-          };
-        } catch (error) {
-          console.error('❌ AUTHORIZE CRASHED:', error);
-          return null;
+        const passwordMatches = await bcrypt.compare(password, user.passwordHash)
+        if (!passwordMatches) {
+          return null
+        }
+
+        // Block login until the account's email has been verified. Google
+        // accounts are marked isEmailVerified: true at creation and never
+        // hit this path (they use the Google provider, not Credentials).
+        if (!user.isEmailVerified) {
+          throw new EmailNotVerifiedError()
+        }
+
+        const roleRecordId = await resolveRoleRecordId(user)
+
+        return {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          isEmailVerified: user.isEmailVerified,
+          roleRecordId: roleRecordId,
         }
       }
     }),
@@ -110,7 +111,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           isEmailVerified: true,
         })
 
-        // Fire-and-forget — a slow/failed email send should never block sign-in.
         sendEmail({
           to: email,
           subject: 'Welcome to Netlodge! 🎉',

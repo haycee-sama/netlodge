@@ -21,6 +21,7 @@ import {
   FileCheck,
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
+import NotificationBell from '../../components/NotificationBell'
 
 const NAV_ITEMS = [
   { href: '/landlord/dashboard',    icon: LayoutDashboard, label: 'Dashboard' },
@@ -210,6 +211,7 @@ export default function LandlordLayout({ children, title, subtitle }) {
           </div>
 
           <div className="flex items-center gap-3">
+            <NotificationBell selfFetch />
             <Link
               href="/landlord/property/new"
               className="hidden sm:flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"

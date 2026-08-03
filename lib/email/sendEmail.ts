@@ -79,3 +79,69 @@ export function welcomeEmailHtml(firstName: string) {
     </div>
   `
 }
+
+export function bookingConfirmedEmailHtml(firstName: string, roomLabel: string, bookingRef: string) {
+  return `
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+      <h2 style="color:#f97316;">Booking confirmed, ${firstName}! 🎉</h2>
+      <p style="color:#374151;">
+        Your booking for <strong>${roomLabel}</strong> is confirmed and your payment is now held in escrow.
+      </p>
+      <div style="background:#fff7ed;color:#ea580c;padding:12px 20px;border-radius:12px;margin:20px 0;font-weight:bold;">
+        Booking Reference: ${bookingRef}
+      </div>
+      <p style="color:#374151;">You have 48 hours to visit the room and confirm it matches the listing. If it doesn't, you can file a dispute from your bookings page.</p>
+    </div>
+  `
+}
+
+export function newBookingEmailHtml(firstName: string, roomLabel: string, bookingRef: string) {
+  return `
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+      <h2 style="color:#f97316;">You have a new booking, ${firstName}!</h2>
+      <p style="color:#374151;">
+        <strong>${roomLabel}</strong> has just been booked and paid for.
+      </p>
+      <div style="background:#fff7ed;color:#ea580c;padding:12px 20px;border-radius:12px;margin:20px 0;font-weight:bold;">
+        Booking Reference: ${bookingRef}
+      </div>
+      <p style="color:#374151;">Funds are held in escrow for 48 hours before being released to your registered bank account.</p>
+    </div>
+  `
+}
+
+export function disputeFiledLandlordEmailHtml(firstName: string, roomLabel: string, reason: string, bookingRef: string) {
+  return `
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+      <h2 style="color:#dc2626;">A dispute was filed — ${roomLabel}</h2>
+      <p style="color:#374151;">Hi ${firstName}, a student has filed a dispute on booking <strong>${bookingRef}</strong>.</p>
+      <div style="background:#fef2f2;color:#b91c1c;padding:12px 20px;border-radius:12px;margin:20px 0;">
+        ${reason}
+      </div>
+      <p style="color:#374151;">Escrow release for this booking is paused while our team reviews. We may contact you for more information.</p>
+    </div>
+  `
+}
+
+export function disputeFiledStudentEmailHtml(firstName: string, roomLabel: string, bookingRef: string) {
+  return `
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+      <h2 style="color:#f97316;">Your dispute has been filed</h2>
+      <p style="color:#374151;">Hi ${firstName}, we've received your dispute for <strong>${roomLabel}</strong> (booking ${bookingRef}).</p>
+      <p style="color:#374151;">Our team will review within 24 hours. Escrow funds are held until this is resolved.</p>
+    </div>
+  `
+}
+
+export function verificationStatusEmailHtml(firstName: string, role: 'student' | 'landlord', status: 'approved' | 'rejected') {
+  const heading = status === 'approved' ? 'You are verified! 🎉' : 'Verification update needed'
+  const body = status === 'approved'
+    ? `Congratulations ${firstName}, your ${role} verification has been approved.`
+    : `Hi ${firstName}, we were unable to verify your ${role} documents. Please log in and resubmit.`
+  return `
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+      <h2 style="color:#f97316;">${heading}</h2>
+      <p style="color:#374151;">${body}</p>
+    </div>
+  `
+}

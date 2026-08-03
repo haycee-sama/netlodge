@@ -6,7 +6,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import LandlordLayout from '../components/LandlordLayout'
 import {
   CheckCircle, Clock, XCircle, Calendar, User, Search,
-  ChevronDown, ChevronUp, Phone, Mail, Download,
+  ChevronDown, ChevronUp, Phone, Mail, Download, ShieldAlert,
 } from 'lucide-react'
 
 const STATUS_CONFIG = {
@@ -22,13 +22,22 @@ const PAYMENT_CONFIG = {
   failed: 'bg-red-100 text-red-600',
 }
 
+const DISPUTE_STATUS_CONFIG = {
+  pending:          { label: 'Dispute Filed — Action Needed', badge: 'bg-red-100 text-red-700' },
+  resolved_refund:  { label: 'Dispute Resolved — Refunded', badge: 'bg-blue-100 text-blue-700' },
+  resolved_release: { label: 'Dispute Resolved — Funds Released', badge: 'bg-green-100 text-green-700' },
+}
+
 function BookingRow({ booking }) {
   const [expanded, setExpanded] = useState(false)
   const config = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.draft
   const StatusIcon = config.icon
+  const disputeInfo = booking.disputeStatus && booking.disputeStatus !== 'none'
+    ? DISPUTE_STATUS_CONFIG[booking.disputeStatus]
+    : null
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+    <div className={`bg-white rounded-2xl border overflow-hidden ${disputeInfo && booking.disputeStatus === 'pending' ? 'border-red-200' : 'border-gray-100'}`}>
       <div className="p-5">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -41,7 +50,7 @@ function BookingRow({ booking }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
             <span className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${config.badge}`}>
               <StatusIcon className="w-3 h-3" />
               {config.label}
@@ -49,6 +58,12 @@ function BookingRow({ booking }) {
             <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${PAYMENT_CONFIG[booking.paymentStatus]}`}>
               {booking.paymentStatus}
             </span>
+            {disputeInfo && (
+              <span className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${disputeInfo.badge}`}>
+                <ShieldAlert className="w-3 h-3" />
+                {disputeInfo.label}
+              </span>
+            )}
           </div>
 
           <div className="text-right shrink-0">
@@ -64,6 +79,16 @@ function BookingRow({ booking }) {
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
         </div>
+
+        {disputeInfo && booking.disputeStatus === 'pending' && !expanded && (
+          <button
+            onClick={() => setExpanded(true)}
+            className="w-full text-left mt-3 flex items-start gap-2 bg-red-50 border border-red-100 rounded-xl px-3 py-2.5"
+          >
+            <ShieldAlert className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+            <p className="text-xs text-red-700">A student filed a dispute on this booking. Click to view the reason.</p>
+          </button>
+        )}
 
         <div className="flex flex-wrap gap-4 mt-3 pt-3 border-t border-gray-50">
           <div className="flex items-center gap-1.5 text-xs text-gray-500">
@@ -82,6 +107,30 @@ function BookingRow({ booking }) {
 
       {expanded && (
         <div className="border-t border-gray-100 p-5 bg-gray-50">
+
+          {disputeInfo && (
+            <div className={`rounded-xl p-4 mb-5 border ${
+              booking.disputeStatus === 'pending' ? 'bg-red-50 border-red-100' : 'bg-blue-50 border-blue-100'
+            }`}>
+              <div className="flex items-center gap-2 mb-2">
+                <ShieldAlert className={`w-4 h-4 ${booking.disputeStatus === 'pending' ? 'text-red-500' : 'text-blue-500'}`} />
+                <p className={`text-sm font-semibold ${booking.disputeStatus === 'pending' ? 'text-red-700' : 'text-blue-700'}`}>
+                  {disputeInfo.label}
+                </p>
+              </div>
+              <p className="text-xs text-gray-500 mb-1">Filed {booking.disputedAt ? new Date(booking.disputedAt).toLocaleString() : ''}</p>
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-white rounded-lg p-3 border border-gray-100 mt-2">
+                {booking.disputeReason || 'No reason provided.'}
+              </p>
+              {booking.disputeStatus === 'pending' && (
+                <p className="text-xs text-gray-500 mt-3">
+                  This dispute is under review by the Netlodge team. Escrow release is on hold until it is resolved.
+                  You do not need to take action here — our support team will contact you if evidence is needed.
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Student Contact</p>
@@ -113,6 +162,9 @@ function BookingRow({ booking }) {
                   <span>You receive</span>
                   <span className="text-green-600">₦{booking.roomPrice.toLocaleString()}</span>
                 </div>
+                {booking.escrowReleasedAt && (
+                  <p className="text-xs text-green-600 mt-1">Released {new Date(booking.escrowReleasedAt).toLocaleDateString()}</p>
+                )}
               </div>
             </div>
           </div>
@@ -134,7 +186,7 @@ export default function LandlordBookingsClient({ bookings }) {
   const [filter, setFilter] = useState('All')
   const shouldReduceMotion = useReducedMotion()
 
-  const FILTERS = ['All', 'confirmed', 'pending_payment', 'cancelled']
+  const FILTERS = ['All', 'confirmed', 'pending_payment', 'cancelled', 'disputed']
 
   const filtered = bookings.filter((b) => {
     const matchesSearch =
@@ -142,21 +194,33 @@ export default function LandlordBookingsClient({ bookings }) {
       b.studentName.toLowerCase().includes(search.toLowerCase()) ||
       b.roomLabel.toLowerCase().includes(search.toLowerCase()) ||
       b.bookingRef.toLowerCase().includes(search.toLowerCase())
-    const matchesFilter = filter === 'All' || b.status === filter
+    const matchesFilter =
+      filter === 'All' ||
+      (filter === 'disputed' ? b.disputeStatus === 'pending' : b.status === filter)
     return matchesSearch && matchesFilter
   })
 
   const totalRevenue = bookings.filter((b) => b.paymentStatus === 'paid').reduce((sum, b) => sum + b.roomPrice, 0)
+  const disputedCount = bookings.filter((b) => b.disputeStatus === 'pending').length
 
   return (
     <LandlordLayout title="Booking Requests" subtitle={`${bookings.length} total bookings`}>
       <div className="flex flex-col gap-6">
 
+        {disputedCount > 0 && (
+          <div className="flex items-center gap-3 bg-red-50 border border-red-100 rounded-2xl px-4 py-3">
+            <ShieldAlert className="w-5 h-5 text-red-500 shrink-0" />
+            <p className="text-sm text-red-700">
+              <span className="font-semibold">{disputedCount} booking{disputedCount !== 1 ? 's' : ''}</span> {disputedCount !== 1 ? 'have' : 'has'} an open dispute. Escrow release is paused for {disputedCount !== 1 ? 'these' : 'this'} booking{disputedCount !== 1 ? 's' : ''}.
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
             { label: 'Total Bookings', value: bookings.length, color: 'text-gray-900' },
             { label: 'Confirmed',      value: bookings.filter((b) => b.status === 'confirmed').length, color: 'text-green-600' },
-            { label: 'Pending',        value: bookings.filter((b) => b.status === 'pending_payment').length, color: 'text-blue-600' },
+            { label: 'Disputed',       value: disputedCount, color: disputedCount > 0 ? 'text-red-600' : 'text-gray-900' },
             { label: 'Total Received', value: `₦${(totalRevenue / 1000000).toFixed(2)}M`, color: 'text-orange-500' },
           ].map((stat) => (
             <div key={stat.label} className="bg-white rounded-2xl border border-gray-100 p-4">
