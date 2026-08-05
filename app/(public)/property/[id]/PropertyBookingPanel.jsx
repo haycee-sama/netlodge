@@ -19,9 +19,9 @@ const STATUS_DOTS = {
   Maintenance: 'bg-gray-400',
 }
 
+const BLUR_DATA_URL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+
 // ── Shared detail content ───────────────────────────────────────
-// Rendered inside BOTH the desktop sticky sidebar and the mobile
-// bottom sheet, so there is exactly one place this markup lives.
 function RoomDetailCard({ room, blockName, propertyName }) {
   const hasImage = room.images && room.images.length > 0
   return (
@@ -35,6 +35,8 @@ function RoomDetailCard({ room, blockName, propertyName }) {
             sizes="(max-width: 1024px) 100vw, 400px"
             className="object-cover"
             priority
+            placeholder="blur"
+            blurDataURL={BLUR_DATA_URL}
           />
         ) : (
           <Building2 className="w-10 h-10 text-gray-400" />
@@ -105,8 +107,6 @@ function RoomDetailCard({ room, blockName, propertyName }) {
   )
 }
 
-// Desktop-only empty state — mobile never shows this, since it added
-// no value below the fold on small screens in the first place.
 function EmptyState() {
   return (
     <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-8 flex flex-col items-center text-center">
@@ -136,10 +136,6 @@ function EmptyState() {
   )
 }
 
-// ── Mobile bottom sheet ─────────────────────────────────────────
-// Opens on-demand only (tap the summary bar), never auto-triggered
-// by room selection — reuses the focus-trap/Escape pattern from
-// ImageGalleryModal, plus vertical drag-to-dismiss.
 function MobileSheet({ room, blockName, propertyName, isOpen, onClose }) {
   const sheetRef = useRef(null)
   const shouldReduceMotion = useReducedMotion()
@@ -230,9 +226,6 @@ function MobileSheet({ room, blockName, propertyName, isOpen, onClose }) {
   )
 }
 
-// ── Mobile sticky summary bar ───────────────────────────────────
-// Appears the instant a room is selected — zero scroll, zero
-// interruption. This is the direct fix for the reported bug.
 function MobileSummaryBar({ room, onExpand }) {
   const shouldReduceMotion = useReducedMotion()
   const hasImage = room?.images && room.images.length > 0
@@ -251,7 +244,15 @@ function MobileSummaryBar({ room, onExpand }) {
           <div className="flex items-center gap-3 min-w-0 text-left">
             <div className="relative w-10 h-10 rounded-xl bg-orange-500 overflow-hidden shrink-0 flex items-center justify-center">
               {hasImage ? (
-                <Image src={room.images[0].url} alt="" fill sizes="40px" className="object-cover" />
+                <Image
+                  src={room.images[0].url}
+                  alt=""
+                  fill
+                  sizes="40px"
+                  className="object-cover"
+                  placeholder="blur"
+                  blurDataURL={BLUR_DATA_URL}
+                />
               ) : (
                 <span className="text-sm font-bold">{room.number}</span>
               )}
@@ -270,8 +271,6 @@ function MobileSummaryBar({ room, onExpand }) {
   )
 }
 
-// ── Main component ───────────────────────────────────────────────
-
 export default function PropertyBookingPanel({ property }) {
   const [activeBlock, setActiveBlock]   = useState(property.blocks[0].id)
   const [selectedRoom, setSelectedRoom] = useState(null)
@@ -288,9 +287,6 @@ export default function PropertyBookingPanel({ property }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-      {/* Visually hidden live region — announces selection to screen
-          readers regardless of whether the mobile bar or desktop
-          panel is what visually changed. */}
       <div aria-live="polite" className="sr-only">
         {selectedRoom
           ? `Room ${selectedRoom.number}, ${selectedRoom.type} selected. ₦${selectedRoom.price.toLocaleString()} per year.`
@@ -369,7 +365,6 @@ export default function PropertyBookingPanel({ property }) {
         </div>
       </div>
 
-      {/* Desktop sticky sidebar — unchanged behavior, lg+ only */}
       <div className="hidden lg:block lg:col-span-1">
         <div className="sticky top-24">
           {selectedRoom ? (
@@ -382,7 +377,6 @@ export default function PropertyBookingPanel({ property }) {
         </div>
       </div>
 
-      {/* Mobile: instant feedback bar + on-demand full sheet */}
       <MobileSummaryBar room={selectedRoom} onExpand={() => setSheetOpen(true)} />
       <MobileSheet
         room={selectedRoom}

@@ -1,5 +1,6 @@
 import './globals.css'
 import Providers from './providers'
+import ToastProvider from './components/ToastProvider'
 
 const siteUrl = 'https://netlodge.ng'
 const defaultTitle = 'Netlodge — Verified Student Housing in Nigeria'
@@ -22,7 +23,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className="bg-gray-50 font-body antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          <ToastProvider>{children}</ToastProvider>
+        </Providers>
       </body>
     </html>
   )

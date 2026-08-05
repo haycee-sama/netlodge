@@ -463,6 +463,7 @@ export const getBookingsByLandlord = cache(async (landlordId: string) => {
       createdAt: b.createdAt.toISOString(),
       disputeStatus: b.disputeStatus,
       disputeReason: b.disputeReason,
+      disputeEvidence: (b.disputeEvidence ?? []) as { url: string; name: string }[],
       disputedAt: b.disputedAt ? b.disputedAt.toISOString() : null,
       escrowReleasedAt: b.escrowReleasedAt ? b.escrowReleasedAt.toISOString() : null,
     }
@@ -508,6 +509,18 @@ export const getLandlordProfileById = cache(async (landlordId: string) => {
     bankName: landlord.bankName ?? '',
     bankAccountName: landlord.bankAccountName ?? '',
     bankAccountNumberEncrypted: landlord.bankAccountNumberEncrypted, // server-only
+    leaseConfig: landlord.leaseConfig as {
+      enabled: { fullYear: boolean; perSemester: boolean; halfYear: boolean }
+      reminderDays: string
+      minStay: string
+    },
+    notificationPreferences: landlord.notificationPreferences as {
+      newBookingRequests: boolean
+      paymentReleased: boolean
+      disputesFiled: boolean
+      leaseExpiryReminders: boolean
+      platformUpdates: boolean
+    },
     email: user?.email ?? '',
     phone: user?.phone ?? '',
     firstName: user?.firstName ?? '',
@@ -740,4 +753,198 @@ export const getUnreadNotificationCount = cache(async (userId: string): Promise<
   const rows = await db.select({ id: notifications.id }).from(notifications)
     .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)))
   return rows.length
+})
+
+// ════════════════════════════════════════════════════════════
+// ADMIN: getAdminDashboardMetrics
+// ════════════════════════════════════════════════════════════
+export const getAdminDashboardMetrics = cache(async () => {
+  const [userRows, propertyRows, pendingStudents, pendingLandlords, openDisputeRows, paidBookingRows] =
+    await Promise.all([
+      db.select({ id: users.id }).from(users),
+      db.select({ id: properties.id }).from(properties),
+      db.select({ id: students.id }).from(students).where(eq(students.verificationStatus, 'pending')),
+      db.select({ id: landlords.id }).from(landlords).where(eq(landlords.verificationStatus, 'pending')),
+      db.select({ id: bookings.id }).from(bookings).where(eq(bookings.disputeStatus, 'pending')),
+      db.select({ serviceFee: bookings.serviceFee }).from(bookings).where(eq(bookings.paymentStatus, 'paid')),
+    ])
+
+  // Platform revenue = the service fee cut, not the full room price
+  // (room price is the landlord's money, held then paid out — it was
+  // never platform revenue).
+  const totalRevenue = paidBookingRows.reduce((sum, b) => sum + Number(b.serviceFee), 0)
+
+  return {
+    totalUsers: userRows.length,
+    totalProperties: propertyRows.length,
+    pendingKycCount: pendingStudents.length + pendingLandlords.length,
+    activeDisputes: openDisputeRows.length,
+    totalRevenue,
+  }
+})
+
+// ════════════════════════════════════════════════════════════
+// ADMIN: getPendingKycUsers — students and landlords with
+// verificationStatus = 'pending', normalized into one shape so the
+// KYC page can render both in a single list.
+// ════════════════════════════════════════════════════════════
+export const getPendingKycUsers = cache(async () => {
+  const pendingStudentRows = await db.select().from(students).where(eq(students.verificationStatus, 'pending'))
+  const pendingLandlordRows = await db.select().from(landlords).where(eq(landlords.verificationStatus, 'pending'))
+
+  const studentUserIds = pendingStudentRows.map((s) => s.userId)
+  const landlordUserIds = pendingLandlordRows.map((l) => l.userId)
+  const allUserIds = [...studentUserIds, ...landlordUserIds]
+
+  const userRows = allUserIds.length ? await db.select().from(users).where(inArray(users.id, allUserIds)) : []
+  const usersMap = new Map(userRows.map((u) => [u.id, u]))
+
+  const studentUniIds = pendingStudentRows.map((s) => s.universityId)
+  const uniMap = await fetchUniversitiesMap(studentUniIds)
+
+  const studentEntries = pendingStudentRows.map((s) => {
+    const user = usersMap.get(s.userId)
+    return {
+      userId: s.userId,
+      roleType: 'student' as const,
+      firstName: user?.firstName ?? '',
+      lastName: user?.lastName ?? '',
+      email: user?.email ?? '',
+      phone: user?.phone ?? '',
+      university: uniMap.get(s.universityId)?.name ?? '',
+      course: s.course,
+      yearLevel: s.yearLevel,
+      kycDocuments: (s.kycDocuments as { type: string; url: string; name: string }[]) ?? [],
+      submittedAt: s.updatedAt.toISOString(),
+    }
+  })
+
+  const landlordEntries = pendingLandlordRows.map((l) => {
+    const user = usersMap.get(l.userId)
+    return {
+      userId: l.userId,
+      roleType: 'landlord' as const,
+      firstName: user?.firstName ?? '',
+      lastName: user?.lastName ?? '',
+      email: user?.email ?? '',
+      phone: user?.phone ?? '',
+      businessName: l.businessName ?? '',
+      kycDocuments: (l.kycDocuments as { type: string; url: string; name: string }[]) ?? [],
+      submittedAt: l.updatedAt.toISOString(),
+    }
+  })
+
+  return { students: studentEntries, landlords: landlordEntries }
+})
+
+// ════════════════════════════════════════════════════════════
+// ADMIN: getAllPropertiesForAdmin
+// ════════════════════════════════════════════════════════════
+export const getAllPropertiesForAdmin = cache(async () => {
+  const propertyRows = await db.select().from(properties)
+  if (propertyRows.length === 0) return []
+
+  const landlordIds = [...new Set(propertyRows.map((p) => p.landlordId))]
+  const landlordRows = await db.select().from(landlords).where(inArray(landlords.id, landlordIds))
+  const landlordsMap = new Map(landlordRows.map((l) => [l.id, l]))
+
+  const landlordUserIds = landlordRows.map((l) => l.userId)
+  const landlordUserRows = landlordUserIds.length ? await db.select().from(users).where(inArray(users.id, landlordUserIds)) : []
+  const landlordUsersMap = new Map(landlordUserRows.map((u) => [u.id, u]))
+
+  const citiesMap = await fetchCitiesMap(propertyRows.map((p) => p.cityId))
+  const universitiesMap = await fetchUniversitiesMap(propertyRows.map((p) => p.universityId))
+
+  const propertyIds = propertyRows.map((p) => p.id)
+  const roomRows = await db.select().from(rooms).where(inArray(rooms.propertyId, propertyIds))
+  const roomCountByProperty = new Map<string, number>()
+  for (const r of roomRows) {
+    roomCountByProperty.set(r.propertyId, (roomCountByProperty.get(r.propertyId) ?? 0) + 1)
+  }
+
+  return propertyRows.map((p) => {
+    const landlord = landlordsMap.get(p.landlordId)
+    const landlordUser = landlord ? landlordUsersMap.get(landlord.userId) : undefined
+
+    return {
+      id: p.id,
+      name: p.name,
+      address: p.address,
+      city: citiesMap.get(p.cityId)?.name ?? '',
+      university: universitiesMap.get(p.universityId)?.name ?? '',
+      isVerified: p.isVerified,
+      totalRooms: roomCountByProperty.get(p.id) ?? 0,
+      landlordName: landlordUser ? `${landlordUser.firstName} ${landlordUser.lastName}` : (landlord?.businessName ?? 'Unknown'),
+      landlordVerified: landlord?.verificationStatus === 'approved',
+      createdAt: p.createdAt.toISOString(),
+    }
+  })
+})
+
+// ════════════════════════════════════════════════════════════
+// ADMIN: getOpenDisputes — bookings with disputeStatus = 'pending'
+// ════════════════════════════════════════════════════════════
+export const getOpenDisputes = cache(async () => {
+  const disputedBookings = await db.select().from(bookings).where(eq(bookings.disputeStatus, 'pending'))
+  if (disputedBookings.length === 0) return []
+
+  const roomIds = [...new Set(disputedBookings.map((b) => b.roomId))]
+  const roomRows = await db.select().from(rooms).where(inArray(rooms.id, roomIds))
+  const roomsMap = new Map(roomRows.map((r) => [r.id, r]))
+
+  const propertyIds = [...new Set(roomRows.map((r) => r.propertyId))]
+  const propertyRows = propertyIds.length ? await db.select().from(properties).where(inArray(properties.id, propertyIds)) : []
+  const propertiesMap = new Map(propertyRows.map((p) => [p.id, p]))
+
+  const landlordIds = [...new Set(propertyRows.map((p) => p.landlordId))]
+  const landlordRows = landlordIds.length ? await db.select().from(landlords).where(inArray(landlords.id, landlordIds)) : []
+  const landlordsMap = new Map(landlordRows.map((l) => [l.id, l]))
+
+  const studentIds = [...new Set(disputedBookings.map((b) => b.studentId))]
+  const studentRows = await db.select().from(students).where(inArray(students.id, studentIds))
+  const studentsMap = new Map(studentRows.map((s) => [s.id, s]))
+
+  const allUserIds = [
+    ...studentRows.map((s) => s.userId),
+    ...landlordRows.map((l) => l.userId),
+  ]
+  const userRows = allUserIds.length ? await db.select().from(users).where(inArray(users.id, allUserIds)) : []
+  const usersMap = new Map(userRows.map((u) => [u.id, u]))
+
+  return disputedBookings.map((b) => {
+    const room = roomsMap.get(b.roomId)
+    const property = room ? propertiesMap.get(room.propertyId) : undefined
+    const landlord = property ? landlordsMap.get(property.landlordId) : undefined
+    const landlordUser = landlord ? usersMap.get(landlord.userId) : undefined
+    const student = studentsMap.get(b.studentId)
+    const studentUser = student ? usersMap.get(student.userId) : undefined
+
+    return {
+      bookingId: b.id,
+      bookingRef: b.bookingRef,
+      roomLabel: room ? `Room ${room.roomNumber} — ${formatRoomType(room.roomType)}` : '',
+      propertyName: property?.name ?? '',
+      studentName: studentUser ? `${studentUser.firstName} ${studentUser.lastName}` : 'Unknown',
+      studentEmail: studentUser?.email ?? '',
+      landlordName: landlordUser ? `${landlordUser.firstName} ${landlordUser.lastName}` : (landlord?.businessName ?? 'Unknown'),
+      landlordEmail: landlordUser?.email ?? '',
+      roomPrice: Number(b.roomPrice),
+      totalAmount: Number(b.totalAmount),
+      disputeReason: b.disputeReason ?? '',
+      disputedAt: b.disputedAt ? b.disputedAt.toISOString() : null,
+      paidAt: b.paidAt ? b.paidAt.toISOString() : null,
+    }
+  })
+})
+
+// ════════════════════════════════════════════════════════════
+// getAllRoomIdsForSitemap — app/sitemap.js
+// Single query for every room id, used to build /rooms/[id] sitemap
+// entries. Replaces the old N+1 pattern of calling getPropertyById()
+// once per property just to read out room ids — this scales to any
+// number of properties/rooms with exactly one round trip.
+// ════════════════════════════════════════════════════════════
+export const getAllRoomIdsForSitemap = cache(async () => {
+  const rows = await db.select({ id: rooms.id }).from(rooms)
+  return rows.map((r) => r.id)
 })

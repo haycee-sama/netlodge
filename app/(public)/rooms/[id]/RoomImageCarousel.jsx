@@ -6,9 +6,9 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Building2, Expand } from 'lucide-react'
 import ImageGalleryModal from './ImageGalleryModal'
 
+const BLUR_DATA_URL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+
 export default function RoomImageCarousel({ images: rawImages }) {
-  // Guarantee every image has a stable, unique key regardless of
-  // whether the DB-stored images array includes an `id` field.
   const images = (rawImages || []).map((img, index) => ({
     ...img,
     id: img.id ?? `img-${index}`,
@@ -82,6 +82,8 @@ export default function RoomImageCarousel({ images: rawImages }) {
               sizes="(max-width: 640px) 100vw, 700px"
               className="object-cover pointer-events-none"
               priority
+              placeholder="blur"
+              blurDataURL={BLUR_DATA_URL}
             />
           </motion.div>
         </AnimatePresence>
@@ -119,6 +121,8 @@ export default function RoomImageCarousel({ images: rawImages }) {
                   fill
                   sizes="80px"
                   className="object-cover"
+                  placeholder="blur"
+                  blurDataURL={BLUR_DATA_URL}
                 />
               </button>
             )

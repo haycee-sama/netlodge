@@ -1,5 +1,5 @@
 // app/sitemap.js
-import { getPropertySummaries, getPropertyById } from '../lib/db/queries'
+import { getPropertySummaries, getAllRoomIdsForSitemap } from '../lib/db/queries'
 
 export default async function sitemap() {
   const baseUrl = 'https://netlodge.ng'
@@ -20,24 +20,16 @@ export default async function sitemap() {
     priority: 0.9,
   }))
 
-  // Fetch each property's full room list to build room-level sitemap
-  // entries. For very large catalogs, replace this with a single
-  // dedicated batched query (e.g. getAllRoomIdsForSitemap()) in
-  // lib/db/queries.ts instead of N calls to getPropertyById.
-  const fullProperties = await Promise.all(summaries.map((p) => getPropertyById(p.id)))
+  // Single batched query for every room id — replaces the old approach
+  // of calling getPropertyById() once per property to read out room ids.
+  const roomIds = await getAllRoomIdsForSitemap()
 
-  const roomRoutes = fullProperties.flatMap((property) =>
-    property
-      ? property.blocks.flatMap((block) =>
-          block.rooms.map((room) => ({
-            url: `${baseUrl}/rooms/${room.id}`,
-            lastModified: new Date(),
-            changeFrequency: 'daily',
-            priority: 0.8,
-          }))
-        )
-      : []
-  )
+  const roomRoutes = roomIds.map((id) => ({
+    url: `${baseUrl}/rooms/${id}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily',
+    priority: 0.8,
+  }))
 
   return [...staticRoutes, ...propertyRoutes, ...roomRoutes]
 }

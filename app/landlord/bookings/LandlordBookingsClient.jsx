@@ -2,6 +2,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { motion, useReducedMotion } from 'framer-motion'
 import LandlordLayout from '../components/LandlordLayout'
 import {
@@ -26,6 +27,36 @@ const DISPUTE_STATUS_CONFIG = {
   pending:          { label: 'Dispute Filed — Action Needed', badge: 'bg-red-100 text-red-700' },
   resolved_refund:  { label: 'Dispute Resolved — Refunded', badge: 'bg-blue-100 text-blue-700' },
   resolved_release: { label: 'Dispute Resolved — Funds Released', badge: 'bg-green-100 text-green-700' },
+}
+
+function DisputeEvidenceStrip({ evidence }) {
+  if (!evidence || evidence.length === 0) return null
+
+  return (
+    <div className="mt-3">
+      <p className="text-xs font-semibold text-gray-500 mb-2">Evidence Photos ({evidence.length})</p>
+      <div className="flex flex-wrap gap-2">
+        {evidence.map((file, index) => (
+          
+            key={file.url}
+            href={file.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200 hover:border-orange-300 transition-colors shrink-0"
+            aria-label={`Open evidence photo ${index + 1} of ${evidence.length} in a new tab`}
+          >
+            <Image
+              src={file.url}
+              alt={file.name || `Evidence photo ${index + 1}`}
+              fill
+              sizes="64px"
+              className="object-cover"
+            />
+          </a>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function BookingRow({ booking }) {
@@ -122,6 +153,9 @@ function BookingRow({ booking }) {
               <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-white rounded-lg p-3 border border-gray-100 mt-2">
                 {booking.disputeReason || 'No reason provided.'}
               </p>
+
+              <DisputeEvidenceStrip evidence={booking.disputeEvidence} />
+
               {booking.disputeStatus === 'pending' && (
                 <p className="text-xs text-gray-500 mt-3">
                   This dispute is under review by the Netlodge team. Escrow release is on hold until it is resolved.

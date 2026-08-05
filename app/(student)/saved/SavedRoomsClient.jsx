@@ -3,11 +3,13 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
   Heart, MapPin, Building2, X, ArrowRight, Search, ShieldCheck,
 } from 'lucide-react'
 import { toggleSaveRoom } from '../../../lib/actions/student'
+import { useToast } from '../../components/ToastProvider'
 
 const STATUS_DOT = { Available: 'bg-green-500', Booked: 'bg-red-500', Maintenance: 'bg-gray-400' }
 
@@ -16,15 +18,19 @@ export default function SavedRoomsClient({ savedRooms }) {
   const [removingId, setRemovingId] = useState(null)
   const [isPending, startTransition] = useTransition()
   const shouldReduceMotion = useReducedMotion()
+  const toast = useToast()
 
   function removeRoom(savedId, roomId) {
     setRemovingId(savedId)
     startTransition(async () => {
       const result = await toggleSaveRoom(roomId)
       setRemovingId(null)
-      if (!('error' in result)) {
-        setRooms((prev) => prev.filter((r) => r.id !== savedId))
+      if ('error' in result) {
+        toast.error(result.error)
+        return
       }
+      setRooms((prev) => prev.filter((r) => r.id !== savedId))
+      toast.success('Room removed from your saved list.')
     })
   }
 
@@ -66,8 +72,13 @@ export default function SavedRoomsClient({ savedRooms }) {
               >
                 <div className="relative h-44 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
                   {room.images?.[0] ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={room.images[0].url} alt={room.images[0].alt || ''} className="w-full h-full object-cover" />
+                    <Image
+                      src={room.images[0].url}
+                      alt={room.images[0].alt || ''}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="object-cover"
+                    />
                   ) : (
                     <Building2 className="w-10 h-10 text-gray-400" />
                   )}
@@ -76,17 +87,17 @@ export default function SavedRoomsClient({ savedRooms }) {
                     onClick={() => removeRoom(room.id, room.roomId)}
                     disabled={isPending && removingId === room.id}
                     aria-label={`Remove Room ${room.roomNumber} from saved rooms`}
-                    className="absolute top-3 right-3 w-11 h-11 bg-white rounded-full flex items-center justify-center shadow-sm hover:bg-red-50 hover:text-red-500 transition-colors text-gray-500 disabled:opacity-50"
+                    className="absolute top-3 right-3 w-11 h-11 bg-white rounded-full flex items-center justify-center shadow-sm hover:bg-red-50 hover:text-red-500 transition-colors text-gray-500 disabled:opacity-50 z-10"
                   >
                     <X className="w-4 h-4" />
                   </button>
 
-                  <div className="absolute top-3 left-3 flex items-center gap-1 bg-white rounded-full px-2 py-1 shadow-sm">
+                  <div className="absolute top-3 left-3 flex items-center gap-1 bg-white rounded-full px-2 py-1 shadow-sm z-10">
                     <ShieldCheck className="w-3.5 h-3.5 text-green-500" />
                     <span className="text-xs font-medium text-green-600">Verified</span>
                   </div>
 
-                  <span className={`absolute bottom-3 left-3 text-xs font-semibold text-white px-2.5 py-1 rounded-full ${STATUS_DOT[room.status] ?? 'bg-gray-400'}`}>
+                  <span className={`absolute bottom-3 left-3 text-xs font-semibold text-white px-2.5 py-1 rounded-full z-10 ${STATUS_DOT[room.status] ?? 'bg-gray-400'}`}>
                     {room.status}
                   </span>
                 </div>

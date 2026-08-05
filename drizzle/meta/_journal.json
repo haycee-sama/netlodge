@@ -29,6 +29,20 @@
       "when": 1785739011755,
       "tag": "0003_omniscient_doctor_strange",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785827639373,
+      "tag": "0004_organic_arachne",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785829629899,
+      "tag": "0005_flashy_jane_foster",
+      "breakpoints": true
     }
   ]
 }

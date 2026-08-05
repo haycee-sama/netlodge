@@ -13,11 +13,25 @@ export async function generateMetadata({ params }) {
   const description = `Book a verified room at ${property.name}, ${property.distanceToGate} from ${property.university} in ${property.city}. Escrow-protected payments, landlord verified.`
   const url = `https://netlodge.ng/property/${id}`
 
+  const roomWithImage = property.blocks
+    .flatMap((block) => block.rooms)
+    .find((room) => Array.isArray(room.images) && room.images.length > 0)
+  const firstImage = roomWithImage ? roomWithImage.images[0] : null
+  const ogImages = firstImage
+    ? [{ url: firstImage.url, alt: firstImage.alt || title }]
+    : undefined
+
   return {
     title, description,
     alternates: { canonical: url },
-    openGraph: { title, description, url, siteName: 'Netlodge', type: 'website' },
-    twitter: { card: 'summary_large_image', title, description },
+    openGraph: {
+      title, description, url, siteName: 'Netlodge', type: 'website',
+      images: ogImages,
+    },
+    twitter: {
+      card: 'summary_large_image', title, description,
+      images: firstImage ? [firstImage.url] : undefined,
+    },
   }
 }
 

@@ -9,7 +9,9 @@ import {
   Calendar,
   Clock,
   Info,
+  AlertCircle,
 } from 'lucide-react'
+import { updateLandlordSettings } from '../../../lib/actions/landlord'
 
 // ── Lease option config ───────────────────────────────────────
 const LEASE_OPTIONS = [
@@ -48,17 +50,14 @@ const SCHEDULE_INFO = {
   ],
 }
 
-export default function LeaseConfigClient() {
+export default function LeaseConfigClient({ initialLeaseConfig }) {
 
-  const [enabled, setEnabled] = useState({
-    fullYear:    true,
-    perSemester: false,
-    halfYear:    false,
-  })
-
-  const [reminderDays, setReminderDays] = useState('30')
-  const [minStay, setMinStay] = useState('fullYear')
+  const [enabled, setEnabled] = useState(initialLeaseConfig.enabled)
+  const [reminderDays, setReminderDays] = useState(initialLeaseConfig.reminderDays)
+  const [minStay, setMinStay] = useState(initialLeaseConfig.minStay)
   const [saved, setSaved] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   function toggleOption(id) {
     if (id === 'fullYear') return
@@ -67,9 +66,20 @@ export default function LeaseConfigClient() {
   }
 
   async function handleSave() {
-    // NOTE: still simulated — no lease_config table/server action exists
-    // yet. Out of scope for this pass; the auth gate above is the fix.
-    await new Promise((r) => setTimeout(r, 800))
+    setLoading(true)
+    setError('')
+
+    const result = await updateLandlordSettings({
+      leaseConfig: { enabled, reminderDays, minStay },
+    })
+
+    setLoading(false)
+
+    if ('error' in result) {
+      setError(result.error)
+      return
+    }
+
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
   }
@@ -88,6 +98,13 @@ export default function LeaseConfigClient() {
             You can override lease options per individual room when creating or editing a room.
           </p>
         </div>
+
+        {error && (
+          <div className="flex items-center gap-2 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+            <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
 
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <h2 className="font-bold text-gray-900 text-lg mb-2">Available Lease Durations</h2>
@@ -234,17 +251,20 @@ export default function LeaseConfigClient() {
         <div className="flex justify-end">
           <button
             onClick={handleSave}
+            disabled={loading}
             className={`flex items-center gap-2 font-bold px-6 py-3 rounded-xl transition-all ${
               saved
                 ? 'bg-green-500 text-white'
-                : 'bg-orange-500 hover:bg-orange-600 text-white'
+                : 'bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white'
             }`}
           >
             {saved ? (
               <>
                 <CheckCircle className="w-5 h-5" />
-                Settings Saved!
+                Settings Saved
               </>
+            ) : loading ? (
+              'Saving...'
             ) : (
               <>
                 <Save className="w-5 h-5" />

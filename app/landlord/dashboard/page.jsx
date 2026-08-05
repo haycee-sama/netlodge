@@ -3,16 +3,18 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import LandlordLayout from '../components/LandlordLayout'
 import { auth } from '../../../lib/auth'
-import { getPropertiesByLandlord } from '../../../lib/db/queries'
+import { getPropertiesByLandlord, getBookingsByLandlord } from '../../../lib/db/queries'
 import {
   Building2, BedDouble, CreditCard, TrendingUp, ArrowRight, Plus, Users, Calendar, FileCheck,
+  CheckCircle, Clock, XCircle,
 } from 'lucide-react'
 
-// Notifications/recent bookings remain static — no landlord notification
-// table and no getBookingsByLandlord query exist in Phase 1 (see Phase 2
-// outline). Everything below this comment that touches real data is DB-backed.
-const RECENT_BOOKINGS = []
-const NOTIFICATIONS = []
+const RECENT_BOOKING_STATUS_CONFIG = {
+  confirmed:       { label: 'Confirmed', badge: 'bg-green-100 text-green-700', icon: CheckCircle },
+  pending_payment: { label: 'Pending',   badge: 'bg-amber-100 text-amber-700', icon: Clock       },
+  draft:           { label: 'Draft',     badge: 'bg-gray-100 text-gray-500',   icon: Clock       },
+  cancelled:       { label: 'Cancelled', badge: 'bg-red-100 text-red-600',     icon: XCircle     },
+}
 
 export default async function LandlordDashboardPage() {
   const session = await auth()
@@ -22,7 +24,12 @@ export default async function LandlordDashboardPage() {
   const landlordId = session.user.roleRecordId
   if (!landlordId) redirect('/landlord/kyc')
 
-  const properties = await getPropertiesByLandlord(landlordId)
+  const [properties, allBookings] = await Promise.all([
+    getPropertiesByLandlord(landlordId),
+    getBookingsByLandlord(landlordId),
+  ])
+
+  const recentBookings = allBookings.slice(0, 4)
 
   const totalRooms = properties.reduce((sum, p) => sum + p.totalRooms, 0)
   const totalAvailable = properties.reduce((sum, p) => sum + p.availableRooms, 0)
@@ -116,10 +123,41 @@ export default async function LandlordDashboardPage() {
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-100 p-6">
-              <h2 className="font-bold text-gray-900 text-lg mb-3">Recent Bookings</h2>
-              <p className="text-sm text-gray-500">
-                Booking activity will appear here once students start booking your rooms.
-              </p>
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="font-bold text-gray-900 text-lg">Recent Bookings</h2>
+                <Link href="/landlord/bookings" className="text-sm text-orange-500 font-semibold hover:underline flex items-center gap-1">
+                  View all <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+
+              {recentBookings.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {recentBookings.map((booking) => {
+                    const config = RECENT_BOOKING_STATUS_CONFIG[booking.status] ?? RECENT_BOOKING_STATUS_CONFIG.draft
+                    const StatusIcon = config.icon
+                    return (
+                      <div key={booking.id} className="flex items-center gap-4 p-4 rounded-xl border border-gray-100">
+                        <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
+                          <span className="text-sm font-bold text-orange-500">{booking.studentName.charAt(0)}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{booking.studentName}</p>
+                          <p className="text-xs text-gray-500 truncate">{booking.roomLabel} · {booking.propertyName}</p>
+                        </div>
+                        <span className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${config.badge}`}>
+                          <StatusIcon className="w-3 h-3" />
+                          {config.label}
+                        </span>
+                        <p className="text-sm font-bold text-gray-900 shrink-0">₦{booking.roomPrice.toLocaleString()}</p>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-8">
+                  Booking activity will appear here once students start booking your rooms.
+                </p>
+              )}
             </div>
 
           </div>

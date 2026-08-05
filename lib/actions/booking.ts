@@ -1,7 +1,7 @@
 // lib/actions/booking.ts
 'use server'
 
-import { eq, and } from 'drizzle-orm'
+import { eq, and, inArray } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { db } from '../db'
 import { bookings, rooms, roomLeaseOptions, properties, landlords, students, users } from '../db/schema'
@@ -33,6 +33,10 @@ function toDateString(d: Date) {
 
 // ════════════════════════════════════════════════════════════
 // createBooking — creates a draft booking row
+//
+// DEDUPE GUARD: before inserting, checks for an existing draft or
+// pending_payment booking by this student for this exact room. If one
+// exists, its id is returned instead of creating a duplicate.
 // ════════════════════════════════════════════════════════════
 export async function createBooking(
   roomId: string,
@@ -45,6 +49,17 @@ export async function createBooking(
   }
   const studentId = session.user.roleRecordId
   if (!studentId) return { error: 'Student profile not found.' }
+
+  const [existingBooking] = await db.select().from(bookings).where(
+    and(
+      eq(bookings.studentId, studentId),
+      eq(bookings.roomId, roomId),
+      inArray(bookings.status, ['draft', 'pending_payment'])
+    )
+  )
+  if (existingBooking) {
+    return { success: true, bookingId: existingBooking.id }
+  }
 
   const [leaseOption] = await db.select().from(roomLeaseOptions).where(
     and(
@@ -90,6 +105,15 @@ export async function createBooking(
 // ════════════════════════════════════════════════════════════
 // confirmBookingPayment — draft → pending_payment, initializes a real
 // Paystack transaction, returns the hosted checkout URL to redirect to.
+//
+// CALLBACK URL: callback_url is set to our own /booking/success route
+// with bookingId already attached as a query param. Paystack appends
+// its own reference and trxref query params to this exact URL on
+// redirect after payment, so the success page always receives both
+// our bookingId and Paystack's reference in one browser navigation.
+// NEXT_PUBLIC_APP_URL must be set to the real production origin in
+// production (e.g. https://netlodge.ng); it falls back to localhost
+// for local development.
 // ════════════════════════════════════════════════════════════
 export async function confirmBookingPayment(bookingId: string, paymentMethod: string) {
   const session = await auth()
@@ -110,6 +134,7 @@ export async function confirmBookingPayment(bookingId: string, paymentMethod: st
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const amountKobo = Math.round(Number(booking.totalAmount) * 100)
+  const callbackUrl = `${appUrl}/booking/success?bookingId=${bookingId}`
 
   try {
     const paystackRes = await fetch(`${PAYSTACK_BASE_URL}/transaction/initialize`, {
@@ -122,7 +147,7 @@ export async function confirmBookingPayment(bookingId: string, paymentMethod: st
         email: session.user.email,
         amount: amountKobo,
         currency: 'NGN',
-        callback_url: `${appUrl}/booking/success?bookingId=${bookingId}`,
+        callback_url: callbackUrl,
         metadata: { bookingId, studentId },
       }),
     })
@@ -141,8 +166,6 @@ export async function confirmBookingPayment(bookingId: string, paymentMethod: st
         paymentReference: paystackData.data.reference,
       }).where(eq(bookings.id, bookingId))
     } catch (err: any) {
-      // Hits the partial unique index (uniq_active_booking_per_room) if
-      // another booking for this room is already pending_payment/confirmed.
       const pgCode = err?.code ?? err?.cause?.code
       if (pgCode === '23505') {
         return { error: 'This room was just reserved by another student. Please choose a different room.' }
@@ -159,19 +182,9 @@ export async function confirmBookingPayment(bookingId: string, paymentMethod: st
 
 // ════════════════════════════════════════════════════════════
 // finalizeConfirmedBooking — the ONLY path that ever marks a booking
-// paid/confirmed. Takes a reference, not a bookingId — always
-// independently re-verifies with Paystack's /transaction/verify
-// endpoint and pulls bookingId out of PAYSTACK's own response, never
-// trusting a caller-supplied claim. Called by both the webhook and the
-// /booking/success page fallback; idempotent, safe to call twice for
-// the same event.
-//
-// RACE-CONDITION FIX: the room's status is flipped to 'booked' with a
-// WHERE status = 'available' guard. If a concurrent booking already
-// claimed the room (e.g. two students paid within seconds of each
-// other), this update returns zero rows, we detect that as a genuine
-// conflict, and we do NOT confirm the second booking — instead we
-// cancel it and flag it for a manual refund review.
+// paid/confirmed. Independently re-verifies with Paystack's own
+// /transaction/verify endpoint, never trusts a caller-supplied claim.
+// Idempotent, safe to call twice for the same event.
 // ════════════════════════════════════════════════════════════
 export async function finalizeConfirmedBooking(reference: string): Promise<{ success: true; bookingRef: string; alreadyConfirmed?: boolean } | { error: string }> {
   if (!reference) return { error: 'Missing payment reference.' }
@@ -251,10 +264,6 @@ export async function finalizeConfirmedBooking(reference: string): Promise<{ suc
       return { error: 'This room was booked by someone else moments before your payment completed. Your payment was successful and will be refunded — our support team has been notified. Please contact support with your reference for a fast-tracked refund.' }
     }
 
-    // ── Notifications & emails — best-effort, never fails the booking ──
-    // Runs exactly once: the alreadyConfirmed short-circuit above prevents
-    // this from re-firing on webhook/success-page double-calls for the
-    // same booking.
     try {
       const [room] = await db.select().from(rooms).where(eq(rooms.id, booking.roomId))
       if (room) {
@@ -275,7 +284,7 @@ export async function finalizeConfirmedBooking(reference: string): Promise<{ suc
         const roomLabel = `Room ${room.roomNumber}${property ? ` at ${property.name}` : ''}`
 
         if (studentUser) {
-          await createNotification(studentUser.id, `Your booking for ${roomLabel} is confirmed! 🎉`, 'booking_confirmed')
+          await createNotification(studentUser.id, `Your booking for ${roomLabel} is confirmed!`, 'booking_confirmed')
           sendEmail({
             to: studentUser.email,
             subject: 'Your Netlodge booking is confirmed!',
@@ -306,7 +315,29 @@ export async function finalizeConfirmedBooking(reference: string): Promise<{ suc
 }
 
 // ════════════════════════════════════════════════════════════
-// cancelBooking — unchanged
+// checkBookingStatus — lightweight, session-scoped status read used
+// by the client-side polling loop on /booking/success. Returns only
+// the status field, never the full booking, to keep each poll cheap.
+// ════════════════════════════════════════════════════════════
+export async function checkBookingStatus(bookingId: string): Promise<{ status: string } | { error: string }> {
+  const session = await auth()
+  if (!session?.user || session.user.role !== 'student') return { error: 'Unauthorized.' }
+  const studentId = session.user.roleRecordId
+  if (!studentId) return { error: 'Student profile not found.' }
+
+  const [booking] = await db.select({
+    status: bookings.status,
+    studentId: bookings.studentId,
+  }).from(bookings).where(eq(bookings.id, bookingId))
+
+  if (!booking) return { error: 'Booking not found.' }
+  if (booking.studentId !== studentId) return { error: 'You do not have access to this booking.' }
+
+  return { status: booking.status }
+}
+
+// ════════════════════════════════════════════════════════════
+// cancelBooking
 // ════════════════════════════════════════════════════════════
 export async function cancelBooking(bookingId: string) {
   const session = await auth()

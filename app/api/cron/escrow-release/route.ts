@@ -4,6 +4,7 @@ import { eq, and, lt, isNull } from 'drizzle-orm'
 import { db } from '../../../../lib/db'
 import { bookings, rooms, properties, landlords } from '../../../../lib/db/schema'
 import { decryptAccountNumberFromBase64 } from '../../../../lib/crypto/bankAccount'
+import { payoutToLandlordBank } from '../../../../lib/payments/paystackTransfer'
 
 const PAYSTACK_BASE_URL = 'https://api.paystack.co'
 const ESCROW_WINDOW_HOURS = 48
@@ -125,33 +126,20 @@ export async function GET(request: Request) {
         throw new Error('Landlord has no payout bank account on file')
       }
 
-      let bankCode = bankCodeCache.get(landlord.bankName)
-      if (bankCode === undefined) {
-        bankCode = await resolveBankCode(landlord.bankName, paystackSecretKey)
-        bankCodeCache.set(landlord.bankName, bankCode)
-      }
-      if (!bankCode) throw new Error(`Could not resolve bank code for "${landlord.bankName}"`)
-
       const accountNumber = decryptAccountNumberFromBase64(landlord.bankAccountNumberEncrypted)
+      const payoutAmountKobo = Math.round(Number(booking.roomPrice) * 100)
 
-      const recipientCode = await createTransferRecipient(
+      const transferResult = await payoutToLandlordBank(
         paystackSecretKey,
+        landlord.bankName,
         accountNumber,
-        bankCode,
-        landlord.bankAccountName
-      )
-      if (!recipientCode) throw new Error('Could not create Paystack transfer recipient')
-
-      const payoutAmountKobo = Math.round(Number(booking.roomPrice) * 100) // landlord gets room price, not the service fee
-      const transferResult = await initiateTransfer(
-        paystackSecretKey,
-        recipientCode,
+        landlord.bankAccountName,
         payoutAmountKobo,
         `Netlodge escrow release — booking ${booking.bookingRef}`
       )
 
       if ('error' in transferResult) throw new Error(transferResult.error)
-
+        
       await db.update(bookings).set({
         escrowReleasedAt: new Date(),
         landlordPayoutReference: transferResult.reference,

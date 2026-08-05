@@ -11,6 +11,14 @@ import CountUpStat from './components/CountUpStat'
 import FeaturedCarousel from './components/FeaturedCarousel'
 import CityCoverageGrid from './components/CityCoverageGrid'
 
+export const metadata = {
+  title: {
+    absolute: 'Netlodge — Verified Student Housing in Nigeria',
+  },
+  description: 'Search thousands of verified, escrow-protected student rooms near universities in Abuja, Lagos, and Enugu. Every landlord verified, every payment protected.',
+  alternates: { canonical: 'https://netlodge.ng' },
+}
+
 const stats = [
   { value: '10,000+', label: 'Verified Rooms' },
   { value: '50,000+', label: 'Student Accounts' },

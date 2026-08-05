@@ -3,12 +3,13 @@
 
 import { useState } from 'react'
 import {
-  User, Lock, Bell, ShieldCheck, Save, Eye, EyeOff, CheckCircle,
-  GraduationCap, Wifi, AlertCircle,
+  User, Lock, Bell, ShieldCheck, Save, Eye, EyeOff,
+  GraduationCap, AlertCircle,
 } from 'lucide-react'
 import {
   updateStudentProfile, updateStudentPassword, updateNotificationPreferences,
 } from '../../../lib/actions/student'
+import { useToast } from '../../components/ToastProvider'
 
 const YEARS = ['100 Level', '200 Level', '300 Level', '400 Level', '500 Level', 'Postgraduate']
 
@@ -18,28 +19,28 @@ const INITIAL_LIFESTYLE = {
 }
 const LIFESTYLE_OPTIONS = {
   sleepSchedule: [
-    { value: 'early', label: '🌙 Early Bird (sleep before 11pm)' },
-    { value: 'late',  label: '🦉 Night Owl (sleep after midnight)' },
+    { value: 'early', label: 'Early Bird (sleep before 11pm)' },
+    { value: 'late',  label: 'Night Owl (sleep after midnight)' },
   ],
   noiseLevel: [
-    { value: 'quiet',    label: '🤫 Quiet — I need silence to focus' },
-    { value: 'moderate', label: '🎵 Moderate — some noise is fine' },
-    { value: 'lively',   label: '🎉 Lively — I enjoy a social atmosphere' },
+    { value: 'quiet',    label: 'Quiet - I need silence to focus' },
+    { value: 'moderate', label: 'Moderate - some noise is fine' },
+    { value: 'lively',   label: 'Lively - I enjoy a social atmosphere' },
   ],
   studyHabits: [
-    { value: 'home',    label: '🏠 I mostly study in my room' },
-    { value: 'library', label: '📚 I mostly study at the library' },
-    { value: 'both',    label: '🔄 I do both' },
+    { value: 'home',    label: 'I mostly study in my room' },
+    { value: 'library', label: 'I mostly study at the library' },
+    { value: 'both',    label: 'I do both' },
   ],
   guestsPolicy: [
-    { value: 'never',  label: '🚫 I prefer no guests' },
-    { value: 'rarely', label: '👤 Guests occasionally are fine' },
-    { value: 'often',  label: '👥 I enjoy having guests regularly' },
+    { value: 'never',  label: 'I prefer no guests' },
+    { value: 'rarely', label: 'Guests occasionally are fine' },
+    { value: 'often',  label: 'I enjoy having guests regularly' },
   ],
   cookingHabits: [
-    { value: 'yes',       label: '👨‍🍳 Yes — I cook regularly' },
-    { value: 'no',        label: '🍔 No — I eat out or order in' },
-    { value: 'sometimes', label: '🥡 Sometimes I cook' },
+    { value: 'yes',       label: 'Yes - I cook regularly' },
+    { value: 'no',        label: 'No - I eat out or order in' },
+    { value: 'sometimes', label: 'Sometimes I cook' },
   ],
 }
 
@@ -108,27 +109,24 @@ function PillSelector({ options, value, onChange }) {
   )
 }
 
-function SaveButton({ onClick, saved, loading, label = 'Save Changes' }) {
+function SaveButton({ onClick, loading, label = 'Save Changes' }) {
   return (
     <button
       onClick={onClick} disabled={loading}
-      className={`flex items-center gap-2 font-semibold px-5 py-2.5 rounded-xl text-sm transition-all ${
-        saved ? 'bg-green-500 text-white' : 'bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white'
-      }`}
+      className="flex items-center gap-2 font-semibold px-5 py-2.5 rounded-xl text-sm transition-all bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white"
     >
-      {saved ? (<><CheckCircle className="w-4 h-4" /> Saved!</>) : loading ? 'Saving...' : (<><Save className="w-4 h-4" /> {label}</>)}
+      {loading ? 'Saving...' : (<><Save className="w-4 h-4" /> {label}</>)}
     </button>
   )
 }
 
 export default function ProfileClient({ profile }) {
+  const toast = useToast()
 
   // ── Profile (course/year/phone) ──
   const [form, setForm] = useState({ course: profile.course, year: profile.yearLevel, phone: profile.phone })
   const [profileErrors, setProfileErrors] = useState({})
-  const [profileSaved, setProfileSaved] = useState(false)
   const [profileLoading, setProfileLoading] = useState(false)
-  const [profileError, setProfileError] = useState('')
 
   async function saveProfile() {
     const errors = {}
@@ -138,20 +136,20 @@ export default function ProfileClient({ profile }) {
     if (Object.keys(errors).length > 0) { setProfileErrors(errors); return }
 
     setProfileLoading(true)
-    setProfileError('')
     const result = await updateStudentProfile({ course: form.course, yearLevel: form.year, phone: form.phone })
     setProfileLoading(false)
 
-    if ('error' in result) { setProfileError(result.error); return }
-    setProfileSaved(true)
-    setTimeout(() => setProfileSaved(false), 3000)
+    if ('error' in result) {
+      toast.error(result.error)
+      return
+    }
+    toast.success('Your profile has been updated.')
   }
 
   // ── Password ──
   const [passwords, setPasswords] = useState({ current: '', newPass: '', confirm: '' })
   const [passwordErrors, setPasswordErrors] = useState({})
   const [showPasswords, setShowPasswords] = useState({ current: false, newPass: false, confirm: false })
-  const [passwordSaved, setPasswordSaved] = useState(false)
   const [passwordLoading, setPasswordLoading] = useState(false)
 
   function handlePasswordChange(e) {
@@ -172,37 +170,38 @@ export default function ProfileClient({ profile }) {
     const result = await updateStudentPassword({ currentPassword: passwords.current, newPassword: passwords.newPass })
     setPasswordLoading(false)
 
-    if ('error' in result) { setPasswordErrors({ current: result.error }); return }
-    setPasswordSaved(true)
+    if ('error' in result) {
+      setPasswordErrors({ current: result.error })
+      toast.error(result.error)
+      return
+    }
     setPasswords({ current: '', newPass: '', confirm: '' })
-    setTimeout(() => setPasswordSaved(false), 3000)
+    toast.success('Your password has been updated.')
   }
 
   // ── Notifications ──
   const [notifs, setNotifs] = useState(profile.notificationPreferences)
-  const [notifSaved, setNotifSaved] = useState(false)
   const [notifLoading, setNotifLoading] = useState(false)
 
   function toggleNotif(key) {
     setNotifs((prev) => ({ ...prev, [key]: !prev[key] }))
-    setNotifSaved(false)
   }
 
   async function saveNotifs() {
     setNotifLoading(true)
     const result = await updateNotificationPreferences(notifs)
     setNotifLoading(false)
-    if (!('error' in result)) {
-      setNotifSaved(true)
-      setTimeout(() => setNotifSaved(false), 3000)
+    if ('error' in result) {
+      toast.error(result.error)
+      return
     }
+    toast.success('Notification preferences saved.')
   }
 
-  // ── Lifestyle (Phase 2 — not persisted yet, unchanged from before) ──
+  // ── Lifestyle (not persisted server-side yet) ──
   const [lifestyle, setLifestyle] = useState(INITIAL_LIFESTYLE)
-  const [lifestyleSaved, setLifestyleSaved] = useState(false)
-  function updateLifestyle(key, value) { setLifestyle((prev) => ({ ...prev, [key]: value })); setLifestyleSaved(false) }
-  function saveLifestyle() { setLifestyleSaved(true); setTimeout(() => setLifestyleSaved(false), 3000) }
+  function updateLifestyle(key, value) { setLifestyle((prev) => ({ ...prev, [key]: value })) }
+  function saveLifestyle() { toast.success('Lifestyle preferences saved for this session.') }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -235,13 +234,13 @@ export default function ProfileClient({ profile }) {
             <FormField label="Email Address" name="email" value={profile.email} disabled />
             <FormField
               label="Phone Number" name="phone" type="tel" value={form.phone}
-              onChange={(e) => { setForm((p) => ({ ...p, phone: e.target.value })); setProfileSaved(false) }}
+              onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
               error={profileErrors.phone} placeholder="08012345678"
             />
             <FormField label="University" name="university" value={profile.university} disabled />
             <FormField
               label="Course / Department" name="course" value={form.course}
-              onChange={(e) => { setForm((p) => ({ ...p, course: e.target.value })); setProfileSaved(false) }}
+              onChange={(e) => setForm((p) => ({ ...p, course: e.target.value }))}
               error={profileErrors.course} placeholder="e.g. Engineering"
             />
           </div>
@@ -250,7 +249,7 @@ export default function ProfileClient({ profile }) {
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Year</label>
             <select
               value={form.year}
-              onChange={(e) => { setForm((p) => ({ ...p, year: e.target.value })); setProfileSaved(false) }}
+              onChange={(e) => setForm((p) => ({ ...p, year: e.target.value }))}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-400"
             >
               {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
@@ -263,15 +262,8 @@ export default function ProfileClient({ profile }) {
             <p className="text-xs text-gray-500">University cannot be changed after verification. Contact support if you transferred schools.</p>
           </div>
 
-          {profileError && (
-            <div className="flex items-center gap-2 bg-red-50 border border-red-100 rounded-xl px-4 py-3 mb-4">
-              <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
-              <p className="text-sm text-red-600">{profileError}</p>
-            </div>
-          )}
-
           <div className="flex justify-end">
-            <SaveButton onClick={saveProfile} saved={profileSaved} loading={profileLoading} />
+            <SaveButton onClick={saveProfile} loading={profileLoading} />
           </div>
         </Section>
 
@@ -306,7 +298,7 @@ export default function ProfileClient({ profile }) {
             ))}
           </div>
           <div className="flex justify-end">
-            <SaveButton onClick={savePassword} saved={passwordSaved} loading={passwordLoading} label="Update Password" />
+            <SaveButton onClick={savePassword} loading={passwordLoading} label="Update Password" />
           </div>
         </Section>
 
@@ -320,16 +312,16 @@ export default function ProfileClient({ profile }) {
             <Toggle label="SMS Alerts" sublabel="Receive critical updates via SMS as well as email" checked={notifs.smsAlerts} onChange={() => toggleNotif('smsAlerts')} />
           </div>
           <div className="flex justify-end">
-            <SaveButton onClick={saveNotifs} saved={notifSaved} loading={notifLoading} label="Save Preferences" />
+            <SaveButton onClick={saveNotifs} loading={notifLoading} label="Save Preferences" />
           </div>
         </Section>
 
         <Section title="Lifestyle Preferences" icon={GraduationCap}>
           <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
-            <Wifi className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-blue-800 mb-0.5">AI Room Matching — Coming Phase 2</p>
-              <p className="text-xs text-blue-600">These preferences are not yet persisted server-side — Phase 2 will add a dedicated table once the matching engine ships.</p>
+              <p className="text-sm font-semibold text-blue-800 mb-0.5">AI Room Matching - Coming Soon</p>
+              <p className="text-xs text-blue-600">These preferences are not yet persisted server-side - a future update will add a dedicated table once the matching engine ships.</p>
             </div>
           </div>
 
@@ -345,7 +337,7 @@ export default function ProfileClient({ profile }) {
           </div>
 
           <div className="flex justify-end">
-            <SaveButton onClick={saveLifestyle} saved={lifestyleSaved} label="Save Lifestyle Prefs" />
+            <SaveButton onClick={saveLifestyle} label="Save Lifestyle Prefs" />
           </div>
         </Section>
 

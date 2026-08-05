@@ -19,6 +19,7 @@ import {
   Menu,
   X,
   FileCheck,
+  Plus,
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 import NotificationBell from '../../components/NotificationBell'
@@ -214,9 +215,11 @@ export default function LandlordLayout({ children, title, subtitle }) {
             <NotificationBell selfFetch />
             <Link
               href="/landlord/property/new"
-              className="hidden sm:flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+              aria-label="Add Property"
+              className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-3 sm:px-4 py-2 rounded-xl transition-colors"
             >
-              + Add Property
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Add Property</span>
             </Link>
           </div>
 

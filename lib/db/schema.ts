@@ -29,13 +29,12 @@ export const users = pgTable('users', {
   id:              uuid('id').primaryKey().defaultRandom(),
   email:           varchar('email', { length: 255 }).notNull().unique(),
   phone:           varchar('phone', { length: 20 }).notNull(),
-  passwordHash:    text('password_hash'), // nullable — OAuth-only accounts (Google) have none
-  oauthProvider:   varchar('oauth_provider', { length: 20 }), // 'google', null for credentials accounts
+  passwordHash:    text('password_hash'),
+  oauthProvider:   varchar('oauth_provider', { length: 20 }),
   role:            userRoleEnum('role').notNull(),
   firstName:       varchar('first_name', { length: 100 }).notNull(),
   lastName:        varchar('last_name', { length: 100 }).notNull(),
   isEmailVerified: boolean('is_email_verified').notNull().default(false),
-  // NEW — persists the student profile "Notification Preferences" section.
   notificationPreferences: jsonb('notification_preferences').notNull().default(sql`'{
     "bookingUpdates": true,
     "paymentReceipts": true,
@@ -104,10 +103,9 @@ export const students = pgTable('students', {
   verificationStatus:     kycStatusEnum('verification_status').notNull().default('pending'),
   verificationProvider:   varchar('verification_provider', { length: 50 }),
   verificationReference:  varchar('verification_reference', { length: 150 }),
-  // NEW — supports submitStudentVerification (item 9)
   universityEmail:        varchar('university_email', { length: 255 }),
   ninBvnEncrypted:        text('nin_bvn_encrypted'),
-  kycDocuments:           jsonb('kyc_documents').notNull().default(sql`'[]'::jsonb`), // [{type, url, name}]
+  kycDocuments:           jsonb('kyc_documents').notNull().default(sql`'[]'::jsonb`),
   reviewedBy:             uuid('reviewed_by').references(() => users.id, { onDelete: 'set null' }),
   reviewedAt:             timestamp('reviewed_at', { withTimezone: true }),
   createdAt:              timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -130,7 +128,24 @@ export const landlords = pgTable('landlords', {
   bankName:                varchar('bank_name', { length: 100 }),
   bankAccountNumberEncrypted: text('bank_account_number_encrypted'),
   bankAccountName:         varchar('bank_account_name', { length: 200 }),
-  kycDocuments:            jsonb('kyc_documents').notNull().default(sql`'[]'::jsonb`), // [{type, url, name}]
+  kycDocuments:            jsonb('kyc_documents').notNull().default(sql`'[]'::jsonb`),
+  // Platform-wide lease duration defaults, reminder window, and minimum
+  // stay policy set on the Lease Config page. Shape:
+  // { enabled: { fullYear: bool, perSemester: bool, halfYear: bool },
+  //   reminderDays: string, minStay: string }
+  leaseConfig:             jsonb('lease_config').notNull().default(sql`'{
+    "enabled": { "fullYear": true, "perSemester": false, "halfYear": false },
+    "reminderDays": "30",
+    "minStay": "fullYear"
+  }'::jsonb`),
+  // Landlord-facing notification toggles set on the Profile page.
+  notificationPreferences: jsonb('notification_preferences').notNull().default(sql`'{
+    "newBookingRequests": true,
+    "paymentReleased": true,
+    "disputesFiled": true,
+    "leaseExpiryReminders": true,
+    "platformUpdates": false
+  }'::jsonb`),
   createdAt:               timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:               timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
@@ -183,13 +198,11 @@ export const rooms = pgTable('rooms', {
   propertyIdx: index('idx_rooms_property').on(t.propertyId),
   statusIdx: index('idx_rooms_status').on(t.status),
   typeIdx: index('idx_rooms_type').on(t.roomType),
-  // NEW — composite index: most queries filter rooms by propertyId AND status together
-  // (availability counts on property/search pages) rather than status alone.
   propertyStatusIdx: index('idx_rooms_property_status').on(t.propertyId, t.status),
   uniqRoom: uniqueIndex('uniq_property_block_room').on(t.propertyId, t.blockName, t.roomNumber),
 }))
 
-// ── 9. ROOM_LEASE_OPTIONS (source of pricing truth) ────────────
+// ── 9. ROOM_LEASE_OPTIONS ────────────────────────────────────
 export const roomLeaseOptions = pgTable('room_lease_options', {
   id:        uuid('id').primaryKey().defaultRandom(),
   roomId:    uuid('room_id').notNull().references(() => rooms.id, { onDelete: 'cascade' }),
@@ -222,9 +235,9 @@ export const bookings = pgTable('bookings', {
   paymentReference:  varchar('payment_reference', { length: 150 }),
   paidAt:            timestamp('paid_at', { withTimezone: true }),
 
-  // ── Escrow / dispute lifecycle (Phase F) ──────────────────────
   disputeStatus:          disputeStatusEnum('dispute_status').notNull().default('none'),
   disputeReason:          text('dispute_reason'),
+  disputeEvidence:        jsonb('dispute_evidence').notNull().default(sql`'[]'::jsonb`),
   disputedAt:             timestamp('disputed_at', { withTimezone: true }),
   escrowReleasedAt:       timestamp('escrow_released_at', { withTimezone: true }),
   landlordPayoutReference: varchar('landlord_payout_reference', { length: 150 }),

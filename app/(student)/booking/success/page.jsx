@@ -2,12 +2,14 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import {
-  CheckCircle, ShieldCheck, MapPin, Building2, Clock,
-  Download, ArrowRight, RefreshCw,
+  CheckCircle, ShieldCheck, MapPin, Building2,
+  Download, ArrowRight,
 } from 'lucide-react'
 import { auth } from '../../../../lib/auth'
 import { getBookingById } from '../../../../lib/db/queries'
 import { finalizeConfirmedBooking } from '../../../../lib/actions/booking'
+import BookingProgress from '../components/BookingProgress'
+import SuccessClient from './SuccessClient'
 
 export default async function BookingSuccessPage({ searchParams }) {
   const session = await auth()
@@ -23,44 +25,28 @@ export default async function BookingSuccessPage({ searchParams }) {
   if (!booking || booking.studentId !== session.user.roleRecordId) redirect('/dashboard')
 
   // Fallback path: Paystack's browser redirect can arrive before the
-  // webhook does (or the webhook can't reach localhost during dev without
-  // a tunnel). If the booking isn't confirmed yet and Paystack gave us a
-  // reference, verify synchronously — this independently re-checks with
-  // Paystack, it does not just trust the URL parameter.
+  // webhook does. If the booking isn't confirmed yet and Paystack gave
+  // us a reference, verify synchronously — independently re-checked
+  // with Paystack, never trusted from the URL alone.
   if (booking.status !== 'confirmed' && reference) {
     await finalizeConfirmedBooking(reference)
     booking = await getBookingById(bookingId)
   }
 
   if (!booking || booking.status !== 'confirmed') {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4 text-center px-4">
-        <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center">
-          <Clock className="w-8 h-8 text-amber-500" />
-        </div>
-        <h2 className="text-xl font-bold text-gray-900">Confirming your payment...</h2>
-        <p className="text-gray-500 text-sm max-w-sm">
-          This usually takes a few seconds. If this doesn't update shortly, refresh —
-          your status will sync automatically once Paystack confirms it.
-        </p>
-        <Link
-          href={`/booking/success?bookingId=${bookingId}${reference ? `&reference=${reference}` : ''}`}
-          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 py-3 rounded-xl transition-colors"
-        >
-          <RefreshCw className="w-4 h-4" /> Refresh Status
-        </Link>
-      </div>
-    )
+    return <SuccessClient bookingId={bookingId} reference={reference} />
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <BookingProgress step={2} />
+
       <div className="bg-green-500 text-white py-14 text-center">
         <div className="max-w-2xl mx-auto px-4">
           <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg">
             <CheckCircle className="w-10 h-10 text-green-500" />
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3">Booking Confirmed! 🎉</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-3">Booking Confirmed!</h1>
           <p className="text-green-100 text-lg mb-4">Your room has been successfully booked and your payment is in escrow.</p>
           <div className="inline-flex items-center gap-3 bg-white/20 border border-white/30 rounded-xl px-5 py-3">
             <span className="text-sm text-green-100">Booking Reference</span>
@@ -99,7 +85,7 @@ export default async function BookingSuccessPage({ searchParams }) {
               { label: 'Lease Type', value: booking.leaseType },
               { label: 'Room Type', value: booking.room?.type },
               { label: 'Bathroom', value: booking.room?.bathroom },
-              { label: 'Payment', value: 'Paid ✓' },
+              { label: 'Payment', value: 'Paid' },
             ].map(({ label, value }) => (
               <div key={label} className="bg-gray-50 rounded-xl p-3">
                 <p className="text-xs text-gray-500 mb-0.5">{label}</p>
@@ -126,7 +112,7 @@ export default async function BookingSuccessPage({ searchParams }) {
 
         <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5">
           <div className="flex items-start gap-3">
-            <Clock className="w-6 h-6 text-blue-500 shrink-0 mt-0.5" />
+            <ShieldCheck className="w-6 h-6 text-blue-500 shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold text-blue-900 mb-1">48-Hour Escrow Window is Now Open</p>
               <p className="text-sm text-blue-700 leading-relaxed">

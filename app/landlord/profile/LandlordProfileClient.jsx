@@ -4,7 +4,7 @@
 import { useState } from 'react'
 import LandlordLayout from '../components/LandlordLayout'
 import { Building2, CreditCard, Bell, Save, CheckCircle, ShieldCheck, AlertCircle, Clock, XCircle } from 'lucide-react'
-import { updateLandlordProfile } from '../../../lib/actions/landlord'
+import { updateLandlordProfile, updateLandlordSettings } from '../../../lib/actions/landlord'
 
 const NIGERIAN_BANKS = ['GTBank', 'Access Bank', 'Zenith Bank', 'First Bank', 'UBA', 'Sterling Bank', 'Fidelity Bank', 'Union Bank']
 
@@ -36,7 +36,7 @@ function SaveButton({ onClick, saved, loading, label = 'Save Changes' }) {
         saved ? 'bg-green-500 text-white' : 'bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white'
       }`}
     >
-      {saved ? (<><CheckCircle className="w-4 h-4" /> Saved!</>) : loading ? 'Saving...' : (<><Save className="w-4 h-4" /> {label}</>)}
+      {saved ? (<><CheckCircle className="w-4 h-4" /> Saved</>) : loading ? 'Saving...' : (<><Save className="w-4 h-4" /> {label}</>)}
     </button>
   )
 }
@@ -53,7 +53,10 @@ export default function LandlordProfileClient({ profile, maskedAccountNumber }) 
   const [payoutLoading, setPayoutLoading] = useState(false)
   const [payoutError, setPayoutError] = useState('')
 
-  const [notifs, setNotifs] = useState({ newBookingRequests: true, paymentReleased: true, disputesFiled: true, leaseExpiryReminders: true, platformUpdates: false })
+  const [notifs, setNotifs] = useState(profile.notificationPreferences)
+  const [notifsSaved, setNotifsSaved] = useState(false)
+  const [notifsLoading, setNotifsLoading] = useState(false)
+  const [notifsError, setNotifsError] = useState('')
 
   const verificationConfig = VERIFICATION_CONFIG[profile.verificationStatus] ?? VERIFICATION_CONFIG.pending
   const VerificationIcon = verificationConfig.icon
@@ -85,6 +88,17 @@ export default function LandlordProfileClient({ profile, maskedAccountNumber }) 
 
   function toggleNotif(key) {
     setNotifs((prev) => ({ ...prev, [key]: !prev[key] }))
+    setNotifsSaved(false)
+  }
+
+  async function saveNotifs() {
+    setNotifsLoading(true)
+    setNotifsError('')
+    const result = await updateLandlordSettings({ notificationPreferences: notifs })
+    setNotifsLoading(false)
+    if ('error' in result) { setNotifsError(result.error); return }
+    setNotifsSaved(true)
+    setTimeout(() => setNotifsSaved(false), 3000)
   }
 
   return (
@@ -191,8 +205,7 @@ export default function LandlordProfileClient({ profile, maskedAccountNumber }) 
         </Section>
 
         <Section title="Notification Preferences" icon={Bell}>
-          <p className="text-xs text-gray-500 mb-4">Preferences shown here are not yet persisted to your account — coming soon.</p>
-          <div className="flex flex-col">
+          <div className="flex flex-col mb-4">
             {[
               { key: 'newBookingRequests', label: 'New Booking Requests' },
               { key: 'paymentReleased', label: 'Payment Released' },
@@ -210,6 +223,15 @@ export default function LandlordProfileClient({ profile, maskedAccountNumber }) 
                 </button>
               </div>
             ))}
+          </div>
+          {notifsError && (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-100 rounded-xl px-4 py-3 mb-4">
+              <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+              <p className="text-sm text-red-600">{notifsError}</p>
+            </div>
+          )}
+          <div className="flex justify-end">
+            <SaveButton onClick={saveNotifs} saved={notifsSaved} loading={notifsLoading} label="Save Preferences" />
           </div>
         </Section>
 

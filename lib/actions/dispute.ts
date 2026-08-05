@@ -11,10 +11,24 @@ import { sendEmail, disputeFiledLandlordEmailHtml, disputeFiledStudentEmailHtml 
 
 const ESCROW_WINDOW_HOURS = 48
 const MIN_REASON_LENGTH = 10
+const MAX_EVIDENCE_FILES = 5
+
+type EvidenceFile = { url: string; name: string }
+
+function sanitizeEvidence(evidenceUrls: unknown): EvidenceFile[] {
+  if (!Array.isArray(evidenceUrls)) return []
+  return evidenceUrls
+    .filter((item): item is EvidenceFile =>
+      !!item && typeof item === 'object' && typeof (item as any).url === 'string'
+    )
+    .slice(0, MAX_EVIDENCE_FILES)
+    .map((item) => ({ url: item.url, name: typeof item.name === 'string' ? item.name : 'evidence' }))
+}
 
 export async function fileDispute(
   bookingId: string,
-  reason: string
+  reason: string,
+  evidenceUrls: EvidenceFile[] = []
 ): Promise<{ success: true } | { error: string }> {
   const session = await auth()
   if (!session?.user || session.user.role !== 'student') {
@@ -27,6 +41,8 @@ export async function fileDispute(
   if (trimmedReason.length < MIN_REASON_LENGTH) {
     return { error: `Please describe the issue in at least ${MIN_REASON_LENGTH} characters.` }
   }
+
+  const evidence = sanitizeEvidence(evidenceUrls)
 
   const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId))
   if (!booking) return { error: 'Booking not found.' }
@@ -57,10 +73,10 @@ export async function fileDispute(
     await db.update(bookings).set({
       disputeStatus: 'pending',
       disputeReason: trimmedReason,
+      disputeEvidence: evidence,
       disputedAt: new Date(),
     }).where(eq(bookings.id, bookingId))
 
-    // ── Notifications & emails — best-effort, never fails the dispute filing ──
     try {
       const [room] = await db.select().from(rooms).where(eq(rooms.id, booking.roomId))
       if (room) {

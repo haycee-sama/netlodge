@@ -1,14 +1,13 @@
 // app/(student)/booking/BookingsClient.jsx
 'use client'
 
-import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import Link from 'next/link'
 import {
   Calendar, CheckCircle, Clock, XCircle, MapPin, Building2,
   Download, AlertCircle, ChevronDown, ChevronUp, Search, ShieldAlert,
 } from 'lucide-react'
-import { fileDispute } from '../../../lib/actions/dispute'
+import DisputeForm from './DisputeForm'
 
 const STATUS_CONFIG = {
   Active:    { badge: 'bg-green-100 text-green-700', icon: CheckCircle },
@@ -21,56 +20,6 @@ const DISPUTE_STATUS_CONFIG = {
   pending:          { label: 'Dispute Under Review', badge: 'bg-amber-100 text-amber-700' },
   resolved_refund:  { label: 'Dispute Resolved — Refunded', badge: 'bg-blue-100 text-blue-700' },
   resolved_release: { label: 'Dispute Resolved — Funds Released', badge: 'bg-green-100 text-green-700' },
-}
-
-function DisputeForm({ bookingId, onSubmitted }) {
-  const router = useRouter()
-  const [reason, setReason] = useState('')
-  const [error, setError] = useState('')
-  const [isPending, startTransition] = useTransition()
-
-  function handleSubmit() {
-    if (reason.trim().length < 10) {
-      setError('Please describe the issue in at least 10 characters.')
-      return
-    }
-    setError('')
-    startTransition(async () => {
-      const result = await fileDispute(bookingId, reason)
-      if ('error' in result) {
-        setError(result.error)
-        return
-      }
-      onSubmitted?.()
-      router.refresh()
-    })
-  }
-
-  return (
-    <div className="bg-red-50 border border-red-100 rounded-xl p-4 mt-3">
-      <p className="text-sm font-semibold text-red-700 mb-2">File a Dispute</p>
-      <p className="text-xs text-red-600 mb-3">
-        Explain how the room did not match the listing. Our team reviews disputes within 24 hours.
-      </p>
-      <textarea
-        value={reason}
-        onChange={(e) => { setReason(e.target.value); if (error) setError('') }}
-        rows={3}
-        placeholder="e.g. The room shown in photos was not the actual room I was given..."
-        className="w-full px-3 py-2.5 rounded-xl border border-red-200 text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-400 transition-all resize-none"
-      />
-      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
-      <div className="flex justify-end mt-3">
-        <button
-          onClick={handleSubmit}
-          disabled={isPending}
-          className="flex items-center gap-2 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
-        >
-          {isPending ? 'Submitting...' : 'Submit Dispute'}
-        </button>
-      </div>
-    </div>
-  )
 }
 
 function BookingCard({ booking }) {

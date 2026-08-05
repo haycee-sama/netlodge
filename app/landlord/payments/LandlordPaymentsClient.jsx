@@ -3,19 +3,50 @@
 
 import { useState } from 'react'
 import LandlordLayout from '../components/LandlordLayout'
-import { CreditCard, TrendingUp, Clock, CheckCircle, Download, AlertCircle } from 'lucide-react'
+import { CreditCard, TrendingUp, Clock, CheckCircle, Download, AlertCircle, Search } from 'lucide-react'
+
+const ESCROW_WINDOW_HOURS = 48
 
 // Escrow is conceptual (48hr post-payment window), not a stored DB
 // field — derived here from paidAt rather than faked.
 function escrowStatusFor(paidAt) {
   if (!paidAt) return 'Received'
   const hoursSincePaid = (Date.now() - new Date(paidAt).getTime()) / 3600000
-  return hoursSincePaid < 48 ? 'In Escrow' : 'Received'
+  return hoursSincePaid < ESCROW_WINDOW_HOURS ? 'In Escrow' : 'Received'
+}
+
+function expectedReleaseLabel(paidAt) {
+  if (!paidAt) return null
+  const releaseDate = new Date(new Date(paidAt).getTime() + ESCROW_WINDOW_HOURS * 60 * 60 * 1000)
+  return releaseDate.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
 }
 
 const STATUS_CONFIG = {
   'Received':  { badge: 'bg-green-100 text-green-700', icon: CheckCircle },
   'In Escrow': { badge: 'bg-blue-100 text-blue-700',   icon: Clock       },
+}
+
+function EmptyPaymentsState({ hasAnyPayments }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
+        {hasAnyPayments ? <Search className="w-7 h-7 text-gray-400" /> : <CreditCard className="w-7 h-7 text-gray-400" />}
+      </div>
+      <h3 className="font-bold text-gray-900 mb-2">
+        {hasAnyPayments ? 'No payments match this filter' : 'No payments yet'}
+      </h3>
+      <p className="text-gray-500 text-sm max-w-xs">
+        {hasAnyPayments
+          ? 'Try switching to a different filter to see your other payments.'
+          : 'Payments will appear here once a student books and pays for one of your rooms.'}
+      </p>
+    </div>
+  )
 }
 
 export default function LandlordPaymentsClient({ payments }) {
@@ -60,7 +91,7 @@ export default function LandlordPaymentsClient({ payments }) {
           <div>
             <p className="text-sm font-semibold text-amber-800">Payments go to your registered bank account</p>
             <p className="text-xs text-amber-600 mt-0.5">
-              To update your bank account go to Profile &amp; Settings. All escrow releases go there automatically.
+              To update your bank account go to Profile and Settings. All escrow releases go there automatically once the 48-hour window closes and our hourly release check runs.
             </p>
           </div>
         </div>
@@ -80,50 +111,60 @@ export default function LandlordPaymentsClient({ payments }) {
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <div className="hidden sm:grid grid-cols-5 gap-4 px-5 py-3 border-b border-gray-100 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            <span className="col-span-2">Student / Room</span>
-            <span>Date</span>
-            <span>Status</span>
-            <span className="text-right">Amount</span>
-          </div>
+          {filtered.length > 0 && (
+            <div className="hidden sm:grid grid-cols-5 gap-4 px-5 py-3 border-b border-gray-100 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <span className="col-span-2">Student / Room</span>
+              <span>Date</span>
+              <span>Status</span>
+              <span className="text-right">Amount</span>
+            </div>
+          )}
 
-          <div className="flex flex-col divide-y divide-gray-50">
-            {filtered.map((payment) => {
-              const config = STATUS_CONFIG[payment.escrowStatus]
-              const StatusIcon = config.icon
-              return (
-                <div key={payment.id} className="grid grid-cols-1 sm:grid-cols-5 gap-2 sm:gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
-                  <div className="sm:col-span-2 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
-                      <span className="text-sm font-bold text-orange-500">{payment.studentName.charAt(0)}</span>
+          {filtered.length > 0 ? (
+            <div className="flex flex-col divide-y divide-gray-50">
+              {filtered.map((payment) => {
+                const config = STATUS_CONFIG[payment.escrowStatus]
+                const StatusIcon = config.icon
+                const releaseLabel = payment.escrowStatus === 'In Escrow' ? expectedReleaseLabel(payment.paidAt) : null
+                return (
+                  <div key={payment.id} className="grid grid-cols-1 sm:grid-cols-5 gap-2 sm:gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
+                    <div className="sm:col-span-2 flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
+                        <span className="text-sm font-bold text-orange-500">{payment.studentName.charAt(0)}</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{payment.studentName}</p>
+                        <p className="text-xs text-gray-500">{payment.roomLabel}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{payment.studentName}</p>
-                      <p className="text-xs text-gray-500">{payment.roomLabel}</p>
+
+                    <div className="flex items-center">
+                      <p className="text-sm text-gray-600">{payment.paidAt ? new Date(payment.paidAt).toLocaleDateString() : '—'}</p>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 w-fit ${config.badge}`}>
+                        <StatusIcon className="w-3 h-3" />
+                        {payment.escrowStatus}
+                      </span>
+                      {releaseLabel && (
+                        <span className="text-xs text-gray-500">Expected release: {releaseLabel}</span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between sm:justify-end gap-3">
+                      <p className="text-sm font-bold text-gray-900">₦{payment.roomPrice.toLocaleString()}</p>
+                      <button className="text-gray-500 hover:text-orange-500 transition-colors">
+                        <Download className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex items-center">
-                    <p className="text-sm text-gray-600">{payment.paidAt ? new Date(payment.paidAt).toLocaleDateString() : '—'}</p>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${config.badge}`}>
-                      <StatusIcon className="w-3 h-3" />
-                      {payment.escrowStatus}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between sm:justify-end gap-3">
-                    <p className="text-sm font-bold text-gray-900">₦{payment.roomPrice.toLocaleString()}</p>
-                    <button className="text-gray-500 hover:text-orange-500 transition-colors">
-                      <Download className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          ) : (
+            <EmptyPaymentsState hasAnyPayments={payments.length > 0} />
+          )}
         </div>
 
       </div>

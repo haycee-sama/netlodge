@@ -44,11 +44,22 @@ export async function generateMetadata({ params }) {
   const description = `₦${room.price.toLocaleString()}/year · ${room.bathroom} bathroom · ${room.furnished === 'Yes' ? 'Furnished' : 'Unfurnished'} · ${property.university}, ${property.city}. Escrow-protected booking.`
   const url = `https://netlodge.ng/rooms/${id}`
 
+  const firstImage = room.images && room.images.length > 0 ? room.images[0] : null
+  const ogImages = firstImage
+    ? [{ url: firstImage.url, alt: firstImage.alt || title }]
+    : undefined
+
   return {
     title, description,
     alternates: { canonical: url },
-    openGraph: { title, description, url, siteName: 'Netlodge', type: 'website' },
-    twitter: { card: 'summary_large_image', title, description },
+    openGraph: {
+      title, description, url, siteName: 'Netlodge', type: 'website',
+      images: ogImages,
+    },
+    twitter: {
+      card: 'summary_large_image', title, description,
+      images: firstImage ? [firstImage.url] : undefined,
+    },
   }
 }
 

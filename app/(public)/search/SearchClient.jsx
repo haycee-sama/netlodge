@@ -14,6 +14,8 @@ const CITIES       = ['All Cities', 'Abuja', 'Lagos', 'Enugu']
 const ROOM_TYPES   = ['All Types', 'Single', 'Shared', 'Self-Contain']
 const UNIVERSITIES = ['All Universities', 'University of Abuja', 'UNILAG', 'LASU', 'UNN', 'ESUT']
 
+const BLUR_DATA_URL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+
 export default function SearchClient({ properties }) {
 
   const [searchQuery, setSearchQuery]   = useState('')
@@ -208,6 +210,8 @@ export default function SearchClient({ properties }) {
                             fill
                             sizes="(max-width: 640px) 100vw, 224px"
                             className="object-cover"
+                            placeholder="blur"
+                            blurDataURL={BLUR_DATA_URL}
                           />
                         ) : (
                           <Building2 className="w-10 h-10 text-gray-400" />

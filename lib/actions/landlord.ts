@@ -1,12 +1,11 @@
 // lib/actions/landlord.ts
 'use server'
 
-import { eq, and, inArray } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { db } from '../db'
 import { properties, rooms, roomLeaseOptions, landlords, bookings } from '../db/schema'
 import { auth } from '../auth'
-import { encryptAccountNumber } from '../crypto/bankAccount'
 import { encryptAccountNumberToBase64 } from '../crypto/bankAccount'
 
 async function requireLandlord() {
@@ -175,14 +174,6 @@ export async function updateRoomLeaseOptions(
 
 // ════════════════════════════════════════════════════════════
 // updateRoomStatus
-//
-// FIX: a room with an active confirmed booking can no longer be
-// flipped back to 'available' or 'maintenance' by the landlord.
-// Previously this action trusted the caller entirely and let a
-// landlord (or anyone replaying their session) re-list an occupied
-// room as bookable, or hide it from the tenant's view via
-// 'maintenance' with zero guard. The client-side disabled-button in
-// LandlordRoomsClient.jsx was cosmetic only — this is the real check.
 // ════════════════════════════════════════════════════════════
 export async function updateRoomStatus(roomId: string, status: 'available' | 'booked' | 'maintenance') {
   const authResult = await requireLandlord()
@@ -239,6 +230,53 @@ export async function updateLandlordProfile(data: {
   } catch (err) {
     console.error('updateLandlordProfile failed', err)
     return { error: 'Could not update profile. Please try again.' }
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// updateLandlordSettings — persists leaseConfig and/or
+// notificationPreferences for the logged-in landlord. Either field
+// may be omitted; only the fields provided are updated, so the Lease
+// Config page and the Profile page's Notification Preferences section
+// can each call this independently without clobbering the other's data.
+// ════════════════════════════════════════════════════════════
+export async function updateLandlordSettings(data: {
+  leaseConfig?: {
+    enabled: { fullYear: boolean; perSemester: boolean; halfYear: boolean }
+    reminderDays: string
+    minStay: string
+  }
+  notificationPreferences?: {
+    newBookingRequests: boolean
+    paymentReleased: boolean
+    disputesFiled: boolean
+    leaseExpiryReminders: boolean
+    platformUpdates: boolean
+  }
+}) {
+  const authResult = await requireLandlord()
+  if ('error' in authResult) return authResult
+
+  if (data.leaseConfig && !data.leaseConfig.enabled?.fullYear) {
+    return { error: 'The 1 Year lease option is required and cannot be disabled.' }
+  }
+
+  try {
+    const updates: Record<string, unknown> = {}
+    if (data.leaseConfig !== undefined) updates.leaseConfig = data.leaseConfig
+    if (data.notificationPreferences !== undefined) updates.notificationPreferences = data.notificationPreferences
+
+    if (Object.keys(updates).length === 0) {
+      return { error: 'No settings were provided to save.' }
+    }
+
+    await db.update(landlords).set(updates).where(eq(landlords.id, authResult.landlordId))
+    revalidatePath('/landlord/lease-config')
+    revalidatePath('/landlord/profile')
+    return { success: true }
+  } catch (err) {
+    console.error('updateLandlordSettings failed', err)
+    return { error: 'Could not save settings. Please try again.' }
   }
 }
 
