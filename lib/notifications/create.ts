@@ -28,25 +28,31 @@ export async function createNotification(userId: string, message: string, type: 
   }
 }
 
-// Call this from wherever admin KYC approval/rejection happens (not present
-// in the current codebase — no admin routes were provided). Wire it into
-// that action once it exists, passing the affected user's id/email/name.
+// Called from lib/actions/admin.ts's approveUserKyc / rejectUserKyc. The
+// optional reason is only meaningful for a rejection, and is appended to
+// both the in-app notification message and the email body so the user
+// knows what to fix before resubmitting.
 export async function notifyVerificationStatusChange(
   userId: string,
   userEmail: string,
   firstName: string,
   role: 'student' | 'landlord',
-  status: 'approved' | 'rejected'
+  status: 'approved' | 'rejected',
+  reason?: string
 ) {
-  const message = status === 'approved'
+  const baseMessage = status === 'approved'
     ? `Your ${role} verification has been approved. You can now ${role === 'landlord' ? 'list properties' : 'book rooms'} on Netlodge.`
     : `Your ${role} verification was not approved. Please review and resubmit your documents.`
+
+  const message = status === 'rejected' && reason
+    ? `${baseMessage} Reason: ${reason}`
+    : baseMessage
 
   await createNotification(userId, message, status === 'approved' ? 'kyc_approved' : 'kyc_rejected')
 
   sendEmail({
     to: userEmail,
-    subject: status === 'approved' ? 'You are verified on Netlodge! 🎉' : 'Netlodge verification update',
-    html: verificationStatusEmailHtml(firstName, role, status),
+    subject: status === 'approved' ? 'You are verified on Netlodge!' : 'Netlodge verification update',
+    html: verificationStatusEmailHtml(firstName, role, status, reason),
   }).catch((err) => console.error('verification status email failed', err))
 }

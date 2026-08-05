@@ -133,15 +133,19 @@ export function disputeFiledStudentEmailHtml(firstName: string, roomLabel: strin
   `
 }
 
-export function verificationStatusEmailHtml(firstName: string, role: 'student' | 'landlord', status: 'approved' | 'rejected') {
-  const heading = status === 'approved' ? 'You are verified! 🎉' : 'Verification update needed'
+export function verificationStatusEmailHtml(firstName: string, role: 'student' | 'landlord', status: 'approved' | 'rejected', reason?: string) {
+  const heading = status === 'approved' ? 'You are verified!' : 'Verification update needed'
   const body = status === 'approved'
     ? `Congratulations ${firstName}, your ${role} verification has been approved.`
     : `Hi ${firstName}, we were unable to verify your ${role} documents. Please log in and resubmit.`
+  const reasonBlock = status === 'rejected' && reason
+    ? `<div style="background:#fef2f2;color:#b91c1c;padding:12px 20px;border-radius:12px;margin:16px 0;"><strong>Reason:</strong> ${reason}</div>`
+    : ''
   return `
     <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
       <h2 style="color:#f97316;">${heading}</h2>
       <p style="color:#374151;">${body}</p>
+      ${reasonBlock}
     </div>
   `
 }
