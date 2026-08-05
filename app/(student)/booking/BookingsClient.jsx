@@ -8,6 +8,8 @@ import {
   Download, AlertCircle, ChevronDown, ChevronUp, Search, ShieldAlert,
 } from 'lucide-react'
 import DisputeForm from './DisputeForm'
+import { DISPUTE_STATUS_LABELS } from '../../../lib/constants/dispute'
+import { formatNaira } from '../../../lib/format'
 
 const STATUS_CONFIG = {
   Active:    { badge: 'bg-green-100 text-green-700', icon: CheckCircle },
@@ -16,19 +18,13 @@ const STATUS_CONFIG = {
   Cancelled: { badge: 'bg-red-100 text-red-600',      icon: XCircle },
 }
 
-const DISPUTE_STATUS_CONFIG = {
-  pending:          { label: 'Dispute Under Review', badge: 'bg-amber-100 text-amber-700' },
-  resolved_refund:  { label: 'Dispute Resolved — Refunded', badge: 'bg-blue-100 text-blue-700' },
-  resolved_release: { label: 'Dispute Resolved — Funds Released', badge: 'bg-green-100 text-green-700' },
-}
-
 function BookingCard({ booking }) {
   const [expanded, setExpanded] = useState(false)
   const [disputeFormOpen, setDisputeFormOpen] = useState(false)
   const config = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.Pending
   const Icon = config.icon
   const disputeInfo = booking.disputeStatus && booking.disputeStatus !== 'none'
-    ? DISPUTE_STATUS_CONFIG[booking.disputeStatus]
+    ? DISPUTE_STATUS_LABELS[booking.disputeStatus]
     : null
 
   return (
@@ -61,7 +57,7 @@ function BookingCard({ booking }) {
             </div>
           </div>
           <div className="text-right shrink-0">
-            <p className="text-lg font-bold text-gray-900">₦{booking.totalAmount.toLocaleString()}</p>
+            <p className="text-lg font-bold text-gray-900">{formatNaira(booking.totalAmount)}</p>
             <p className="text-xs text-gray-500">Total</p>
           </div>
         </div>
@@ -111,15 +107,15 @@ function BookingCard({ booking }) {
               <div className="bg-gray-50 rounded-xl p-4 flex flex-col gap-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Room price ({booking.leaseType})</span>
-                  <span className="font-medium text-gray-800">₦{booking.roomPrice.toLocaleString()}</span>
+                  <span className="font-medium text-gray-800">{formatNaira(booking.roomPrice)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Service fee (7%)</span>
-                  <span className="font-medium text-gray-800">₦{booking.serviceFee.toLocaleString()}</span>
+                  <span className="font-medium text-gray-800">{formatNaira(booking.serviceFee)}</span>
                 </div>
                 <div className="flex justify-between text-sm font-bold border-t border-gray-200 pt-2 mt-1">
                   <span className="text-gray-900">Total Paid</span>
-                  <span className="text-orange-500">₦{booking.totalAmount.toLocaleString()}</span>
+                  <span className="text-orange-500">{formatNaira(booking.totalAmount)}</span>
                 </div>
               </div>
             </div>

@@ -1,5 +1,5 @@
 // app/(public)/layout.jsx
-import Navbar from '../components/Navbar'
+import Navbar from '../components/shared/Navbar'
 import Footer from '../components/Footer'
 import { auth } from '../../lib/auth'
 import { getNotificationsByUser, getUnreadNotificationCount } from '../../lib/db/queries'

@@ -5,17 +5,11 @@ import { eq, and } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { db } from '../db'
 import { properties, rooms, roomLeaseOptions, landlords, bookings } from '../db/schema'
-import { auth } from '../auth'
+import { requireLandlordId } from '../auth-guards'
 import { encryptAccountNumberToBase64 } from '../crypto/bankAccount'
 
 async function requireLandlord() {
-  const session = await auth()
-  if (!session?.user || session.user.role !== 'landlord') {
-    return { error: 'Unauthorized.' } as const
-  }
-  const landlordId = session.user.roleRecordId
-  if (!landlordId) return { error: 'Landlord profile not found.' } as const
-  return { landlordId } as const
+  return requireLandlordId()
 }
 
 async function ownsProperty(landlordId: string, propertyId: string) {

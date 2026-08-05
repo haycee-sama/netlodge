@@ -4,17 +4,11 @@ import Link from 'next/link'
 import LandlordLayout from '../components/LandlordLayout'
 import { auth } from '../../../lib/auth'
 import { getPropertiesByLandlord, getBookingsByLandlord } from '../../../lib/db/queries'
+import { LANDLORD_BOOKING_STATUS_CONFIG } from '../../../lib/constants/bookingStatus'
+import { formatNaira } from '../../../lib/format'
 import {
   Building2, BedDouble, CreditCard, TrendingUp, ArrowRight, Plus, Users, Calendar, FileCheck,
-  CheckCircle, Clock, XCircle,
 } from 'lucide-react'
-
-const RECENT_BOOKING_STATUS_CONFIG = {
-  confirmed:       { label: 'Confirmed', badge: 'bg-green-100 text-green-700', icon: CheckCircle },
-  pending_payment: { label: 'Pending',   badge: 'bg-amber-100 text-amber-700', icon: Clock       },
-  draft:           { label: 'Draft',     badge: 'bg-gray-100 text-gray-500',   icon: Clock       },
-  cancelled:       { label: 'Cancelled', badge: 'bg-red-100 text-red-600',     icon: XCircle     },
-}
 
 export default async function LandlordDashboardPage() {
   const session = await auth()
@@ -133,7 +127,7 @@ export default async function LandlordDashboardPage() {
               {recentBookings.length > 0 ? (
                 <div className="flex flex-col gap-3">
                   {recentBookings.map((booking) => {
-                    const config = RECENT_BOOKING_STATUS_CONFIG[booking.status] ?? RECENT_BOOKING_STATUS_CONFIG.draft
+                    const config = LANDLORD_BOOKING_STATUS_CONFIG[booking.status] ?? LANDLORD_BOOKING_STATUS_CONFIG.draft
                     const StatusIcon = config.icon
                     return (
                       <div key={booking.id} className="flex items-center gap-4 p-4 rounded-xl border border-gray-100">
@@ -148,7 +142,7 @@ export default async function LandlordDashboardPage() {
                           <StatusIcon className="w-3 h-3" />
                           {config.label}
                         </span>
-                        <p className="text-sm font-bold text-gray-900 shrink-0">₦{booking.roomPrice.toLocaleString()}</p>
+                        <p className="text-sm font-bold text-gray-900 shrink-0">{formatNaira(booking.roomPrice)}</p>
                       </div>
                     )
                   })}

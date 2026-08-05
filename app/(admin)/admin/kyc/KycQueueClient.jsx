@@ -8,6 +8,7 @@ import {
   AlertCircle, Mail, Phone,
 } from 'lucide-react'
 import { approveUserKyc, rejectUserKyc } from '../../../../lib/actions/admin'
+import EmptyState from '../../../components/shared/EmptyState'
 
 function isPdf(url) {
   return url.toLowerCase().endsWith('.pdf')
@@ -32,7 +33,7 @@ function DocumentViewer({ documents }) {
             <img src={doc.url} alt={doc.name} className="w-full h-40 object-cover" />
           )}
           
-            href={doc.url}
+          <a  href={doc.url}
             target="_blank"
             rel="noopener noreferrer"
             className="block text-center text-xs font-medium text-orange-600 hover:underline py-2 bg-white border-t border-gray-100"
@@ -194,12 +195,12 @@ export default function KycQueueClient({ submissions }) {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-2xl border border-gray-100">
-          <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-            <FileCheck className="w-7 h-7 text-gray-400" />
-          </div>
-          <h3 className="font-bold text-gray-900 mb-2">No pending submissions</h3>
-          <p className="text-gray-500 text-sm">The KYC queue is clear. New submissions will appear here.</p>
+        <div className="bg-white rounded-2xl border border-gray-100">
+          <EmptyState
+            icon={FileCheck}
+            title="No pending submissions"
+            description="The KYC queue is clear. New submissions will appear here."
+          />
         </div>
       )}
     </div>

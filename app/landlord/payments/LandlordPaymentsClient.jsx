@@ -4,6 +4,8 @@
 import { useState } from 'react'
 import LandlordLayout from '../components/LandlordLayout'
 import { CreditCard, TrendingUp, Clock, CheckCircle, Download, AlertCircle, Search } from 'lucide-react'
+import { formatNaira, formatDateTime } from '../../../lib/format'
+import EmptyState from '../../components/shared/EmptyState'
 
 const ESCROW_WINDOW_HOURS = 48
 
@@ -18,35 +20,12 @@ function escrowStatusFor(paidAt) {
 function expectedReleaseLabel(paidAt) {
   if (!paidAt) return null
   const releaseDate = new Date(new Date(paidAt).getTime() + ESCROW_WINDOW_HOURS * 60 * 60 * 1000)
-  return releaseDate.toLocaleString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  })
+  return formatDateTime(releaseDate)
 }
 
 const STATUS_CONFIG = {
   'Received':  { badge: 'bg-green-100 text-green-700', icon: CheckCircle },
   'In Escrow': { badge: 'bg-blue-100 text-blue-700',   icon: Clock       },
-}
-
-function EmptyPaymentsState({ hasAnyPayments }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-        {hasAnyPayments ? <Search className="w-7 h-7 text-gray-400" /> : <CreditCard className="w-7 h-7 text-gray-400" />}
-      </div>
-      <h3 className="font-bold text-gray-900 mb-2">
-        {hasAnyPayments ? 'No payments match this filter' : 'No payments yet'}
-      </h3>
-      <p className="text-gray-500 text-sm max-w-xs">
-        {hasAnyPayments
-          ? 'Try switching to a different filter to see your other payments.'
-          : 'Payments will appear here once a student books and pays for one of your rooms.'}
-      </p>
-    </div>
-  )
 }
 
 export default function LandlordPaymentsClient({ payments }) {
@@ -66,9 +45,9 @@ export default function LandlordPaymentsClient({ payments }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { label: 'Total Received', value: `₦${totalReceived.toLocaleString()}`, icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-50', sub: `${enriched.filter((p) => p.escrowStatus === 'Received').length} payments` },
-            { label: 'In Escrow',      value: `₦${totalInEscrow.toLocaleString()}`, icon: Clock,       color: 'text-blue-500',  bg: 'bg-blue-50',  sub: 'Pending 48hr window' },
-            { label: 'Total Earnings', value: `₦${totalAll.toLocaleString()}`,       icon: TrendingUp,  color: 'text-orange-500', bg: 'bg-orange-50', sub: `${enriched.length} total transactions` },
+            { label: 'Total Received', value: formatNaira(totalReceived), icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-50', sub: `${enriched.filter((p) => p.escrowStatus === 'Received').length} payments` },
+            { label: 'In Escrow',      value: formatNaira(totalInEscrow), icon: Clock,       color: 'text-blue-500',  bg: 'bg-blue-50',  sub: 'Pending 48hr window' },
+            { label: 'Total Earnings', value: formatNaira(totalAll),       icon: TrendingUp,  color: 'text-orange-500', bg: 'bg-orange-50', sub: `${enriched.length} total transactions` },
           ].map((stat) => {
             const Icon = stat.icon
             return (
@@ -153,7 +132,7 @@ export default function LandlordPaymentsClient({ payments }) {
                     </div>
 
                     <div className="flex items-center justify-between sm:justify-end gap-3">
-                      <p className="text-sm font-bold text-gray-900">₦{payment.roomPrice.toLocaleString()}</p>
+                      <p className="text-sm font-bold text-gray-900">{formatNaira(payment.roomPrice)}</p>
                       <button className="text-gray-500 hover:text-orange-500 transition-colors">
                         <Download className="w-4 h-4" />
                       </button>
@@ -163,7 +142,15 @@ export default function LandlordPaymentsClient({ payments }) {
               })}
             </div>
           ) : (
-            <EmptyPaymentsState hasAnyPayments={payments.length > 0} />
+            <EmptyState
+              icon={payments.length > 0 ? Search : CreditCard}
+              title={payments.length > 0 ? 'No payments match this filter' : 'No payments yet'}
+              description={
+                payments.length > 0
+                  ? 'Try switching to a different filter to see your other payments.'
+                  : 'Payments will appear here once a student books and pays for one of your rooms.'
+              }
+            />
           )}
         </div>
 

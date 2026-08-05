@@ -7,37 +7,9 @@ import {
   ShieldAlert, CheckCircle, XCircle, AlertCircle, Building2,
 } from 'lucide-react'
 import { resolveDispute } from '../../../../lib/actions/admin'
-
-function ImageGallery({ title, images, emptyMessage }) {
-  if (!images || images.length === 0) {
-    return (
-      <div>
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{title}</p>
-        <p className="text-sm text-gray-400">{emptyMessage}</p>
-      </div>
-    )
-  }
-
-  return (
-    <div>
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{title} ({images.length})</p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        {images.map((img, index) => (
-          
-            key={`${img.url}-${index}`}
-            href={img.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block rounded-lg overflow-hidden border border-gray-200 hover:border-orange-300 transition-colors"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={img.url} alt={img.name || img.alt || ''} className="w-full h-28 object-cover" />
-          </a>
-        ))}
-      </div>
-    </div>
-  )
-}
+import { formatNaira } from '../../../../lib/format'
+import EmptyState from '../../../components/shared/EmptyState'
+import EvidenceGallery from '../../../components/shared/EvidenceGallery'
 
 function DisputeCard({ dispute }) {
   const router = useRouter()
@@ -82,7 +54,7 @@ function DisputeCard({ dispute }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
-        <ImageGallery
+        <EvidenceGallery
           title="Student Evidence"
           images={dispute.disputeEvidence}
           emptyMessage="No evidence photos were submitted."
@@ -92,24 +64,13 @@ function DisputeCard({ dispute }) {
             <Building2 className="w-3.5 h-3.5 text-gray-400" />
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Original Listing Photos</p>
           </div>
-          {dispute.listingImages.length === 0 ? (
-            <p className="text-sm text-gray-400">No listing photos on file.</p>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {dispute.listingImages.map((img, index) => (
-                <div key={`${img.url}-${index}`} className="rounded-lg overflow-hidden border border-gray-200">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img.url} alt={img.alt || ''} className="w-full h-28 object-cover" />
-                </div>
-              ))}
-            </div>
-          )}
+          <EvidenceGallery images={dispute.listingImages} emptyMessage="No listing photos on file." />
         </div>
       </div>
 
       <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-5 flex justify-between text-sm">
         <span className="text-gray-600">Amount paid</span>
-        <span className="font-bold text-gray-900">Naira {dispute.totalAmount.toLocaleString()}</span>
+        <span className="font-bold text-gray-900">{formatNaira(dispute.totalAmount)}</span>
       </div>
 
       {error && (
@@ -178,12 +139,8 @@ export default function DisputesQueueClient({ disputes }) {
           {disputes.map((dispute) => <DisputeCard key={dispute.bookingId} dispute={dispute} />)}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-2xl border border-gray-100">
-          <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-            <ShieldAlert className="w-7 h-7 text-gray-400" />
-          </div>
-          <h3 className="font-bold text-gray-900 mb-2">No open disputes</h3>
-          <p className="text-gray-500 text-sm">The dispute queue is clear.</p>
+        <div className="bg-white rounded-2xl border border-gray-100">
+          <EmptyState icon={ShieldAlert} title="No open disputes" description="The dispute queue is clear." />
         </div>
       )}
     </div>

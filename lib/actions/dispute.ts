@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { db } from '../db'
 import { bookings, rooms, properties, landlords, students, users } from '../db/schema'
-import { auth } from '../auth'
+import { requireStudentId } from '../auth-guards'
 import { createNotification } from '../notifications/create'
 import { sendEmail, disputeFiledLandlordEmailHtml, disputeFiledStudentEmailHtml } from '../email/sendEmail'
 
@@ -25,23 +25,21 @@ function sanitizeEvidence(evidenceUrls: unknown): EvidenceFile[] {
     .map((item) => ({ url: item.url, name: typeof item.name === 'string' ? item.name : 'evidence' }))
 }
 
-export async function fileDispute(
-  bookingId: string,
-  reason: string,
-  evidenceUrls: EvidenceFile[] = []
-): Promise<{ success: true } | { error: string }> {
-  const session = await auth()
-  if (!session?.user || session.user.role !== 'student') {
-    return { error: 'You must be logged in as a student to file a dispute.' }
-  }
-  const studentId = session.user.roleRecordId
-  if (!studentId) return { error: 'Student profile not found.' }
+  export async function fileDispute(
+    bookingId: string,
+    reason: string,
+    evidenceUrls: EvidenceFile[] = []
+  ): Promise<{ success: true } | { error: string }> {
+    const authResult = await requireStudentId('You must be logged in as a student to file a dispute.')
+    if ('error' in authResult) return { error: authResult.error! }
+    const { studentId } = authResult
 
-  const trimmedReason = reason?.trim() ?? ''
-  if (trimmedReason.length < MIN_REASON_LENGTH) {
-    return { error: `Please describe the issue in at least ${MIN_REASON_LENGTH} characters.` }
-  }
+    const trimmedReason = reason?.trim() ?? ''
+    if (trimmedReason.length < MIN_REASON_LENGTH) {
+      return { error: `Please describe the issue in at least ${MIN_REASON_LENGTH} characters.` }
+    }
 
+    // ... rest of your function
   const evidence = sanitizeEvidence(evidenceUrls)
 
   const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId))

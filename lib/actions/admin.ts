@@ -8,7 +8,7 @@ import {
   users, students, landlords, properties, rooms, bookings,
   universities, cities,
 } from '../db/schema'
-import { auth } from '../auth'
+import { requireAdminId } from '../auth-guards'
 import { decryptAccountNumberFromBase64 } from '../crypto/bankAccount'
 import { createNotification, notifyVerificationStatusChange } from '../notifications/create'
 import { sendEmail } from '../email/sendEmail'
@@ -17,11 +17,7 @@ const PAYSTACK_BASE_URL = 'https://api.paystack.co'
 const STALE_KYC_HOURS = 24
 
 async function requireAdmin() {
-  const session = await auth()
-  if (!session?.user || session.user.role !== 'admin') {
-    return { error: 'Unauthorized.' } as const
-  }
-  return { adminUserId: session.user.id } as const
+  return requireAdminId()
 }
 
 // ════════════════════════════════════════════════════════════

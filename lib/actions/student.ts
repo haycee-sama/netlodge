@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache'
 import { db } from '../db'
 import { savedRooms, rooms, students, users } from '../db/schema'
 import { auth } from '../auth'
+import { requireStudentId } from '../auth-guards'
 import { encryptAccountNumberToBase64 } from '../crypto/bankAccount'
 
 type StudentAuthResult =
@@ -14,13 +15,9 @@ type StudentAuthResult =
   | { studentId: string; userId: string }
 
 async function requireStudent(): Promise<StudentAuthResult> {
-  const session = await auth()
-  if (!session?.user || session.user.role !== 'student') {
-    return { error: 'Unauthorized.' }
-  }
-  const studentId = session.user.roleRecordId
-  if (!studentId) return { error: 'Student profile not found.' }
-  return { studentId, userId: session.user.id }
+  const result = await requireStudentId()
+  if ('error' in result) return { error: result.error! }
+  return { studentId: result.studentId, userId: result.userId }
 }
 
 // ════════════════════════════════════════════════════════════

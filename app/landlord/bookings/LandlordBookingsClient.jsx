@@ -2,20 +2,17 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { motion, useReducedMotion } from 'framer-motion'
 import LandlordLayout from '../components/LandlordLayout'
 import {
   CheckCircle, Clock, XCircle, Calendar, User, Search,
   ChevronDown, ChevronUp, Phone, Mail, Download, ShieldAlert,
 } from 'lucide-react'
-
-const STATUS_CONFIG = {
-  confirmed:       { label: 'Confirmed', badge: 'bg-green-100 text-green-700', icon: CheckCircle },
-  pending_payment: { label: 'Pending',   badge: 'bg-amber-100 text-amber-700', icon: Clock       },
-  draft:           { label: 'Draft',     badge: 'bg-gray-100 text-gray-500',   icon: Clock       },
-  cancelled:       { label: 'Cancelled', badge: 'bg-red-100 text-red-600',     icon: XCircle     },
-}
+import { LANDLORD_BOOKING_STATUS_CONFIG } from '../../../lib/constants/bookingStatus'
+import { LANDLORD_DISPUTE_STATUS_LABELS } from '../../../lib/constants/dispute'
+import { formatNaira } from '../../../lib/format'
+import EvidenceGallery from '../../components/shared/EvidenceGallery'
+import EmptyState from '../../components/shared/EmptyState'
 
 const PAYMENT_CONFIG = {
   paid:   'bg-green-100 text-green-700',
@@ -23,48 +20,12 @@ const PAYMENT_CONFIG = {
   failed: 'bg-red-100 text-red-600',
 }
 
-const DISPUTE_STATUS_CONFIG = {
-  pending:          { label: 'Dispute Filed — Action Needed', badge: 'bg-red-100 text-red-700' },
-  resolved_refund:  { label: 'Dispute Resolved — Refunded', badge: 'bg-blue-100 text-blue-700' },
-  resolved_release: { label: 'Dispute Resolved — Funds Released', badge: 'bg-green-100 text-green-700' },
-}
-
-function DisputeEvidenceStrip({ evidence }) {
-  if (!evidence || evidence.length === 0) return null
-
-  return (
-    <div className="mt-3">
-      <p className="text-xs font-semibold text-gray-500 mb-2">Evidence Photos ({evidence.length})</p>
-      <div className="flex flex-wrap gap-2">
-        {evidence.map((file, index) => (
-          
-            key={file.url}
-            href={file.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200 hover:border-orange-300 transition-colors shrink-0"
-            aria-label={`Open evidence photo ${index + 1} of ${evidence.length} in a new tab`}
-          >
-            <Image
-              src={file.url}
-              alt={file.name || `Evidence photo ${index + 1}`}
-              fill
-              sizes="64px"
-              className="object-cover"
-            />
-          </a>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 function BookingRow({ booking }) {
   const [expanded, setExpanded] = useState(false)
-  const config = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.draft
+  const config = LANDLORD_BOOKING_STATUS_CONFIG[booking.status] ?? LANDLORD_BOOKING_STATUS_CONFIG.draft
   const StatusIcon = config.icon
   const disputeInfo = booking.disputeStatus && booking.disputeStatus !== 'none'
-    ? DISPUTE_STATUS_CONFIG[booking.disputeStatus]
+    ? LANDLORD_DISPUTE_STATUS_LABELS[booking.disputeStatus]
     : null
 
   return (
@@ -98,7 +59,7 @@ function BookingRow({ booking }) {
           </div>
 
           <div className="text-right shrink-0">
-            <p className="font-bold text-gray-900">₦{booking.roomPrice.toLocaleString()}</p>
+            <p className="font-bold text-gray-900">{formatNaira(booking.roomPrice)}</p>
             <p className="text-xs text-gray-400">{booking.paidAt ? new Date(booking.paidAt).toLocaleDateString() : '—'}</p>
           </div>
 
@@ -154,7 +115,9 @@ function BookingRow({ booking }) {
                 {booking.disputeReason || 'No reason provided.'}
               </p>
 
-              <DisputeEvidenceStrip evidence={booking.disputeEvidence} />
+              <div className="mt-3">
+                <EvidenceGallery title="Evidence Photos" images={booking.disputeEvidence} variant="strip" />
+              </div>
 
               {booking.disputeStatus === 'pending' && (
                 <p className="text-xs text-gray-500 mt-3">
@@ -186,15 +149,15 @@ function BookingRow({ booking }) {
               <div className="bg-white rounded-xl p-3 flex flex-col gap-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Room price</span>
-                  <span className="font-medium">₦{booking.roomPrice.toLocaleString()}</span>
+                  <span className="font-medium">{formatNaira(booking.roomPrice)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Service fee</span>
-                  <span className="font-medium text-gray-400">-₦{booking.serviceFee.toLocaleString()}</span>
+                  <span className="font-medium text-gray-400">-{formatNaira(booking.serviceFee)}</span>
                 </div>
                 <div className="flex justify-between text-sm font-bold border-t border-gray-100 pt-2">
                   <span>You receive</span>
-                  <span className="text-green-600">₦{booking.roomPrice.toLocaleString()}</span>
+                  <span className="text-green-600">{formatNaira(booking.roomPrice)}</span>
                 </div>
                 {booking.escrowReleasedAt && (
                   <p className="text-xs text-green-600 mt-1">Released {new Date(booking.escrowReleasedAt).toLocaleDateString()}</p>
@@ -308,12 +271,8 @@ export default function LandlordBookingsClient({ bookings }) {
             ))}
           </motion.div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-              <Search className="w-7 h-7 text-gray-400" />
-            </div>
-            <h3 className="font-bold text-gray-900 mb-2">No bookings found</h3>
-            <p className="text-gray-500 text-sm">Try adjusting your search or filter.</p>
+          <div className="bg-white rounded-2xl border border-gray-100">
+            <EmptyState icon={Search} title="No bookings found" description="Try adjusting your search or filter." />
           </div>
         )}
 

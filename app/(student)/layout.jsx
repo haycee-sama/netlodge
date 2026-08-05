@@ -1,23 +1,14 @@
 // app/(student)/layout.jsx
-import Navbar from '../components/Navbar'
-import { auth } from '../../lib/auth'
-import { getNotificationsByUser, getUnreadNotificationCount } from '../../lib/db/queries'
+// Route-group layout for every page under (student). Renders the
+// self-contained StudentLayout (sidebar + header, own nav links, own
+// sign-out) instead of the generic public Navbar — the student area no
+// longer inherits marketing-page chrome or leaves booking/saved/profile
+// pages without any consistent navigation.
+//
+// Does not import anything from the landlord or admin layouts.
 
-export default async function StudentLayout({ children }) {
-  const session = await auth()
-  const isLoggedIn = !!session?.user?.id
+import StudentLayout from './components/StudentLayout'
 
-  const [notifications, unreadCount] = isLoggedIn
-    ? await Promise.all([
-        getNotificationsByUser(session.user.id),
-        getUnreadNotificationCount(session.user.id),
-      ])
-    : [[], 0]
-
-  return (
-    <>
-      <Navbar isLoggedIn={isLoggedIn} initialNotifications={notifications} initialUnreadCount={unreadCount} />
-      <main>{children}</main>
-    </>
-  )
+export default function StudentGroupLayout({ children }) {
+  return <StudentLayout>{children}</StudentLayout>
 }
