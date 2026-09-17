@@ -1,1 +1,0 @@
-ALTER TABLE "bookings" ADD COLUMN "dispute_evidence" jsonb DEFAULT '[]'::jsonb NOT NULL;
