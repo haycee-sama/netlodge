@@ -1,51 +1,125 @@
 import * as React from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-interface LogoProps extends React.SVGProps<SVGSVGElement> {
-  /** When true, render the logomark only (no wordmark). */
-  markOnly?: boolean;
+interface LogoProps extends React.HTMLAttributes<HTMLSpanElement> {
+  /** Visual variant.
+   *  - "full":    mark + wordmark + tagline (footer, auth panels — large vertical spaces)
+   *  - "default": mark + wordmark (headers, sidebars — the standard horizontal lockup)
+   *  - "mark":    mark only (favicons, mobile tight spaces, loading states)
+   */
+  variant?: "full" | "default" | "mark";
+  /** Mark height in px. Wordmark and tagline scale relative to it. */
+  size?: "sm" | "md" | "lg";
+  /** Override the wordmark tone. Useful on coloured surfaces (e.g. the green CTA band). */
+  tone?: "auto" | "light" | "dark";
+  className?: string;
 }
 
 /**
- * NetLodge brand mark — a stylised "NL" formed by two stacked chevrons
- * over a rounded square, evoking both a roof line and a location pin.
+ * NetLodge brand lockup.
+ *
+ * Architecture:
+ *  - The green gradient "N" mark is served as a static SVG via next/image. It
+ *    has no currentColor dependencies, so it renders identically on light and
+ *    dark backgrounds. The mark is the visual anchor of the brand.
+ *  - The "NetLodge" wordmark and the "Student Accommodation, Simplified." tagline
+ *    are rendered as HTML text. "Net" uses the foreground color (auto-adapts to
+ *    theme); "Lodge" uses the primary emerald. This gives crisp, theme-aware
+ *    typography with zero currentColor-in-`<img>` headaches, and keeps the
+ *    per-page payload tiny (the 37KB mark SVG is cached once by the browser).
+ *
+ * The original SVG logo's wordmark uses a heavy geometric sans with "Net" in
+ * dark navy and "Lodge" in emerald. We match that with the display font
+ * (Plus Jakarta Sans, weight 800) and the brand's primary emerald token.
  */
-export function Logo({ markOnly = false, className, ...props }: LogoProps) {
+export function Logo({
+  variant = "default",
+  size = "md",
+  tone = "auto",
+  className,
+  ...props
+}: LogoProps) {
+  const isFull = variant === "full";
+  const isMark = variant === "mark";
+
+  // Mark height per size token.
+  const markHeight = size === "sm" ? 28 : size === "lg" ? 44 : 32;
+  const markWidth = markHeight; // mark SVG is square (385x385 viewBox)
+
+  // Wordmark size relative to mark.
+  const wordmarkSize = size === "sm" ? "text-base" : size === "lg" ? "text-2xl" : "text-lg";
+  const taglineSize = size === "sm" ? "text-[8px]" : size === "lg" ? "text-[11px]" : "text-[9px]";
+
+  // Tone: on the green CTA band we force light; otherwise inherit from theme.
+  const netTone =
+    tone === "light"
+      ? "text-white"
+      : tone === "dark"
+        ? "text-foreground"
+        : "text-foreground dark:text-foreground";
+
+  if (isMark) {
+    return (
+      <span
+        className={cn("inline-flex items-center select-none", className)}
+        aria-label="NetLodge"
+        {...props}
+      >
+        <Image
+          src="/netlodge-mark.svg"
+          alt="NetLodge"
+          width={markWidth}
+          height={markHeight}
+          priority
+          className="h-auto w-auto"
+          style={{ height: `${markHeight}px`, width: `${markWidth}px` }}
+        />
+      </span>
+    );
+  }
+
   return (
     <span
       className={cn("inline-flex items-center gap-2 select-none", className)}
       aria-label="NetLodge"
+      {...props}
     >
-      <svg
-        viewBox="0 0 40 40"
-        width="32"
-        height="32"
-        role="img"
+      <Image
+        src="/netlodge-mark.svg"
+        alt=""
+        width={markWidth}
+        height={markHeight}
+        priority
         aria-hidden
-        {...props}
-      >
-        <defs>
-          <linearGradient id="nl-grad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="oklch(0.45 0.13 165)" />
-            <stop offset="100%" stopColor="oklch(0.6 0.14 175)" />
-          </linearGradient>
-        </defs>
-        <rect width="40" height="40" rx="10" fill="url(#nl-grad)" />
-        <path
-          d="M10 28 V14 L20 22 L30 14 V28"
-          fill="none"
-          stroke="white"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <circle cx="20" cy="30" r="2" fill="oklch(0.78 0.16 65)" />
-      </svg>
-      {!markOnly && (
-        <span className="font-display text-xl font-extrabold tracking-tight leading-none">
-          Net<span className="text-primary">Lodge</span>
+        className="h-auto w-auto shrink-0"
+        style={{ height: `${markHeight}px`, width: `${markWidth}px` }}
+      />
+      <span className="flex flex-col leading-none">
+        <span
+          className={cn(
+            "font-display font-extrabold tracking-tight",
+            wordmarkSize,
+            netTone,
+          )}
+        >
+          Net
+          <span className="text-primary">Lodge</span>
         </span>
-      )}
+        {isFull && (
+          <span
+            className={cn(
+              "mt-1 font-medium uppercase tracking-[0.22em]",
+              taglineSize,
+              tone === "light"
+                ? "text-white/70"
+                : "text-muted-foreground",
+            )}
+          >
+            Student Accommodation, Simplified.
+          </span>
+        )}
+      </span>
     </span>
   );
 }
