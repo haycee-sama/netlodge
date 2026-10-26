@@ -1,0 +1,12 @@
+{
+  "name": "NetLodge",
+  "short_name": "NetLodge",
+  "description": "Verified student accommodation in Nigeria.",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "theme_color": "#0f766e",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/"
+}

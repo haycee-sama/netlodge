@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /student
+Disallow: /landlord
+Disallow: /manager
+Disallow: /agent
+Disallow: /auth
+Disallow: /api
+
+Sitemap: https://netlodge.example/sitemap.xml
