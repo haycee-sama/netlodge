@@ -127,6 +127,25 @@ export async function POST(request: NextRequest) {
       const result = String(rpcResult ?? "");
       console.log(`[paystack/webhook] confirm_payment returned: ${result} for ${txnData.reference}`);
 
+      // Send a notification to the student (deduped via create_notification RPC)
+      if (result === "confirmed") {
+        await adminClient.rpc("create_notification", {
+          p_user_id: payment.student_id,
+          p_type: "payment_update",
+          p_title: "Payment confirmed",
+          p_body: `Your payment ${payment.reference} has been confirmed. Your booking is now active.`,
+          p_href: `/student/bookings/${payment.booking_id}`,
+        });
+      } else if (result === "needs_reconciliation") {
+        await adminClient.rpc("create_notification", {
+          p_user_id: payment.student_id,
+          p_type: "payment_update",
+          p_title: "Payment received — under review",
+          p_body: `Your payment ${payment.reference} was received but your booking needs manual review. Our team will contact you.`,
+          p_href: `/student/bookings/${payment.booking_id}`,
+        });
+      }
+
       return NextResponse.json({ status: "ok", result }, { status: 200 });
     }
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { initializeTransaction } from "@/lib/paystack/server";
+import { securityCheck } from "@/lib/security/api-security";
 
 /**
  * POST /api/payments/initiate
@@ -18,6 +19,10 @@ import { initializeTransaction } from "@/lib/paystack/server";
  */
 export async function POST(request: NextRequest) {
   try {
+    // Security: rate limit + origin validation
+    const sec = securityCheck(request, "payment-initiate", { capacity: 5, refillPerSecond: 0.2 });
+    if (sec) return sec;
+
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 

@@ -188,6 +188,88 @@ bun run scripts/test-admin-api-auth.ts
 - Audit logs are append-only — no UPDATE or DELETE policies exist on `audit_logs`.
 - Demo-mode sessions (cookie-based, no JWT) are redirected away from `/admin` by the middleware and rejected by all API routes.
 
+## Phase 7 — Finance, Support, Reconciliation, and Security Hardening
+
+### Test accounts
+
+Additional test accounts created for Phase 7 (password `TestPass123!`):
+
+| Email | Role | Purpose |
+|------|------|---------|
+| `fa.test@netlodge.test` | finance_admin | Refunds, payouts, reconciliation |
+| `ss.test@netlodge.test` | support_staff | Ticket queue, replies, escalation |
+
+### Finance Admin workflow test plan
+
+1. Sign in as `fa.test@netlodge.test`.
+2. `/admin/finance` — dashboard shows real metrics (gross volume, platform revenue, payouts, refunds, success rate).
+3. `/admin/finance/transactions` — list of all payments with status/verified badges.
+4. `/admin/finance/refunds` — click "New refund" → enter a payment ID, amount (kobo), reason, detail → submit. The `create_refund` RPC validates the refundable balance and locks the payment row.
+5. Click "Approve" on a requested refund → the route calls Paystack's test-mode refund API and records the provider reference. The refund moves to "processing".
+6. Click "Reject" on a requested refund → requires a reason. The refund moves to "rejected".
+7. `/admin/finance/payouts` — click "Approve" on a scheduled payout. The payout moves to "in_flight" (no live transfer). Self-approval is blocked.
+8. Click "Reject" on a scheduled payout → requires a reason.
+9. `/admin/finance/reconciliation` — click "Run reconciliation" → select a date range → the system creates reconciliation records for all successful payments and verifies each with Paystack. Discrepancies are flagged.
+10. Click "Resolve" on a discrepancy → requires resolution notes. The record moves to "resolved" (the underlying payment is NOT modified).
+
+### Support Agent workflow test plan
+
+1. Sign in as `ss.test@netlodge.test`.
+2. `/admin/support/tickets` — queue shows all tickets with status/priority filters.
+3. Click any ticket → detail page shows the original message, conversation, and action buttons.
+4. Click "Assign to me" → ticket moves to "in_progress", `assigned_to` is set.
+5. Type a reply → uncheck "Internal note" → click "Send reply" → the message appears in the conversation.
+6. Check "Internal note" → type a note → click "Add internal note" → the note appears with a lock icon (visible to staff only, RLS-enforced).
+7. Use the status dropdown to move the ticket to "resolved" or "closed".
+8. Click "Escalate" → select a target role + reason → the ticket is flagged as escalated.
+
+### Security hardening test plan
+
+The `/api/payments/initiate` and all `/api/admin/finance/*` + `/api/admin/support/*` mutation routes now enforce:
+
+1. **Origin validation** (CSRF mitigation): mutation requests (POST/PUT/PATCH/DELETE) without an `Origin` or `Referer` header are rejected with 403. Requests with a foreign origin are rejected. Bearer-token-authenticated requests skip this check (the token is the CSRF protection).
+2. **Rate limiting**: per-IP token bucket. Payment init: 5 burst / 0.2/s sustained. Refund/payout/reconciliation mutations: 5 burst / 0.2/s. Read endpoints: 30 burst / 2/s. When exhausted, returns 429 with `Retry-After`.
+3. **Role checks**: every route verifies the caller's role via `requireRole()`.
+
+Test with:
+```bash
+bun run /tmp/test-security.ts  # CSRF + rate limit checks against dev server
+```
+
+### Automated tests
+
+Three integration test scripts:
+
+```bash
+# Phase 5: confirm_payment RPC (atomic, idempotent booking confirmation)
+bun run scripts/test-confirm-payment.ts
+
+# Phase 6: admin RPCs (verification, role change, suspend, platform metrics)
+bun run scripts/test-admin-rpcs.ts
+
+# Phase 7: finance + support RPCs (refunds, payouts, reconciliation, tickets, notifications)
+bun run scripts/test-finance-support-rpcs.ts
+```
+
+### Rate limiting limitations
+
+The rate limiter is **in-memory per instance**. In a multi-instance deployment (Vercel, Cloud Run, Kubernetes with >1 replica), each instance maintains its own bucket. For true distributed rate limiting, you need a shared store (Redis, Upstash, Cloudflare KV). The current implementation:
+
+- Protects a single instance correctly.
+- Degrades gracefully in multi-instance: each instance enforces its own limit, so the effective limit is `limit × instance_count` (less strict, but not unbounded).
+- Is a fail-safe baseline — not a substitute for a distributed rate limiter in production.
+
+To enable distributed rate limiting, integrate Upstash Redis or Cloudflare KV in `src/lib/security/api-security.ts`.
+
+### Notification delivery
+
+Notifications are **database-backed** (not real-time). The `notifications` table stores per-user notifications with `read` boolean. The webhook calls `create_notification` (deduped on user+type+title+href within 24h) after payment confirmation.
+
+**Real-time delivery (SSE/WebSocket) is NOT implemented.** To add it:
+1. Set up Supabase Realtime subscriptions on the `notifications` table.
+2. Add a client-side listener in the auth context.
+3. Show a toast when a new notification arrives.
+
 ## Credential Cleanup Procedure
 
 When development is complete and temporary credentials are no longer needed:

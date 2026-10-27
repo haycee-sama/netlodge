@@ -6,126 +6,118 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
-import { StatCard, SectionHeading, EmptyState } from "@/components/shared/page-components";
-import { PayoutStatusBadge, RefundStatusBadge, PaymentStatusBadge } from "@/components/shared/status-badges";
-import { Price } from "@/components/shared/price";
-import { getRepositories } from "@/lib/repositories";
-import { payouts as allPayouts, payments as allPayments } from "@/lib/data/fixtures";
-import { refunds as allRefunds } from "@/lib/data/admin-fixtures";
-import type { Payout, Payment, Refund } from "@/lib/types";
-import { formatRelativeTime, formatNgn } from "@/lib/utils/format";
-import { Banknote, Receipt, RotateCcw, AlertTriangle, CheckCircle2, TrendingUp, Scale, Wallet } from "lucide-react";
+import { StatCard, SectionHeading } from "@/components/shared/page-components";
+import { useAuth } from "@/lib/auth/auth-context";
+import { formatNgn } from "@/lib/utils/format";
+import { Banknote, Receipt, RotateCcw, AlertTriangle, CheckCircle2, TrendingUp, Wallet, Loader2 } from "lucide-react";
+
+interface Metrics {
+  gross_volume_kobo: number;
+  platform_revenue_kobo: number;
+  pending_payouts_count: number;
+  pending_payouts_total_kobo: number;
+  settled_payouts_total_kobo: number;
+  refund_total_kobo: number;
+  pending_refunds_count: number;
+  failed_txns_count: number;
+  success_rate: number;
+  total_payments: number;
+}
 
 export default function FinanceDashboardPage() {
-  const [payouts, setPayouts] = React.useState<Payout[]>([]);
-  const [payments, setPayments] = React.useState<Payment[]>([]);
-  const [refunds, setRefunds] = React.useState<Refund[]>([]);
+  const { session } = useAuth();
+  const [m, setM] = React.useState<Metrics | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const isSupabaseAuth = session?.authenticated === true;
 
   React.useEffect(() => {
-    Promise.all([
-      getRepositories().payouts.listAll({ pageSize: 100 }),
-      getRepositories().payments.listAll({ pageSize: 100 }),
-      getRepositories().refunds.listAll({ pageSize: 100 }),
-    ]).then(([p, pay, r]) => {
-      setPayouts(p.items); setPayments(pay.items); setRefunds(r.items); setLoading(false);
-    });
-  }, []);
+    if (!isSupabaseAuth) { setLoading(false); return; }
+    fetch("/api/admin/finance/metrics", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.error) setError(data.error);
+        else setM(data);
+        setLoading(false);
+      })
+      .catch((e) => { setError(e instanceof Error ? e.message : "Network error"); setLoading(false); });
+  }, [isSupabaseAuth]);
 
-  const grossVolume = payments.filter((p) => p.status === "successful").reduce((s, p) => s + p.amountKobo, 0);
-  const platformRevenue = payments.filter((p) => p.status === "successful").reduce((s, p) => s + p.feeKobo, 0) + allPayouts.reduce((s, p) => s + p.platformFeeKobo, 0);
-  const pendingPayouts = payouts.filter((p) => p.status === "scheduled" || p.status === "in_flight");
-  const pendingPayoutsTotal = pendingPayouts.reduce((s, p) => s + p.netKobo, 0);
-  const completedPayouts = payouts.filter((p) => p.status === "settled");
-  const completedPayoutsTotal = completedPayouts.reduce((s, p) => s + p.netKobo, 0);
-  const refundTotal = refunds.filter((r) => r.status === "completed").reduce((s, r) => s + r.amountKobo, 0);
-  const failedTxns = payments.filter((p) => p.status === "failed").length;
-  const successRate = payments.length > 0 ? Math.round((payments.filter((p) => p.status === "successful").length / payments.length) * 100) : 0;
-  const pendingRefunds = refunds.filter((r) => r.status === "requested" || r.status === "under_review");
+  if (!isSupabaseAuth) {
+    return (
+      <div className="mx-auto max-w-7xl space-y-6">
+        <AdminPageHeader eyebrow="Finance operations" title="Finance dashboard" />
+        <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">
+          Sign in with a real Finance Admin account to view the dashboard.
+        </CardContent></Card>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <AdminPageHeader
         eyebrow="Finance operations"
         title="Finance dashboard"
-        description="Monitor payments, commissions, refunds, payouts, and reconciliation across the platform."
-        breadcrumbs={[{ label: "Finance", href: "/admin/finance" }, { label: "Dashboard" }]}
-        actions={
-          <Button asChild variant="outline"><Link href="/admin/finance/reconciliation"><Scale className="mr-2 h-4 w-4" aria-hidden /> Run reconciliation</Link></Button>
-        }
+        description="Real-time financial metrics — gross volume, platform revenue, payouts, refunds, and reconciliation. All figures derived from verified database records."
+        breadcrumbs={[{ label: "Finance Admin", href: "/admin/finance" }, { label: "Dashboard" }]}
       />
+      <DemoModeBanner message="Live data — every metric comes from the database. Pending/failed transactions are never counted as settled funds." />
 
-      <DemoModeBanner message="All financial figures are derived from fixture data. Approving a payout or refund updates local state and records a demo audit entry — no real money movement occurs. In production, every financial action is executed through Paystack and independently verified." />
+      {error && (
+        <Card className="border-destructive/40 bg-destructive/5">
+          <CardContent className="flex items-center justify-between p-4 text-sm text-destructive">
+            <span>{error}</span>
+            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Retry</Button>
+          </CardContent>
+        </Card>
+      )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Gross volume" value={formatNgn(grossVolume)} hint="Successful payments" icon={<TrendingUp className="h-4 w-4" aria-hidden />} />
-        <StatCard label="Platform revenue" value={formatNgn(platformRevenue)} hint="Fees + commission" icon={<Wallet className="h-4 w-4" aria-hidden />} />
-        <StatCard label="Pending payouts" value={formatNgn(pendingPayoutsTotal)} hint={`${pendingPayouts.length} awaiting`} icon={<Banknote className="h-4 w-4" aria-hidden />} />
-        <StatCard label="Refunds (completed)" value={formatNgn(refundTotal)} hint={`${refunds.filter((r) => r.status === "completed").length} refunds`} icon={<RotateCcw className="h-4 w-4" aria-hidden />} />
-      </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+      ) : m ? (
+        <>
+          <section>
+            <SectionHeading title="Volume & revenue" />
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard label="Gross volume" value={formatNgn(m.gross_volume_kobo)} hint="Successful payments only" icon={<TrendingUp className="h-4 w-4" aria-hidden />} />
+              <StatCard label="Platform revenue" value={formatNgn(m.platform_revenue_kobo)} hint="Payment fees + payout fees" icon={<Wallet className="h-4 w-4" aria-hidden />} />
+              <StatCard label="Success rate" value={`${m.success_rate}%`} hint={`${m.total_payments} total transactions`} icon={<CheckCircle2 className="h-4 w-4" aria-hidden />} />
+              <StatCard label="Failed transactions" value={m.failed_txns_count} icon={<AlertTriangle className="h-4 w-4" aria-hidden />} />
+            </div>
+          </section>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Completed payouts" value={formatNgn(completedPayoutsTotal)} hint={`${completedPayouts.length} settled`} icon={<CheckCircle2 className="h-4 w-4" aria-hidden />} />
-        <StatCard label="Failed transactions" value={failedTxns} icon={<AlertTriangle className="h-4 w-4" aria-hidden />} />
-        <StatCard label="Payment success rate" value={`${successRate}%`} icon={<TrendingUp className="h-4 w-4" aria-hidden />} />
-        <StatCard label="Pending refund reviews" value={pendingRefunds.length} icon={<Receipt className="h-4 w-4" aria-hidden />} />
-      </div>
+          <section>
+            <SectionHeading title="Payouts" />
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <StatCard label="Pending payouts" value={m.pending_payouts_count} hint={`Net: ${formatNgn(m.pending_payouts_total_kobo)}`} icon={<Banknote className="h-4 w-4" aria-hidden />} />
+              <StatCard label="Settled payouts (total)" value={formatNgn(m.settled_payouts_total_kobo)} hint="Net amount disbursed" icon={<CheckCircle2 className="h-4 w-4" aria-hidden />} />
+              <StatCard label="Refunds completed" value={formatNgn(m.refund_total_kobo)} hint={`${m.pending_refunds_count} pending review`} icon={<RotateCcw className="h-4 w-4" aria-hidden />} />
+            </div>
+          </section>
 
-      <section>
-        <SectionHeading eyebrow="Awaiting approval" title="Pending payouts" action={<Button asChild variant="ghost" size="sm"><Link href="/admin/finance/payouts">View all</Link></Button>} />
-        {pendingPayouts.length === 0 ? (
-          <EmptyState className="mt-4" icon={<CheckCircle2 className="h-5 w-5" aria-hidden />} title="No pending payouts" description="All payouts have been processed." />
-        ) : (
-          <Card className="mt-4"><CardContent className="p-0">
-            <ul className="divide-y divide-border">
-              {pendingPayouts.slice(0, 5).map((p) => (
-                <li key={p.id}>
-                  <Link href={`/admin/finance/payouts/${p.id}`} className="flex items-center justify-between gap-3 p-4 hover:bg-muted/40">
-                    <div className="min-w-0"><p className="font-mono text-xs font-medium">{p.reference}</p><p className="text-xs text-muted-foreground">{p.bankAccountMasked} · scheduled {formatRelativeTime(p.scheduledFor)}</p></div>
-                    <div className="flex items-center gap-3"><Price kobo={p.netKobo} /><PayoutStatusBadge status={p.status} /></div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </CardContent></Card>
-        )}
-      </section>
-
-      <section>
-        <SectionHeading eyebrow="Awaiting review" title="Refund requests" action={<Button asChild variant="ghost" size="sm"><Link href="/admin/finance/refunds">View all</Link></Button>} />
-        {pendingRefunds.length === 0 ? (
-          <EmptyState className="mt-4" icon={<CheckCircle2 className="h-5 w-5" aria-hidden />} title="No pending refunds" description="All refund requests have been reviewed." />
-        ) : (
-          <Card className="mt-4"><CardContent className="p-0">
-            <ul className="divide-y divide-border">
-              {pendingRefunds.slice(0, 5).map((r) => (
-                <li key={r.id}>
-                  <Link href="/admin/finance/refunds" className="flex items-center justify-between gap-3 p-4 hover:bg-muted/40">
-                    <div className="min-w-0"><p className="font-mono text-xs font-medium">{r.reference}</p><p className="text-xs text-muted-foreground">{r.reason.replace(/_/g, " ")} · requested {formatRelativeTime(r.createdAt)}</p></div>
-                    <div className="flex items-center gap-3"><Price kobo={r.amountKobo} /><RefundStatusBadge status={r.status} /></div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </CardContent></Card>
-        )}
-      </section>
-
-      <section>
-        <SectionHeading eyebrow="Activity" title="Recent transactions" action={<Button asChild variant="ghost" size="sm"><Link href="/admin/finance/transactions">View all</Link></Button>} />
-        <Card className="mt-4"><CardContent className="p-0">
-          <ul className="divide-y divide-border">
-            {payments.slice(0, 5).map((p) => (
-              <li key={p.id}>
-                <Link href={`/admin/finance/transactions/${p.id}`} className="flex items-center justify-between gap-3 p-4 hover:bg-muted/40">
-                  <div className="min-w-0"><p className="font-mono text-xs font-medium">{p.reference}</p><p className="text-xs text-muted-foreground">{p.channel.toUpperCase()} · {formatRelativeTime(p.initiatedAt)}</p></div>
-                  <div className="flex items-center gap-3"><Price kobo={p.amountKobo} /><PaymentStatusBadge status={p.status} /></div>
+          <section>
+            <SectionHeading title="Quick links" />
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                { href: "/admin/finance/transactions", icon: Receipt, label: "Transactions" },
+                { href: "/admin/finance/refunds", icon: RotateCcw, label: "Refunds" },
+                { href: "/admin/finance/payouts", icon: Banknote, label: "Payouts" },
+                { href: "/admin/finance/reconciliation", icon: AlertTriangle, label: "Reconciliation" },
+              ].map((q) => (
+                <Link key={q.href} href={q.href}>
+                  <Card className="h-full transition-all hover:shadow-md hover:-translate-y-0.5">
+                    <CardContent className="flex items-center gap-3 p-4">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary"><q.icon className="h-4 w-4" aria-hidden /></div>
+                      <p className="flex-1 text-sm font-medium">{q.label}</p>
+                    </CardContent>
+                  </Card>
                 </Link>
-              </li>
-            ))}
-          </ul>
-        </CardContent></Card>
-      </section>
+              ))}
+            </div>
+          </section>
+        </>
+      ) : null}
     </div>
   );
 }

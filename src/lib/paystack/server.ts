@@ -131,6 +131,84 @@ export async function verifyTransaction(
 }
 
 /**
+ * Refund a Paystack transaction.
+ *
+ * Paystack supports full and partial refunds. The amount is in kobo.
+ * If amount is omitted, Paystack refunds the full transaction amount.
+ *
+ * Returns the Paystack refund reference (`data.id` as a string, plus
+ * `data.status` which is usually `pending` immediately after creation).
+ *
+ * IMPORTANT: A successful return here means Paystack accepted the refund
+ * request — the actual money movement may take time to settle. The
+ * webhook will deliver a `refund.processed` event when the refund
+ * completes, or the route handler can poll the verify endpoint.
+ *
+ * Test mode only — never call this with live credentials unless
+ * explicitly authorized.
+ */
+export async function refundTransaction(
+  reference: string,
+  amountKobo?: number,
+): Promise<{
+  success: boolean;
+  refundId?: string;
+  refundStatus?: string;
+  refundReference?: string;
+  error?: string;
+}> {
+  const secretKey = process.env.PAYSTACK_SECRET_KEY;
+  if (!secretKey) {
+    return { success: false, error: "PAYSTACK_SECRET_KEY is not configured" };
+  }
+
+  // Safety: refuse to call the live API if the key is not a test key.
+  if (!secretKey.startsWith("sk_test_")) {
+    return {
+      success: false,
+      error: "Refunds are only permitted in Paystack test mode (sk_test_*) in this phase. Live refunds require explicit production authorization.",
+    };
+  }
+
+  try {
+    const body: Record<string, unknown> = { transaction: reference };
+    if (amountKobo !== undefined && amountKobo > 0) {
+      body.amount = amountKobo;
+    }
+
+    const response = await fetch(`${PAYSTACK_BASE_URL}/refund`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.status) {
+      return {
+        success: false,
+        error: data.message || "Paystack refund failed",
+      };
+    }
+
+    return {
+      success: true,
+      refundId: String(data.data?.id ?? ""),
+      refundStatus: String(data.data?.status ?? "pending"),
+      refundReference: String(data.data?.reference ?? ""),
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Network error during Paystack refund",
+    };
+  }
+}
+
+/**
  * Verify a Paystack webhook signature.
  * Uses HMAC-SHA512 with the secret key against the raw body.
  *
