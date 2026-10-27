@@ -4,13 +4,15 @@ import { NextResponse, type NextRequest } from "next/server";
 /**
  * Supabase session-refresh middleware.
  *
- * Refreshes the user's Supabase auth session on every request by updating
- * the cookies. This is the recommended pattern for Next.js App Router.
+ * - Refreshes the user's Supabase auth session on every request.
+ * - Protects dashboard routes — redirects to /login if no session.
+ * - Allows demo-mode access via a cookie set by the auth context.
+ * - Redirects authenticated users away from auth pages.
  *
- * Also protects admin routes — if a user visits /admin/* without a session,
- * they are redirected to /login.
+ * Security note: demo mode is only for UI preview. It does NOT grant
+ * any backend privileges — all data access is still controlled by RLS.
  */
-export async function updateSession(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -34,12 +36,12 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Do not run code between createServerClient and getUser.
-  // A simple mistake could make it very hard to debug issues with users
-  // being randomly logged out.
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Check for demo-mode cookie (set by the auth context for UI preview)
+  const hasDevSession = request.cookies.has("netlodge-dev-session");
 
   // Protect admin/dashboard routes — redirect to login if no session.
   const protectedPaths = [
@@ -53,7 +55,7 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith(p),
   );
 
-  if (isProtected && !user) {
+  if (isProtected && !user && !hasDevSession) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirect", request.nextUrl.pathname);
@@ -66,7 +68,7 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith(p),
   );
 
-  if (isAuthPage && user) {
+  if (isAuthPage && (user || hasDevSession)) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     url.searchParams.delete("redirect");
@@ -75,3 +77,9 @@ export async function updateSession(request: NextRequest) {
 
   return supabaseResponse;
 }
+
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+  ],
+};

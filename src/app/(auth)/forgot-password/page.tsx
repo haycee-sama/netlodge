@@ -24,11 +24,23 @@ export default function ForgotPasswordPage() {
   });
 
   async function onSubmit(values: ForgotPasswordInput) {
-    await new Promise((r) => setTimeout(r, 600));
-    setSubmitted(values.email);
-    toast.success("Reset link sent", {
-      description: "Check your inbox for a password reset link.",
-    });
+    setSubmitting(true);
+    try {
+      const { resetPasswordForEmail } = await import("@/lib/supabase/auth-service");
+      const result = await resetPasswordForEmail(values.email);
+      if (result.success) {
+        setSubmitted(values.email);
+        toast.success("Reset link sent", {
+          description: "Check your inbox for a password reset link.",
+        });
+      } else {
+        toast.error("Could not send reset link", {
+          description: result.error ?? "Please try again.",
+        });
+      }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (submitted) {

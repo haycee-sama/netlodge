@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Loader2, Mail, Lock, ArrowRight, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,7 @@ import { homeRouteForRole } from "@/lib/auth/permissions";
 import { toast } from "sonner";
 import type { UserRole } from "@/lib/types";
 import { roleLabel as formatRoleLabel } from "@/lib/types";
+import { signInWithEmail } from "@/lib/supabase/auth-service";
 
 const marketplaceDemoAccounts: { role: UserRole; email: string; label: string; description: string }[] = [
   { role: "student", email: "ada@netlodge.demo", label: "Student", description: "Browse, save, book" },
@@ -33,7 +34,7 @@ const adminDemoAccounts: { role: UserRole; email: string; label: string; descrip
   { role: "super_admin", email: "admin@netlodge.demo", label: "Super Admin", description: "Platform-wide control" },
 ];
 
-/** Demo-only: infer a user's role from their email address. */
+/** Demo-only: infer a user's role from their email address for demo quick-access. */
 function inferRoleFromEmail(email: string): UserRole {
   const e = email.toLowerCase();
   if (e.includes("officer") || e.includes("verification")) return "verification_officer";
@@ -61,30 +62,47 @@ function LoginForm() {
   const { signIn } = useAuth();
   const [showPw, setShowPw] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
+  const [authError, setAuthError] = React.useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
     formState: { errors },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
 
-  const remember = watch("password") !== undefined; // always present; placeholder
-
   async function onSubmit(values: LoginInput) {
     setSubmitting(true);
+    setAuthError(null);
     try {
-      // Demo: infer role from email for convenience.
-      const role: UserRole = inferRoleFromEmail(values.email);
-      signIn({ email: values.email, role });
-      toast.success("Signed in", {
-        description: `Welcome back. You're now in the ${formatRoleLabel(role)} workspace.`,
-      });
-      router.push(redirect ?? homeRouteForRole(role));
+      // Try real Supabase Auth first
+      const result = await signInWithEmail(values.email, values.password);
+      if (result.success && result.session) {
+        toast.success("Signed in", {
+          description: `Welcome back. You're now in the ${formatRoleLabel(result.session.role)} workspace.`,
+        });
+        router.push(redirect ?? homeRouteForRole(result.session.role));
+        return;
+      }
+
+      // If Supabase auth fails, check if this is a demo account
+      if (values.email.endsWith("@netlodge.demo")) {
+        // Demo fallback for quick-access accounts
+        const role = inferRoleFromEmail(values.email);
+        signIn({ email: values.email, role });
+        toast.success(`Signed in as ${formatRoleLabel(role)} (demo)`, {
+          description: "Demo mode — not connected to Supabase Auth.",
+        });
+        router.push(redirect ?? homeRouteForRole(role));
+        return;
+      }
+
+      // Real auth failed and not a demo account — show error
+      setAuthError(result.error ?? "Invalid email or password.");
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : "An unexpected error occurred.");
     } finally {
       setSubmitting(false);
     }
@@ -92,8 +110,8 @@ function LoginForm() {
 
   function quickSignIn(role: UserRole, email: string) {
     signIn({ email, role });
-    toast.success(`Signed in as ${formatRoleLabel(role)}`, {
-      description: "Demo mode — no real authentication backend is connected.",
+    toast.success(`Signed in as ${formatRoleLabel(role)} (demo)`, {
+      description: "Demo mode — not connected to Supabase Auth.",
     });
     router.push(homeRouteForRole(role));
   }
@@ -109,6 +127,13 @@ function LoginForm() {
           Sign in to your NetLodge account to continue.
         </p>
       </div>
+
+      {authError && (
+        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <span>{authError}</span>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1.5">
@@ -232,10 +257,10 @@ function LoginForm() {
 
       <Card className="border-dashed bg-muted/30">
         <CardContent className="p-3 text-xs text-muted-foreground">
-          <strong className="text-foreground">Demo mode:</strong> No real authentication backend is
-          connected. The form above accepts any email and password matching the schema, and the
-          quick-access buttons sign you in instantly. Switch roles anytime from the dashboard
-          settings.
+          <strong className="text-foreground">Authentication:</strong> Real sign-in uses Supabase
+          Auth. Demo quick-access buttons create a local preview session for UI testing. New
+          registrations always receive the student role only — admin roles require server-side
+          assignment.
         </CardContent>
       </Card>
     </div>
