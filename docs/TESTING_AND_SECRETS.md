@@ -115,6 +115,79 @@ Failure scenarios to test:
 - **Booking cancelled mid-flight** — cancel the booking after initiating payment but before confirming → webhook should detect the `cancelled` status and surface for reconciliation rather than confirming.
 - **Duplicate webhook** — replay the same webhook payload twice → second delivery should be a no-op (idempotent).
 
+## Phase 6 — Verification Officer & Super Admin testing
+
+### Test accounts
+
+The following test accounts are pre-configured in the Supabase project (passwords are `TestPass123!` for all):
+
+| Email | Role | Purpose |
+|------|------|---------|
+| `landlord.test@netlodge.test` | landlord | Owns test properties, can submit verification cases |
+| `student.test@netlodge.test` | student | Books rooms, makes payments |
+| `vo.test@netlodge.test` | verification_officer | Reviews verification cases (create on demand — see below) |
+| `sa.test@netlodge.test` | super_admin | Full platform administration (create on demand — see below) |
+
+To create the VO + SA test accounts:
+
+```bash
+bun run scripts/create-admin-test-accounts.ts
+```
+
+### Verification Officer workflow test plan
+
+1. Sign in as `vo.test@netlodge.test` at `/login`.
+2. Navigate to `/admin/verification` — the dashboard should load with live metrics (new cases, assigned to me, overdue, escalated).
+3. Click **Open review queue** → the queue page shows all pending verification cases from the database.
+4. Use the status, type, entity, and overdue filters to narrow the list.
+5. Click any case → the detail page shows case summary, related property/landlord, evidence list, internal notes, and action buttons.
+6. Click **Assign to me** → the case status flips to `under_review` and `assigned_officer_id` is set.
+7. Click **Approve** → enter review notes → confirm. The case status flips to `approved` and (for property cases) the property's `verification_status` flips to `approved` and `status` to `verified`.
+8. Test **Reject** (requires a reason), **Request info** (requires a message), and **Escalate** (requires a target + reason).
+9. Verify that the self-approval guard blocks a VO from reviewing their own submission (entity_id = VO's profile id).
+10. Sign in as `sa.test@netlodge.test` → navigate to `/admin/audit-logs` → verify the `verification.approve` audit entry appears.
+
+### Super Admin workflow test plan
+
+1. Sign in as `sa.test@netlodge.test`.
+2. Navigate to `/admin` — the platform overview shows real metrics from the database (users by role, properties by status, bookings, payments, verification cases).
+3. Navigate to `/admin/users` → search, filter by role/status, click any user.
+4. On the user detail page:
+   - Test **Change role** (requires a reason) — the `set_user_role` RPC enforces no-self-change and no-demoting-last-super-admin.
+   - Test **Suspend account** (requires a reason) — the `set_user_active_status` RPC enforces no-self-suspension and no-suspending-last-super-admin.
+   - Test **Reactivate account**.
+5. Verify the audit timeline on the user detail page shows all role/status changes.
+6. Navigate to `/admin/audit-logs` → filter by category, severity, or search. Verify audit entries are immutable (no edit/delete buttons exist).
+7. Navigate to `/admin/verification/queue` → the SA can see the same queue as VOs and can also re-open closed cases.
+
+### Automated tests
+
+Two integration test scripts are included:
+
+```bash
+# Tests the SECURITY DEFINER RPCs (review_verification_case, set_user_role,
+# set_user_active_status, platform_metrics) against the live Supabase project.
+# Creates and cleans up its own test data.
+bun run scripts/test-admin-rpcs.ts
+
+# Tests the API route authorization (401 for unauthenticated, 403 for
+# wrong-role, 200 for authorized) against the running dev server.
+bun run scripts/test-admin-api-auth.ts
+```
+
+### Security guarantees verified by tests
+
+- Unauthenticated users receive 401 from all `/api/admin/*` routes.
+- Authenticated non-admin users (students) receive 403 from all admin RPCs.
+- A VO can review cases but cannot access SA endpoints (users, audit-logs, metrics).
+- A VO cannot approve their own submission (self-approval guard).
+- A SA cannot change their own role (self-escalation guard).
+- A SA cannot suspend their own account (self-suspension guard).
+- The last active super_admin cannot be demoted or suspended (lockout guard).
+- All privileged actions (approve, reject, escalate, role change, suspend, reactivate) record an audit log entry with the actor, action, target, and reason.
+- Audit logs are append-only — no UPDATE or DELETE policies exist on `audit_logs`.
+- Demo-mode sessions (cookie-based, no JWT) are redirected away from `/admin` by the middleware and rejected by all API routes.
+
 ## Credential Cleanup Procedure
 
 When development is complete and temporary credentials are no longer needed:

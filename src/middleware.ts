@@ -71,11 +71,23 @@ export async function middleware(request: NextRequest) {
   }
 
   // Protect dashboard routes — redirect to login if no session.
-  if (isProtected && !user && !hasDevSession) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(url);
+  // Admin routes (/admin) require a real Supabase session — demo-mode
+  // cookies are NOT sufficient. This is defense-in-depth: the admin API
+  // routes also reject demo users via server-side role checks.
+  if (isProtected && !user) {
+    // Allow demo-mode access to marketplace routes only (not /admin)
+    if (pathname.startsWith("/admin")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(url);
+    }
+    if (!hasDevSession) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(url);
+    }
   }
 
   // Redirect authenticated users away from auth pages.

@@ -4,65 +4,92 @@ import * as React from "react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { AdminDataTable, type Column } from "@/components/admin/admin-data-table";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
-import { AuditSeverityBadge } from "@/components/shared/status-badges";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { getRepositories } from "@/lib/repositories";
-import type { AuditLog, AuditActionCategory, AuditSeverity } from "@/lib/types";
+import { Card, CardContent } from "@/components/ui/card";
+import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
+import { useAuth } from "@/lib/auth/auth-context";
 import { formatRelativeTime, formatDateTime } from "@/lib/utils/format";
+import { Loader2 } from "lucide-react";
 
-const CATEGORY_OPTIONS: { value: "all" | AuditActionCategory; label: string }[] = [
-  { value: "all", label: "All categories" },
-  { value: "auth", label: "Auth" },
-  { value: "user_management", label: "User management" },
-  { value: "role_management", label: "Role management" },
-  { value: "verification", label: "Verification" },
-  { value: "support", label: "Support" },
-  { value: "finance", label: "Finance" },
-  { value: "payout", label: "Payout" },
-  { value: "refund", label: "Refund" },
-  { value: "configuration", label: "Configuration" },
-  { value: "security", label: "Security" },
-  { value: "integration", label: "Integration" },
+interface AuditLogRow {
+  id: string;
+  timestamp: string;
+  actor_email: string;
+  actor_role: string;
+  category: string;
+  action: string;
+  resource_type: string;
+  resource_id: string;
+  summary: string;
+  severity: string;
+}
+
+const CATEGORY_OPTIONS = [
+  "all", "auth", "user_management", "role_management", "verification",
+  "support", "finance", "payout", "refund", "configuration", "security", "integration",
 ];
 
-const SEVERITY_OPTIONS: { value: "all" | AuditSeverity; label: string }[] = [
-  { value: "all", label: "All severities" },
-  { value: "info", label: "Info" },
-  { value: "warning", label: "Warning" },
-  { value: "critical", label: "Critical" },
-];
+const SEVERITY_OPTIONS = ["all", "info", "warning", "critical"];
+
+const SEVERITY_CLASS: Record<string, string> = {
+  info: "text-muted-foreground",
+  warning: "text-warning-foreground",
+  critical: "text-destructive",
+};
 
 export default function AdminAuditLogsPage() {
-  const [rows, setRows] = React.useState<AuditLog[]>([]);
+  const { session } = useAuth();
+  const [rows, setRows] = React.useState<AuditLogRow[]>([]);
   const [total, setTotal] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const [q, setQ] = React.useState("");
-  const [category, setCategory] = React.useState<"all" | AuditActionCategory>("all");
-  const [severity, setSeverity] = React.useState<"all" | AuditSeverity>("all");
+  const [category, setCategory] = React.useState("all");
+  const [severity, setSeverity] = React.useState("all");
   const [page, setPage] = React.useState(1);
-  const pageSize = 20;
+  const pageSize = 50;
+  const isSupabaseAuth = session?.authenticated === true;
 
-  React.useEffect(() => {
+  const fetchLogs = React.useCallback(async () => {
+    if (!isSupabaseAuth) { setLoading(false); return; }
     setLoading(true);
-    getRepositories().auditLogs.list({
-      q: q || undefined,
-      category: category === "all" ? undefined : category,
-      severity: severity === "all" ? undefined : severity,
-      page, pageSize,
-    }).then((r) => { setRows(r.items); setTotal(r.total); setLoading(false); });
-  }, [q, category, severity, page]);
+    setError(null);
+    try {
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+      });
+      if (q) params.set("q", q);
+      if (category !== "all") params.set("category", category);
+      if (severity !== "all") params.set("severity", severity);
 
-  const columns: Column<AuditLog>[] = [
-    { key: "timestamp", header: "When", cell: (a) => <span className="text-xs text-muted-foreground" title={formatDateTime(a.timestamp)}>{formatRelativeTime(a.timestamp)}</span> },
-    { key: "actorEmail", header: "Actor", cell: (a) => <span className="text-xs">{a.actorEmail}</span> },
-    { key: "action", header: "Action", cell: (a) => <span className="font-mono text-xs">{a.action}</span> },
-    { key: "summary", header: "Summary", cell: (a) => <span className="text-sm">{a.summary}</span> },
-    { key: "severity", header: "Severity", cell: (a) => <AuditSeverityBadge severity={a.severity} /> },
-    { key: "category", header: "Category", cell: (a) => <Badge variant="outline" className="text-xs capitalize">{a.category.replace(/_/g, " ")}</Badge> },
-    { key: "resourceType", header: "Resource", cell: (a) => <Badge variant="outline" className="text-xs">{a.resourceType}</Badge> },
-  ];
+      const res = await fetch(`/api/admin/audit-logs?${params}`, { credentials: "include" });
+      const data = await res.json();
+      if (!res.ok) setError(data.error || "Failed to load audit logs");
+      else { setRows(data.items ?? []); setTotal(data.total ?? 0); }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Network error");
+    } finally {
+      setLoading(false);
+    }
+  }, [isSupabaseAuth, page, pageSize, q, category, severity]);
+
+  React.useEffect(() => { fetchLogs(); }, [fetchLogs]);
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  if (!isSupabaseAuth) {
+    return (
+      <div className="mx-auto max-w-7xl space-y-6">
+        <AdminPageHeader eyebrow="Trust & system" title="Audit logs" />
+        <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">
+          Sign in with a real Super Admin account to view audit logs.
+        </CardContent></Card>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -72,34 +99,77 @@ export default function AdminAuditLogsPage() {
         description="Immutable record of every administrative action across the platform. Audit logs cannot be edited or deleted through any application interface."
         breadcrumbs={[{ label: "Admin", href: "/admin" }, { label: "Audit logs" }]}
       />
-      <DemoModeBanner message="Audit logs are append-only. In production, the audit_logs table has no UPDATE or DELETE permissions for any role — inserts are allowed only from authenticated server actions." />
+      <DemoModeBanner message="Live data — audit_logs table is append-only (no UPDATE/DELETE policies). Super_admin sees all; finance_admin sees only finance-category rows." />
 
-      <AdminDataTable
-        columns={columns}
-        rows={rows}
-        total={total}
-        loading={loading}
-        searchValue={q}
-        onSearchChange={(v) => { setQ(v); setPage(1); }}
-        searchPlaceholder="Search by action, summary, or actor…"
-        filters={
-          <>
-            <Select value={category} onValueChange={(v) => { setCategory(v as typeof category); setPage(1); }}>
-              <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
-              <SelectContent>{CATEGORY_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={severity} onValueChange={(v) => { setSeverity(v as typeof severity); setPage(1); }}>
-              <SelectTrigger className="h-9 w-36"><SelectValue /></SelectTrigger>
-              <SelectContent>{SEVERITY_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
-            </Select>
-          </>
-        }
-        page={page}
-        pageSize={pageSize}
-        onPageChange={setPage}
-        getRowId={(a) => a.id}
-        emptyTitle="No audit entries" emptyDescription="Try adjusting your filters."
-      />
+      {/* Filters */}
+      <Card>
+        <CardContent className="flex flex-wrap items-center gap-2 p-4">
+          <Input placeholder="Search action, summary, or actor…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} className="h-9 w-64" />
+          <Select value={category} onValueChange={(v) => { setCategory(v); setPage(1); }}>
+            <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {CATEGORY_OPTIONS.map((o) => <SelectItem key={o} value={o}>{o === "all" ? "All categories" : o.replace(/_/g, " ")}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={severity} onValueChange={(v) => { setSeverity(v); setPage(1); }}>
+            <SelectTrigger className="h-9 w-36"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {SEVERITY_OPTIONS.map((o) => <SelectItem key={o} value={o}>{o === "all" ? "All severities" : o.charAt(0).toUpperCase() + o.slice(1)}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button variant="ghost" size="sm" className="h-9 ml-auto" onClick={fetchLogs} disabled={loading}>
+            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Refresh"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {error && (
+        <Card className="border-destructive/40 bg-destructive/5">
+          <CardContent className="flex items-center justify-between p-4 text-sm text-destructive">
+            <span>{error}</span>
+            <Button variant="outline" size="sm" onClick={fetchLogs}>Retry</Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {!error && (
+        <Card>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+            ) : rows.length === 0 ? (
+              <div className="py-12 text-center text-sm text-muted-foreground">No audit entries match your filters.</div>
+            ) : (
+              <ul className="divide-y divide-border">
+                {rows.map((a) => (
+                  <li key={a.id} className="space-y-1 p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`text-xs font-medium ${SEVERITY_CLASS[a.severity] ?? ""}`}>{a.severity.toUpperCase()}</span>
+                      <Badge variant="outline" className="text-xs capitalize">{a.category.replace(/_/g, " ")}</Badge>
+                      <Badge variant="outline" className="text-xs">{a.resource_type}</Badge>
+                      <span className="font-mono text-xs">{a.action}</span>
+                      <span className="ml-auto text-xs text-muted-foreground" title={formatDateTime(a.timestamp)}>{formatRelativeTime(a.timestamp)}</span>
+                    </div>
+                    <p className="text-sm">{a.summary}</p>
+                    <p className="text-xs text-muted-foreground">By {a.actor_email} ({a.actor_role})</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {total > pageSize && (
+        <div className="flex items-center justify-between text-sm">
+          <p className="text-muted-foreground">Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, total)} of {total}</p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
+            <span className="flex h-9 items-center px-3 text-xs text-muted-foreground">Page {page} of {totalPages}</span>
+            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

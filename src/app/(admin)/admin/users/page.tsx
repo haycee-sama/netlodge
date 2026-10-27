@@ -6,97 +6,179 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { AdminDataTable, type Column } from "@/components/admin/admin-data-table";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { RoleBadge } from "@/components/shared/status-badges";
-import { Badge } from "@/components/ui/badge";
-import { getRepositories } from "@/lib/repositories";
-import type { User, UserRole } from "@/lib/types";
+import { useAuth } from "@/lib/auth/auth-context";
 import { USER_ROLES, roleLabel } from "@/lib/types";
 import { formatRelativeTime } from "@/lib/utils/format";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+interface UserRow {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone: string | null;
+  status: string;
+  status_reason: string | null;
+  created_at: string;
+  updated_at: string;
+  roles: string[];
+  last_seen_at: string | null;
+}
 
 export default function AdminUsersPage() {
   const router = useRouter();
-  const [rows, setRows] = React.useState<User[]>([]);
+  const { session } = useAuth();
+  const [rows, setRows] = React.useState<UserRow[]>([]);
   const [total, setTotal] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const [q, setQ] = React.useState("");
-  const [role, setRole] = React.useState<"all" | UserRole>("all");
-  const [active, setActive] = React.useState<"all" | "active" | "suspended">("all");
+  const [role, setRole] = React.useState("all");
+  const [active, setActive] = React.useState("all");
   const [page, setPage] = React.useState(1);
-  const pageSize = 15;
+  const pageSize = 20;
+  const isSupabaseAuth = session?.authenticated === true;
 
-  React.useEffect(() => {
+  const fetchUsers = React.useCallback(async () => {
+    if (!isSupabaseAuth) { setLoading(false); return; }
     setLoading(true);
-    getRepositories().users.list({
-      q: q || undefined,
-      role: role === "all" ? undefined : role,
-      active: active === "all" ? undefined : active === "active",
-      page, pageSize,
-    }).then((r) => { setRows(r.items); setTotal(r.total); setLoading(false); });
-  }, [q, role, active, page]);
+    setError(null);
+    try {
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+        active,
+      });
+      if (q) params.set("q", q);
+      const res = await fetch(`/api/admin/users?${params}`, { credentials: "include" });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to load users");
+        if (res.status === 403) toast.error("Access denied", { description: "Super Admin role required." });
+      } else {
+        let items = data.items ?? [];
+        // Client-side role filter (DB role-filter would be complex; safe because RLS already restricts)
+        if (role !== "all") items = items.filter((u: UserRow) => u.roles.includes(role));
+        setRows(items);
+        setTotal(role !== "all" ? items.length : (data.total ?? 0));
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Network error");
+    } finally {
+      setLoading(false);
+    }
+  }, [isSupabaseAuth, page, pageSize, q, role, active]);
 
-  const columns: Column<User>[] = [
-    {
-      key: "name",
-      header: "Name",
-      cell: (u) => (
-        <div className="min-w-0">
-          <p className="font-medium">{u.firstName} {u.lastName}</p>
-          <p className="text-xs text-muted-foreground">{u.email}</p>
-        </div>
-      ),
-    },
-    { key: "role", header: "Role", cell: (u) => <RoleBadge role={u.role} active={u.active} /> },
-    { key: "active", header: "Status", cell: (u) => u.active ? <Badge variant="outline" className="text-success">Active</Badge> : <Badge variant="outline" className="text-destructive">Suspended</Badge> },
-    { key: "createdAt", header: "Joined", cell: (u) => <span className="text-xs text-muted-foreground">{formatRelativeTime(u.createdAt)}</span> },
-    { key: "lastSeenAt", header: "Last seen", cell: (u) => <span className="text-xs text-muted-foreground">{u.lastSeenAt ? formatRelativeTime(u.lastSeenAt) : "—"}</span> },
-  ];
+  React.useEffect(() => { fetchUsers(); }, [fetchUsers]);
+
+  if (!isSupabaseAuth) {
+    return (
+      <div className="mx-auto max-w-7xl space-y-6">
+        <AdminPageHeader eyebrow="User administration" title="Users" />
+        <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">
+          Sign in with a real Super Admin account to manage users.
+        </CardContent></Card>
+      </div>
+    );
+  }
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <AdminPageHeader
         eyebrow="User administration"
         title="Users"
-        description="Search, filter, and manage every NetLodge account. Role changes and suspensions are audit-logged."
+        description="Search, filter, and manage every NetLodge account. Role changes and suspensions are server-authorized and audit-logged."
         breadcrumbs={[{ label: "Super Admin", href: "/admin" }, { label: "Users" }]}
       />
-      <DemoModeBanner message="Role changes and account suspensions update local state and record demo audit entries. In production, these actions require reauthentication and are enforced by Supabase RLS policies." />
+      <DemoModeBanner message="Live data — role changes are protected by the set_user_role RPC (no self-escalation, no demoting the last super_admin)." />
 
-      <AdminDataTable
-        columns={columns}
-        rows={rows}
-        total={total}
-        loading={loading}
-        searchValue={q}
-        onSearchChange={(v) => { setQ(v); setPage(1); }}
-        searchPlaceholder="Search by name, email, or ID…"
-        filters={
-          <>
-            <Select value={role} onValueChange={(v) => { setRole(v as typeof role); setPage(1); }}>
-              <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All roles</SelectItem>
-                {USER_ROLES.map((r) => <SelectItem key={r} value={r}>{roleLabel(r)}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={active} onValueChange={(v) => { setActive(v as typeof active); setPage(1); }}>
-              <SelectTrigger className="h-9 w-36"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="active">Active only</SelectItem>
-                <SelectItem value="suspended">Suspended only</SelectItem>
-              </SelectContent>
-            </Select>
-          </>
-        }
-        page={page}
-        pageSize={pageSize}
-        onPageChange={setPage}
-        onRowClick={(u) => router.push(`/admin/users/${u.id}`)}
-        getRowId={(u) => u.id}
-        emptyTitle="No users found" emptyDescription="Try adjusting your filters."
-      />
+      {/* Filters */}
+      <Card>
+        <CardContent className="flex flex-wrap items-center gap-2 p-4">
+          <Input placeholder="Search by name or email…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} className="h-9 w-56" />
+          <Select value={role} onValueChange={(v) => { setRole(v); setPage(1); }}>
+            <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All roles</SelectItem>
+              {USER_ROLES.map((r) => <SelectItem key={r} value={r}>{roleLabel(r)}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={active} onValueChange={(v) => { setActive(v); setPage(1); }}>
+            <SelectTrigger className="h-9 w-36"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="active">Active only</SelectItem>
+              <SelectItem value="suspended">Suspended only</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="ghost" size="sm" className="h-9 ml-auto" onClick={fetchUsers} disabled={loading}>
+            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Refresh"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {error && (
+        <Card className="border-destructive/40 bg-destructive/5">
+          <CardContent className="flex items-center justify-between p-4 text-sm text-destructive">
+            <span>{error}</span>
+            <Button variant="outline" size="sm" onClick={fetchUsers}>Retry</Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {!error && (
+        <Card>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+            ) : rows.length === 0 ? (
+              <div className="py-12 text-center text-sm text-muted-foreground">No users found.</div>
+            ) : (
+              <ul className="divide-y divide-border">
+                {rows.map((u) => (
+                  <li key={u.id}>
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/admin/users/${u.id}`)}
+                      className="flex w-full flex-col gap-1 p-4 text-left hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="min-w-0 space-y-1">
+                        <p className="font-medium">{u.first_name} {u.last_name} <span className="text-xs text-muted-foreground">· {u.email}</span></p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {u.roles.map((r) => <RoleBadge key={r} role={r as any} active={u.status === "active"} />)}
+                          {u.status === "suspended" && <Badge variant="outline" className="text-destructive">Suspended</Badge>}
+                        </div>
+                      </div>
+                      <div className="text-right text-xs text-muted-foreground">
+                        <p>Joined {formatRelativeTime(u.created_at)}</p>
+                      </div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {total > pageSize && (
+        <div className="flex items-center justify-between text-sm">
+          <p className="text-muted-foreground">Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, total)} of {total}</p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
+            <span className="flex h-9 items-center px-3 text-xs text-muted-foreground">Page {page} of {totalPages}</span>
+            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
