@@ -34,6 +34,27 @@ import {
   ChevronDown,
   ExternalLink,
   Home,
+  // Admin icons
+  ListChecks,
+  GraduationCap,
+  ArrowUpCircle,
+  History,
+  Ticket,
+  MessagesSquare,
+  BookOpen,
+  RotateCcw,
+  Percent,
+  Scale,
+  AlertTriangle,
+  ScrollText,
+  KeyRound,
+  UserCog,
+  Wallet,
+  MapPin,
+  Sparkles,
+  Megaphone,
+  Plug,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -51,34 +72,28 @@ import { Badge } from "@/components/ui/badge";
 import { Logo } from "@/components/shared/logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { useAuth } from "@/lib/auth/auth-context";
-import { roleNavItems, homeRouteForRole, type UserRole } from "@/lib/auth/permissions";
+import {
+  roleNavGroups,
+  roleNavItems,
+  homeRouteForRole,
+  type UserRole,
+} from "@/lib/auth/permissions";
+import {
+  MARKETPLACE_ROLES,
+  ADMIN_ROLES,
+  roleLabel as formatRoleLabel,
+} from "@/lib/types";
 import { initials } from "@/lib/utils/format";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  LayoutDashboard,
-  Search,
-  Heart,
-  CalendarCheck,
-  CreditCard,
-  Bell,
-  LifeBuoy,
-  User,
-  ShieldCheck,
-  Settings,
-  Building2,
-  Rocket,
-  CalendarDays,
-  Tag,
-  Receipt,
-  Banknote,
-  Users,
-  BadgeCheck,
-  BarChart3,
-  DoorOpen,
-  ClipboardCheck,
-  Briefcase,
-  MessageSquare,
-  Share2,
+  LayoutDashboard, Search, Heart, CalendarCheck, CreditCard, Bell, LifeBuoy,
+  User, ShieldCheck, Settings, Building2, Rocket, CalendarDays, Tag, Receipt,
+  Banknote, Users, BadgeCheck, BarChart3, DoorOpen, ClipboardCheck, Briefcase,
+  MessageSquare, Share2,
+  // Admin icons
+  ListChecks, GraduationCap, ArrowUpCircle, History, Ticket, MessagesSquare,
+  BookOpen, RotateCcw, Percent, Scale, AlertTriangle, ScrollText, KeyRound,
+  UserCog, Wallet, MapPin, Sparkles, Megaphone, Plug, Activity,
 };
 
 interface RoleShellProps {
@@ -92,21 +107,16 @@ export function RoleShell({ role, children }: RoleShellProps) {
   const { session, isLoading, signOut, switchRole } = useAuth();
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
-  // Redirect to login if not signed in or wrong role.
+  // Redirect to login if not signed in.
   React.useEffect(() => {
     if (isLoading) return;
     if (!session) {
       router.replace(`/login?redirect=${pathname}`);
       return;
     }
-    if (session.role !== role) {
-      // Auto-switch to the role the route expects, since dev mode allows free switching.
-      if ([ "student", "landlord", "manager", "agent"].includes(session.role)) {
-        // Only allow switching if user is "allowed" to preview that role.
-        // For demo simplicity, we let any user preview any role via this nav.
-      }
-      // Don't hard-redirect; let the user preview other roles.
-    }
+    // In dev mode, we let any signed-in user preview any role's shell — the
+    // production backend enforces real authorisation. We do NOT auto-switch
+    // the session role here; the user must explicitly switch via the menu.
   }, [isLoading, session, role, router, pathname]);
 
   if (isLoading) {
@@ -121,8 +131,44 @@ export function RoleShell({ role, children }: RoleShellProps) {
     return null; // redirect in effect
   }
 
+  const groups = roleNavGroups(role);
   const nav = roleNavItems(role);
-  const roleLabel = role[0].toUpperCase() + role.slice(1);
+  const roleLabel = formatRoleLabel(role);
+
+  // Determine the notifications route for the bell icon — admin roles all
+  // have a per-role notifications page under their admin namespace.
+  const notificationsHref =
+    role === "verification_officer"
+      ? "/admin/verification/notifications"
+      : role === "support_staff"
+        ? "/admin/support/notifications"
+        : role === "finance_admin"
+          ? "/admin/finance/notifications"
+          : role === "super_admin"
+            ? "/admin/notifications"
+            : `/${role}/notifications`;
+
+  const profileHref =
+    role === "verification_officer"
+      ? "/admin/verification/profile"
+      : role === "support_staff"
+        ? "/admin/support/profile"
+        : role === "finance_admin"
+          ? "/admin/finance/profile"
+          : role === "super_admin"
+            ? "/admin/profile"
+            : `/${role}/profile`;
+
+  const settingsHref =
+    role === "verification_officer"
+      ? "/admin/verification/settings"
+      : role === "support_staff"
+        ? "/admin/support/settings"
+        : role === "finance_admin"
+          ? "/admin/finance/settings"
+          : role === "super_admin"
+            ? "/admin/settings"
+            : `/${role}/settings`;
 
   function handleSignOut() {
     signOut();
@@ -134,6 +180,16 @@ export function RoleShell({ role, children }: RoleShellProps) {
     router.push(homeRouteForRole(r));
   }
 
+  // Active-link check: a nav item is active if its href exactly matches the
+  // pathname, OR the pathname starts with the href AND the href is not the
+  // role's home route (so the home route only highlights on its own page).
+  const homeHref = homeRouteForRole(role);
+  function isActive(href: string): boolean {
+    if (pathname === href) return true;
+    if (href === homeHref) return false; // home only highlights on exact match
+    return !!pathname?.startsWith(href + "/") || pathname === href;
+  }
+
   const sidebar = (
     <div className="flex h-full flex-col">
       <div className="flex h-16 items-center border-b border-sidebar-border px-5">
@@ -141,27 +197,36 @@ export function RoleShell({ role, children }: RoleShellProps) {
           <Logo />
         </Link>
       </div>
-      <nav className="flex-1 space-y-0.5 overflow-y-auto p-3" aria-label={`${roleLabel} sidebar`}>
-        {nav.map((item) => {
-          const Icon = iconMap[item.icon] ?? LayoutDashboard;
-          const active = pathname === item.href || (item.href !== `/${role}` && pathname?.startsWith(item.href));
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                active
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-              )}
-            >
-              <Icon className="h-4 w-4 shrink-0" aria-hidden />
-              <span className="flex-1">{item.label}</span>
-              {item.badge && <Badge variant="secondary" className="h-5 text-xs">{item.badge}</Badge>}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 space-y-4 overflow-y-auto p-3" aria-label={`${roleLabel} sidebar`}>
+        {groups.map((group, gi) => (
+          <div key={gi} className="space-y-0.5">
+            {group.label && (
+              <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                {group.label}
+              </p>
+            )}
+            {group.items.map((item) => {
+              const Icon = iconMap[item.icon] ?? LayoutDashboard;
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    active
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                      : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                  <span className="flex-1">{item.label}</span>
+                  {item.badge && <Badge variant="secondary" className="h-5 text-xs">{item.badge}</Badge>}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </nav>
       <div className="border-t border-sidebar-border p-3">
         <Link
@@ -201,7 +266,16 @@ export function RoleShell({ role, children }: RoleShellProps) {
             </SheetTrigger>
           </Sheet>
           <div className="flex items-center gap-2 text-sm">
-            <Badge variant="outline" className="capitalize">{roleLabel} workspace</Badge>
+            <Badge
+              variant="outline"
+              className={cn(
+                "gap-1.5",
+                ADMIN_ROLES.includes(role) && "border-primary/40 bg-primary/5 text-primary",
+              )}
+            >
+              {ADMIN_ROLES.includes(role) && <ShieldCheck className="h-3 w-3" aria-hidden />}
+              {roleLabel} workspace
+            </Badge>
           </div>
           <div className="ml-auto flex items-center gap-1.5">
             <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
@@ -212,7 +286,7 @@ export function RoleShell({ role, children }: RoleShellProps) {
             </Button>
             <ThemeToggle compact />
             <Button asChild variant="ghost" size="icon" aria-label="Notifications" className="relative">
-              <Link href={`/${role}/notifications`}>
+              <Link href={notificationsHref}>
                 <Bell className="h-4 w-4" aria-hidden />
                 <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-destructive" aria-hidden />
               </Link>
@@ -235,28 +309,42 @@ export function RoleShell({ role, children }: RoleShellProps) {
                 <DropdownMenuLabel className="space-y-0.5">
                   <div className="text-sm font-medium">{session.firstName} {session.lastName}</div>
                   <div className="truncate text-xs text-muted-foreground">{session.email}</div>
+                  <div className="pt-1">
+                    <Badge variant="outline" className="text-[10px]">{roleLabel}</Badge>
+                  </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href={`/${role}/profile`}>
+                  <Link href={profileHref}>
                     <User className="mr-2 h-4 w-4" aria-hidden />
                     Profile
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href={`/${role}/settings`}>
+                  <Link href={settingsHref}>
                     <Settings className="mr-2 h-4 w-4" aria-hidden />
                     Settings
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel className="text-xs text-muted-foreground">
-                  Switch role (demo)
+                  Marketplace roles (demo)
                 </DropdownMenuLabel>
-                {(["student", "landlord", "manager", "agent"] as UserRole[]).map((r) => (
+                {MARKETPLACE_ROLES.map((r) => (
                   <DropdownMenuItem key={r} onClick={() => handleSwitchRole(r)}>
-                    <span className="mr-2 h-2 w-2 rounded-full bg-primary" aria-hidden />
-                    <span className="capitalize">{r}</span>
+                    <span className="mr-2 h-2 w-2 rounded-full bg-muted-foreground/50" aria-hidden />
+                    <span>{formatRoleLabel(r)}</span>
+                    {r === session.role && <Badge variant="secondary" className="ml-auto">current</Badge>}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">
+                  Administrative roles (demo)
+                </DropdownMenuLabel>
+                {ADMIN_ROLES.map((r) => (
+                  <DropdownMenuItem key={r} onClick={() => handleSwitchRole(r)}>
+                    <ShieldCheck className="mr-2 h-3.5 w-3.5 text-primary" aria-hidden />
+                    <span>{formatRoleLabel(r)}</span>
                     {r === session.role && <Badge variant="secondary" className="ml-auto">current</Badge>}
                   </DropdownMenuItem>
                 ))}

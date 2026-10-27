@@ -127,7 +127,7 @@ src/
 - `/how-it-works`, `/safety`, `/help`, `/contact`, `/terms`, `/privacy`, `/cookies`
 
 ### Auth (5 routes)
-- `/login` (with quick-access demo accounts for all 4 roles)
+- `/login` (with quick-access demo accounts for all 8 roles — 4 marketplace + 4 administrative)
 - `/register` (with role selection)
 - `/forgot-password`, `/reset-password`, `/auth/callback`
 
@@ -155,6 +155,41 @@ src/
 ### Agent app (8 routes)
 - `/agent` — Dashboard with assignments, enquiries, referral metrics
 - `/agent/assignments`, `/agent/properties`, `/agent/enquiries`, `/agent/referrals`, `/agent/notifications`, `/agent/profile`, `/agent/settings`
+
+### Administrative roles (60+ routes under `/admin`)
+
+All four administrative roles share the `/admin` route prefix. The layout auto-detects the role from the path and renders the appropriate sidebar.
+
+**Verification Officer** (`/admin/verification/*` — 11 routes):
+- Dashboard with pending/assigned/overdue/escalated counts
+- Review queue (searchable, filterable, sortable, paginated)
+- Student KYC, Landlord, Property, Room evidence filtered queues
+- Case detail with Approve/Reject/Request-info/Escalate/Internal-note actions
+- Escalations, Decision history, Notifications, Profile, Settings
+
+**Support Agent** (`/admin/support/*` — 10 routes):
+- Dashboard with open/unassigned/urgent/overdue/escalated counts and avg response time
+- Ticket queue (searchable, filterable by status/priority/team)
+- Ticket detail with staff reply, internal notes, assign, escalate, status changes
+- Customer directory + customer detail (bookings, payments, tickets)
+- Conversations (unified inbox), Escalations, Knowledge base, Reports, Notifications, Profile, Settings
+
+**Finance Administrator** (`/admin/finance/*` — 13 routes):
+- Dashboard with gross volume, platform revenue, pending/settled payouts, refund totals, success rate
+- Transactions list + detail (with backend-verification status)
+- Payments, Refunds (with approve/reject), Payouts list + detail (with approve/reject/reverse)
+- Commissions, Reconciliation (with run + resolve), Disputes (with resolve)
+- Reports, Audit trail, Notifications, Profile, Settings
+
+**Super Administrator** (`/admin/*` — 25+ routes):
+- Platform overview with user/marketplace/finance/operations/system metrics
+- Users list + detail (with role change, suspend/reactivate, last-super-admin guard)
+- Roles & permissions (full role-permission matrix), Staff management
+- Properties, Rooms, Bookings oversight (read-only cross-platform views)
+- Verifications/Support/Finance cross-links to respective workspaces
+- Universities, Locations, Facilities, Commissions configuration
+- Announcements (create/publish), Reports, Audit logs (immutable), Security center
+- Integrations (enable/disable with reason), System health, Platform settings, Profile, Notifications
 
 ---
 

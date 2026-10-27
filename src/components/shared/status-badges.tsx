@@ -8,11 +8,23 @@ import type {
   PropertyStatus,
   RentableUnitStatus,
   VerificationStatus,
+  SupportTicketStatus,
+  RefundStatus,
+  ReconciliationStatus,
+  DisputeStatus,
+  IntegrationStatus,
+  AuditSeverity,
+  UserRole,
 } from "@/lib/types";
 import {
   BOOKING_STATUS_LABELS,
   PAYMENT_STATUS_LABELS,
   PAYOUT_STATUS_LABELS,
+  REFUND_STATUS_LABELS,
+  RECONCILIATION_STATUS_LABELS,
+  DISPUTE_STATUS_LABELS,
+  INTEGRATION_STATUS_LABELS,
+  roleLabel,
 } from "@/lib/types";
 
 type Tone = "default" | "success" | "warning" | "danger" | "info" | "muted";
@@ -143,4 +155,111 @@ export function VerificationBadge({ status }: { status: VerificationStatus }) {
     rejected: "Rejected",
   };
   return <StatusBadge tone={tone}>{labels[status]}</StatusBadge>;
+}
+
+/* ---------------------------------------------------------- Admin badges */
+
+export function SupportTicketStatusBadge({ status }: { status: SupportTicketStatus }) {
+  const tone: Tone =
+    status === "resolved" || status === "closed"
+      ? "success"
+      : status === "in_progress"
+        ? "info"
+        : status === "awaiting_user"
+          ? "warning"
+          : "default";
+  const labels: Record<SupportTicketStatus, string> = {
+    open: "Open",
+    in_progress: "In progress",
+    awaiting_user: "Awaiting user",
+    resolved: "Resolved",
+    closed: "Closed",
+  };
+  return <StatusBadge tone={tone}>{labels[status]}</StatusBadge>;
+}
+
+export function RefundStatusBadge({ status }: { status: RefundStatus }) {
+  const tone: Tone =
+    status === "completed"
+      ? "success"
+      : status === "approved" || status === "processing"
+        ? "info"
+        : status === "under_review" || status === "requested"
+          ? "warning"
+          : status === "rejected" || status === "failed"
+            ? "danger"
+            : "default";
+  return <StatusBadge tone={tone}>{REFUND_STATUS_LABELS[status]}</StatusBadge>;
+}
+
+export function ReconciliationStatusBadge({ status }: { status: ReconciliationStatus }) {
+  const tone: Tone =
+    status === "matched"
+      ? "success"
+      : status === "resolved"
+        ? "info"
+        : "warning";
+  return <StatusBadge tone={tone}>{RECONCILIATION_STATUS_LABELS[status]}</StatusBadge>;
+}
+
+export function DisputeStatusBadge({ status }: { status: DisputeStatus }) {
+  const tone: Tone =
+    status === "resolved_in_favor_of_student" || status === "resolved_in_favor_of_landlord"
+      ? "success"
+      : status === "closed"
+        ? "muted"
+        : status === "evidence_requested"
+          ? "warning"
+          : "info";
+  return <StatusBadge tone={tone}>{DISPUTE_STATUS_LABELS[status]}</StatusBadge>;
+}
+
+export function IntegrationStatusBadge({ status }: { status: IntegrationStatus }) {
+  const tone: Tone =
+    status === "operational"
+      ? "success"
+      : status === "degraded"
+        ? "warning"
+        : status === "outage"
+          ? "danger"
+          : "info";
+  return <StatusBadge tone={tone}>{INTEGRATION_STATUS_LABELS[status]}</StatusBadge>;
+}
+
+export function AuditSeverityBadge({ severity }: { severity: AuditSeverity }) {
+  const tone: Tone =
+    severity === "critical"
+      ? "danger"
+      : severity === "warning"
+        ? "warning"
+        : "info";
+  const labels: Record<AuditSeverity, string> = {
+    info: "Info",
+    warning: "Warning",
+    critical: "Critical",
+  };
+  return <StatusBadge tone={tone}>{labels[severity]}</StatusBadge>;
+}
+
+export function PriorityBadge({ priority }: { priority: "low" | "medium" | "high" | "urgent" }) {
+  const tone: Tone =
+    priority === "urgent"
+      ? "danger"
+      : priority === "high"
+        ? "warning"
+        : priority === "medium"
+          ? "info"
+          : "muted";
+  return <StatusBadge tone={tone} dot={false}>{priority[0].toUpperCase() + priority.slice(1)}</StatusBadge>;
+}
+
+export function RoleBadge({ role, active = true }: { role: UserRole; active?: boolean }) {
+  const isAdmin = ["verification_officer", "support_staff", "finance_admin", "super_admin"].includes(role);
+  const tone: Tone = !active ? "muted" : isAdmin ? "info" : "default";
+  return (
+    <StatusBadge tone={tone} dot={false}>
+      {roleLabel(role)}
+      {!active && " · suspended"}
+    </StatusBadge>
+  );
 }

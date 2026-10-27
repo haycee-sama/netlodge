@@ -1,0 +1,844 @@
+     1→/**
+     2→ * DEV FIXTURES — DO NOT TREAT AS REAL DATA.
+     3→ *
+     4→ * The fixtures in this file are deterministic, clearly-labelled development
+     5→ * data used to exercise the UI when no backend is connected. None of the
+     6→ * properties, rooms, bookings, payments, verifications, or reviews below
+     7→ * represent real listings, partners, transactions, or endorsements.
+     8→ *
+     9→ * Replace via the production adapter documented in /docs/integration-contracts.md.
+    10→ */
+    11→
+    12→import type {
+    13→  University,
+    14→  Neighbourhood,
+    15→  Property,
+    16→  Floor,
+    17→  RentableUnit,
+    18→  Booking,
+    19→  Payment,
+    20→  Payout,
+    21→  AppNotification,
+    22→  SupportTicket,
+    23→  SavedProperty,
+    24→  Facility,
+    25→  PropertyImage,
+    26→  AdditionalCharge,
+    27→} from "@/lib/types";
+    28→
+    29→/* ----------------------------------------------------------------- Helpers */
+    30→
+    31→function img(url: string, alt: string, opts: Partial<PropertyImage> = {}): PropertyImage {
+    32→  return {
+    33→    id: `img_${Math.random().toString(36).slice(2, 9)}`,
+    34→    url,
+    35→    altText: alt,
+    36→    isVerified: opts.isVerified ?? false,
+    37→    caption: opts.caption ?? null,
+    38→    position: opts.position ?? 0,
+    39→  };
+    40→}
+    41→
+    42→const now = Date.now();
+    43→const days = (n: number) => new Date(now + n * 86400000).toISOString();
+    44→const daysAgo = (n: number) => new Date(now - n * 86400000).toISOString();
+    45→
+    46→/** Common Nigerian PropTech imagery — these are ILLUSTRATIVE placeholders only. */
+    47→const PHOTOS = {
+    48→  exteriorA: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&q=70&auto=format&fit=crop",
+    49→  exteriorB: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&q=70&auto=format&fit=crop",
+    50→  roomA: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200&q=70&auto=format&fit=crop",
+    51→  roomB: "https://images.unsplash.com/photo-1554995207-c18c203602cb?w=1200&q=70&auto=format&fit=crop",
+    52→  roomC: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=1200&q=70&auto=format&fit=crop",
+    53→  roomD: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&q=70&auto=format&fit=crop",
+    54→  kitchen: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&q=70&auto=format&fit=crop",
+    55→  bathroom: "https://images.unsplash.com/photo-1620626011761-996317b8d101?w=1200&q=70&auto=format&fit=crop",
+    56→  common: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=70&auto=format&fit=crop",
+    57→  hostel: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=1200&q=70&auto=format&fit=crop",
+    58→};
+    59→
+    60→/* ------------------------------------------------------------- Universities */
+    61→
+    62→export const universities: University[] = [
+    63→  {
+    64→    id: "uni_unilag",
+    65→    slug: "university-of-lagos",
+    66→    name: "University of Lagos",
+    67→    shortName: "UNILAG",
+    68→    city: "Lagos",
+    69→    state: "Lagos",
+    70→    latitude: 6.5158,
+    71→    longitude: 3.3898,
+    72→    description:
+    73→      "The University of the First Choice and the Nation's Pride. UNILAG's Akoka campus is surrounded by a vibrant student accommodation market spanning Akoka, Yaba, Bariga and Somolu.",
+    74→    totalListings: 184,
+    75→    popularNeighbourhoods: ["Akoka", "Bariga", "Yaba", "Somolu"],
+    76→  },
+    77→  {
+    78→    id: "uni_ui",
+    79→    slug: "university-of-ibadan",
+    80→    name: "University of Ibadan",
+    81→    shortName: "UI",
+    82→    city: "Ibadan",
+    83→    state: "Oyo",
+    84→    description:
+    85→      "Nigeria's oldest university, with a mature off-campus housing market in Agbowo, Bodija and Bashorun.",
+    86→    totalListings: 96,
+    87→    popularNeighbourhoods: ["Agbowo", "Bodija", "Bashorun"],
+    88→  },
+    89→  {
+    90→    id: "uni_oau",
+    91→    slug: "obafemi-awolowo-university",
+    92→    name: "Obafemi Awolowo University",
+    93→    shortName: "OAU",
+    94→    city: "Ile-Ife",
+    95→    state: "Osun",
+    96→    description:
+    97→      "A scenic campus whose off-campus accommodation clusters around Mayfair, Ede Road and Sabo.",
+    98→    totalListings: 72,
+    99→    popularNeighbourhoods: ["Mayfair", "Sabo", "Ede Road"],
+   100→  },
+   101→  {
+   102→    id: "uni_uniben",
+   103→    slug: "university-of-benin",
+   104→    name: "University of Benin",
+   105→    shortName: "UNIBEN",
+   106→    city: "Benin City",
+   107→    state: "Edo",
+   108→    description:
+   109→      "UNIBEN's two campuses draw students to Ugbowo, Ekenwan and BDPA for off-campus living.",
+   110→    totalListings: 64,
+   111→    popularNeighbourhoods: ["Ugbowo", "BDPA", "Ekenwan"],
+   112→  },
+   113→  {
+   114→    id: "uni_abu",
+   115→    slug: "ahmadu-bello-university",
+   116→    name: "Ahmadu Bello University",
+   117→    shortName: "ABU",
+   118→    city: "Zaria",
+   119→    state: "Kaduna",
+   120→    description:
+   121→      "ABU's Samaru campus anchors a busy housing market in Samaru, Palladan and Gyallesu.",
+   122→    totalListings: 58,
+   123→    popularNeighbourhoods: ["Samaru", "Palladan", "Gyallesu"],
+   124→  },
+   125→  {
+   126→    id: "uni_unn",
+   127→    slug: "university-of-nigeria-nsukka",
+   128→    name: "University of Nigeria, Nsukka",
+   129→    shortName: "UNN",
+   130→    city: "Nsukka",
+   131→    state: "Enugu",
+   132→    description:
+   133→      "UNN's Lions' campus has off-campus accommodation spread across Nsukka town and Obukpa.",
+   134→    totalListings: 41,
+   135→    popularNeighbourhoods: ["Nsukka Town", "Obukpa", "Odenigwe"],
+   136→  },
+   137→];
+   138→
+   139→export const neighbourhoods: Neighbourhood[] = [
+   140→  {
+   141→    id: "nbg_akoka",
+   142→    slug: "akoka",
+   143→    name: "Akoka",
+   144→    city: "Lagos",
+   145→    state: "Lagos",
+   146→    universityId: "uni_unilag",
+   147→    averageAnnualRentKobo: 65000000,
+   148→    walkingMinutesToCampus: 8,
+   149→    totalListings: 84,
+   150→    imageUrl: PHOTOS.hostel,
+   151→  },
+   152→  {
+   153→    id: "nbg_bariga",
+   154→    slug: "bariga",
+   155→    name: "Bariga",
+   156→    city: "Lagos",
+   157→    state: "Lagos",
+   158→    universityId: "uni_unilag",
+   159→    averageAnnualRentKobo: 48000000,
+   160→    walkingMinutesToCampus: 18,
+   161→    totalListings: 36,
+   162→    imageUrl: PHOTOS.exteriorB,
+   163→  },
+   164→  {
+   165→    id: "nbg_yaba",
+   166→    slug: "yaba",
+   167→    name: "Yaba",
+   168→    city: "Lagos",
+   169→    state: "Lagos",
+   170→    universityId: "uni_unilag",
+   171→    averageAnnualRentKobo: 85000000,
+   172→    walkingMinutesToCampus: 22,
+   173→    totalListings: 42,
+   174→    imageUrl: PHOTOS.common,
+   175→  },
+   176→  {
+   177→    id: "nbg_somolu",
+   178→    slug: "somolu",
+   179→    name: "Somolu",
+   180→    city: "Lagos",
+   181→    state: "Lagos",
+   182→    universityId: "uni_unilag",
+   183→    averageAnnualRentKobo: 42000000,
+   184→    walkingMinutesToCampus: 25,
+   185→    totalListings: 22,
+   186→    imageUrl: PHOTOS.exteriorA,
+   187→  },
+   188→];
+   189→
+   190→/* ---------------------------------------------------------------- Properties */
+   191→
+   192→const baseFacilities: Facility[] = [
+   193→  "wifi",
+   194→  "power_backup",
+   195→  "water_borehole",
+   196→  "cctv",
+   197→  "security_guard",
+   198→  "parking",
+   199→];
+   200→
+   201→export const properties: Property[] = [
+   202→  {
+   203→    id: "prop_akoka_heights",
+   204→    slug: "akoka-heights-hostel",
+   205→    landlordId: "dev_landlord_1",
+   206→    managerIds: ["dev_manager_1"],
+   207→    agentIds: ["dev_agent_1"],
+   208→    name: "Akoka Heights Hostel",
+   209→    description:
+   210→      "A purpose-built student hostel a short walk from the UNILAG second gate. Akoka Heights offers 24-hour power, dedicated security, and a calm study environment — ideal for final-year students who need to focus. All common areas are cleaned daily and the on-site manager lives in the building.",
+   211→    type: "hostel_block",
+   212→    status: "verified",
+   213→    verificationStatus: "approved",
+   214→    city: "Lagos",
+   215→    state: "Lagos",
+   216→    neighbourhoodId: "nbg_akoka",
+   217→    universityId: "uni_unilag",
+   218→    publicAddressLine: "St. Finbarr's College Road, Akoka",
+   219→    privateAddressLine: "14 St. Finbarr's College Road, Akoka, Yaba, Lagos",
+   220→    latitude: 6.5185,
+   221→    longitude: 3.3912,
+   222→    facilities: baseFacilities,
+   223→    rules: [
+   224→      { id: "r1", label: "No loud music after 10pm", category: "quiet_hours" },
+   225→      { id: "r2", label: "Visitors allowed 9am–8pm only", category: "visitors" },
+   226→      { id: "r3", label: "No smoking indoors", category: "smoking" },
+   227→      { id: "r4", label: "Annual rent payable in two instalments", category: "payment" },
+   228→    ],
+   229→    images: [
+   230→      img(PHOTOS.exteriorA, "Akoka Heights Hostel — front view", { isVerified: true, position: 0 }),
+   231→      img(PHOTOS.common, "Akoka Heights Hostel — common room", { isVerified: true, position: 1 }),
+   232→      img(PHOTOS.kitchen, "Akoka Heights Hostel — shared kitchen", { isVerified: true, position: 2 }),
+   233→    ],
+   234→    totalFloors: 4,
+   235→    totalUnits: 64,
+   236→    availableUnits: 12,
+   237→    occupiedUnits: 48,
+   238→    heldUnits: 4,
+   239→    priceFromKobo: 45000000,
+   240→    createdAt: daysAgo(120),
+   241→    updatedAt: daysAgo(2),
+   242→  },
+   243→  {
+   244→    id: "prop_bariga_gardens",
+   245→    slug: "bariga-gardens-residence",
+   246→    landlordId: "dev_landlord_1",
+   247→    managerIds: ["dev_manager_1"],
+   248→    agentIds: [],
+   249→    name: "Bariga Gardens Residence",
+   250→    description:
+   251→      "A budget-friendly residence in Bariga with shared self-contain rooms and easy access to UNILAG via the Bariga shuttle. Newly renovated kitchens and reliable borehole water make it a popular pick for 100-level students.",
+   252→    type: "self_contain_block",
+   253→    status: "verified",
+   254→    verificationStatus: "approved",
+   255→    city: "Lagos",
+   256→    state: "Lagos",
+   257→    neighbourhoodId: "nbg_bariga",
+   258→    universityId: "uni_unilag",
+   259→    publicAddressLine: "Adeleye Street, Bariga",
+   260→    privateAddressLine: "23 Adeleye Street, Bariga, Somolu, Lagos",
+   261→    latitude: 6.5311,
+   262→    longitude: 3.3819,
+   263→    facilities: ["water_borehole", "security_guard", "parking", "kitchen_shared"],
+   264→    rules: [
+   265→      { id: "r1", label: "Quiet hours 11pm–6am", category: "quiet_hours" },
+   266→      { id: "r2", label: "No overnight visitors", category: "visitors" },
+   267→      { id: "r3", label: "Annual rent only", category: "payment" },
+   268→    ],
+   269→    images: [
+   270→      img(PHOTOS.exteriorB, "Bariga Gardens Residence — exterior", { isVerified: true, position: 0 }),
+   271→      img(PHOTOS.roomB, "Bariga Gardens Residence — sample room", { isVerified: false, position: 1, caption: "Representative photo" }),
+   272→    ],
+   273→    totalFloors: 2,
+   274→    totalUnits: 28,
+   275→    availableUnits: 6,
+   276→    occupiedUnits: 22,
+   277→    heldUnits: 0,
+   278→    priceFromKobo: 32000000,
+   279→    createdAt: daysAgo(80),
+   280→    updatedAt: daysAgo(5),
+   281→  },
+   282→  {
+   283→    id: "prop_yaba_suites",
+   284→    slug: "yaba-suites-apartments",
+   285→    landlordId: "dev_landlord_2",
+   286→    managerIds: [],
+   287→    agentIds: ["dev_agent_1"],
+   288→    name: "Yaba Suites Apartments",
+   289→    description:
+   290→      "Premium two-bedroom apartments in Yaba, popular with postgraduate students and visiting lecturers. Each apartment has its own kitchen, bathroom and balcony, with solar power backup for lighting and Wi-Fi.",
+   291→    type: "apartment_building",
+   292→    status: "verified",
+   293→    verificationStatus: "approved",
+   294→    city: "Lagos",
+   295→    state: "Lagos",
+   296→    neighbourhoodId: "nbg_yaba",
+   297→    universityId: "uni_unilag",
+   298→    publicAddressLine: "Herbert Macaulay Way, Yaba",
+   299→    privateAddressLine: "71 Herbert Macaulay Way, Yaba, Lagos",
+   300→    latitude: 6.4839,
+   301→    longitude: 3.3734,
+   302→    facilities: ["wifi", "solar_power", "water_borehole", "cctv", "security_guard", "parking", "laundry"],
+   303→    rules: [
+   304→      { id: "r1", label: "No subletting", category: "other" },
+   305→      { id: "r2", label: "Pets on case-by-case basis", category: "pets" },
+   306→      { id: "r3", label: "Quarterly rent payable in advance", category: "payment" },
+   307→    ],
+   308→    images: [
+   309→      img(PHOTOS.exteriorA, "Yaba Suites Apartments — front", { isVerified: true, position: 0 }),
+   310→      img(PHOTOS.roomA, "Yaba Suites Apartments — apartment living room", { isVerified: true, position: 1 }),
+   311→      img(PHOTOS.common, "Yaba Suites Apartments — balcony", { isVerified: true, position: 2 }),
+   312→    ],
+   313→    totalFloors: 3,
+   314→    totalUnits: 18,
+   315→    availableUnits: 4,
+   316→    occupiedUnits: 14,
+   317→    heldUnits: 0,
+   318→    priceFromKobo: 120000000,
+   319→    createdAt: daysAgo(200),
+   320→    updatedAt: daysAgo(1),
+   321→  },
+   322→  {
+   323→    id: "prop_somolu_terraces",
+   324→    slug: "somolu-terraces",
+   325→    landlordId: "dev_landlord_2",
+   326→    managerIds: [],
+   327→    agentIds: [],
+   328→    name: "Somolu Terraces",
+   329→    description:
+   330→      "A row of terrace-house rooms a short keke ride from UNILAG. Quiet and residential, with shared courtyards and dedicated study nooks.",
+   331→    type: "terrace_house",
+   332→    status: "verified",
+   333→    verificationStatus: "approved",
+   334→    city: "Lagos",
+   335→    state: "Lagos",
+   336→    neighbourhoodId: "nbg_somolu",
+   337→    universityId: "uni_unilag",
+   338→    publicAddressLine: "Bajulaiye Road, Somolu",
+   339→    privateAddressLine: "8 Bajulaiye Road, Somolu, Lagos",
+   340→    latitude: 6.5419,
+   341→    longitude: 3.3756,
+   342→    facilities: ["water_borehole", "security_guard", "kitchen_shared", "study_room"],
+   343→    rules: [{ id: "r1", label: "Annual rent only", category: "payment" }],
+   344→    images: [
+   345→      img(PHOTOS.exteriorB, "Somolu Terraces — street view", { isVerified: true, position: 0 }),
+   346→      img(PHOTOS.roomC, "Somolu Terraces — typical room", { isVerified: false, position: 1, caption: "Representative photo" }),
+   347→    ],
+   348→    totalFloors: 2,
+   349→    totalUnits: 16,
+   350→    availableUnits: 3,
+   351→    occupiedUnits: 13,
+   352→    heldUnits: 0,
+   353→    priceFromKobo: 38000000,
+   354→    createdAt: daysAgo(60),
+   355→    updatedAt: daysAgo(3),
+   356→  },
+   357→  {
+   358→    id: "prop_akoka_heights_annex",
+   359→    slug: "akoka-heights-annex",
+   360→    landlordId: "dev_landlord_1",
+   361→    managerIds: [],
+   362→    agentIds: [],
+   363→    name: "Akoka Heights Annex",
+   364→    description:
+   365→      "The Annex is a newer wing of Akoka Heights, with ensuite self-contain rooms and a small gym. Currently pending verification — listings will go live once the inspection report is approved.",
+   366→    type: "hostel_block",
+   367→    status: "pending_verification",
+   368→    verificationStatus: "in_review",
+   369→    city: "Lagos",
+   370→    state: "Lagos",
+   371→    neighbourhoodId: "nbg_akoka",
+   372→    universityId: "uni_unilag",
+   373→    publicAddressLine: "St. Finbarr's College Road, Akoka",
+   374→    privateAddressLine: "16 St. Finbarr's College Road, Akoka, Yaba, Lagos",
+   375→    latitude: 6.5189,
+   376→    longitude: 3.3916,
+   377→    facilities: ["wifi", "power_backup", "water_borehole", "cctv", "security_guard", "gym"],
+   378→    rules: [
+   379→      { id: "r1", label: "No loud music after 10pm", category: "quiet_hours" },
+   380→      { id: "r2", label: "Annual rent payable in two instalments", category: "payment" },
+   381→    ],
+   382→    images: [
+   383→      img(PHOTOS.hostel, "Akoka Heights Annex — exterior (representative)", { isVerified: false, position: 0, caption: "Representative photo" }),
+   384→    ],
+   385→    totalFloors: 3,
+   386→    totalUnits: 36,
+   387→    availableUnits: 36,
+   388→    occupiedUnits: 0,
+   389→    heldUnits: 0,
+   390→    priceFromKobo: 52000000,
+   391→    createdAt: daysAgo(14),
+   392→    updatedAt: daysAgo(1),
+   393→  },
+   394→];
+   395→
+   396→/* -------------------------------------------------------------------- Floors */
+   397→
+   398→export const floors: Floor[] = [
+   399→  { id: "flr_ah_g", propertyId: "prop_akoka_heights", label: "Ground Floor", level: 0, defaultPriceKobo: 45000000, totalUnits: 16, availableUnits: 4, position: 0 },
+   400→  { id: "flr_ah_1", propertyId: "prop_akoka_heights", label: "First Floor", level: 1, defaultPriceKobo: 48000000, totalUnits: 16, availableUnits: 3, position: 1 },
+   401→  { id: "flr_ah_2", propertyId: "prop_akoka_heights", label: "Second Floor", level: 2, defaultPriceKobo: 52000000, totalUnits: 16, availableUnits: 3, position: 2 },
+   402→  { id: "flr_ah_3", propertyId: "prop_akoka_heights", label: "Third Floor", level: 3, defaultPriceKobo: 58000000, totalUnits: 16, availableUnits: 2, position: 3 },
+   403→
+   404→  { id: "flr_bg_g", propertyId: "prop_bariga_gardens", label: "Ground Floor", level: 0, defaultPriceKobo: 32000000, totalUnits: 14, availableUnits: 3, position: 0 },
+   405→  { id: "flr_bg_1", propertyId: "prop_bariga_gardens", label: "First Floor", level: 1, defaultPriceKobo: 35000000, totalUnits: 14, availableUnits: 3, position: 1 },
+   406→
+   407→  { id: "flr_ys_g", propertyId: "prop_yaba_suites", label: "Ground Floor", level: 0, defaultPriceKobo: 120000000, totalUnits: 6, availableUnits: 1, position: 0 },
+   408→  { id: "flr_ys_1", propertyId: "prop_yaba_suites", label: "First Floor", level: 1, defaultPriceKobo: 125000000, totalUnits: 6, availableUnits: 1, position: 1 },
+   409→  { id: "flr_ys_2", propertyId: "prop_yaba_suites", label: "Second Floor", level: 2, defaultPriceKobo: 130000000, totalUnits: 6, availableUnits: 2, position: 2 },
+   410→];
+   411→
+   412→/* ----------------------------------------------------- Rentable units (rooms) */
+   413→
+   414→function roomCharges(extra: AdditionalCharge[] = []): AdditionalCharge[] {
+   415→  return [
+   416→    { id: "chg_service", label: "Service charge", amountKobo: 5000000, frequency: "annual" },
+   417→    { id: "chg_caution", label: "Caution deposit", amountKobo: 10000000, frequency: "one_time" },
+   418→    ...extra,
+   419→  ];
+   420→}
+   421→
+   422→export const rooms: RentableUnit[] = [
+   423→  // Akoka Heights — ground floor
+   424→  {
+   425→    id: "room_ah_g101", identifier: "G-101", slug: "g-101",
+   426→    propertyId: "prop_akoka_heights", floorId: "flr_ah_g",
+   427→    unitType: "self_contain", status: "available",
+   428→    capacity: 1, bedrooms: 1, bathrooms: 1, hasBalcony: false, hasWindow: true, sizeSqM: 14,
+   429→    facilities: ["fan", "wardrobe", "desk_chair", "ensuite_bathroom", "window"],
+   430→    furnishing: "semi_furnished",
+   431→    images: [img(PHOTOS.roomA, "G-101 — self-contain room", { isVerified: true })],
+   432→    representativeImagesOnly: false,
+   433→    annualRentKobo: 45000000, rentalPeriod: "annual",
+   434→    additionalCharges: roomCharges(),
+   435→    cautionDepositKobo: 10000000,
+   436→    availableFrom: days(7), availableTo: days(370),
+   437→    bookingTerms: "Annual lease renewable. Two instalments acceptable with management approval.",
+   438→    createdAt: daysAgo(60), updatedAt: daysAgo(2),
+   439→  },
+   440→  {
+   441→    id: "room_ah_g102", identifier: "G-102", slug: "g-102",
+   442→    propertyId: "prop_akoka_heights", floorId: "flr_ah_g",
+   443→    unitType: "self_contain", status: "available",
+   444→    capacity: 1, bedrooms: 1, bathrooms: 1, hasBalcony: false, hasWindow: true, sizeSqM: 14,
+   445→    facilities: ["fan", "wardrobe", "desk_chair", "ensuite_bathroom", "window"],
+   446→    furnishing: "semi_furnished",
+   447→    images: [img(PHOTOS.roomA, "G-102 — self-contain room", { isVerified: true })],
+   448→    representativeImagesOnly: false,
+   449→    annualRentKobo: 45000000, rentalPeriod: "annual",
+   450→    additionalCharges: roomCharges(),
+   451→    cautionDepositKobo: 10000000,
+   452→    availableFrom: days(7), availableTo: days(370),
+   453→    bookingTerms: "Annual lease renewable. Two instalments acceptable with management approval.",
+   454→    createdAt: daysAgo(60), updatedAt: daysAgo(2),
+   455→  },
+   456→  {
+   457→    id: "room_ah_g103", identifier: "G-103", slug: "g-103",
+   458→    propertyId: "prop_akoka_heights", floorId: "flr_ah_g",
+   459→    unitType: "shared_room", status: "available",
+   460→    capacity: 2, bedrooms: 1, bathrooms: 1, hasBalcony: false, hasWindow: true, sizeSqM: 20,
+   461→    facilities: ["fan", "wardrobe", "shared_bathroom", "window"],
+   462→    furnishing: "semi_furnished",
+   463→    images: [img(PHOTOS.roomB, "G-103 — shared room", { isVerified: true })],
+   464→    representativeImagesOnly: false,
+   465→    annualRentKobo: 32000000, rentalPeriod: "annual",
+   466→    additionalCharges: roomCharges(),
+   467→    cautionDepositKobo: 8000000,
+   468→    availableFrom: days(7), availableTo: days(370),
+   469→    bookingTerms: "Shared room — both occupants must be named on the lease.",
+   470→    createdAt: daysAgo(60), updatedAt: daysAgo(2),
+   471→  },
+   472→  {
+   473→    id: "room_ah_g104", identifier: "G-104", slug: "g-104",
+   474→    propertyId: "prop_akoka_heights", floorId: "flr_ah_g",
+   475→    unitType: "self_contain", status: "occupied",
+   476→    capacity: 1, bedrooms: 1, bathrooms: 1, hasBalcony: false, hasWindow: false, sizeSqM: 12,
+   477→    facilities: ["fan", "wardrobe", "ensuite_bathroom"],
+   478→    furnishing: "semi_furnished",
+   479→    images: [img(PHOTOS.roomC, "G-104 — self-contain (representative)", { isVerified: false })],
+   480→    representativeImagesOnly: true,
+   481→    annualRentKobo: 43000000, rentalPeriod: "annual",
+   482→    additionalCharges: roomCharges(),
+   483→    availableFrom: days(380), availableTo: days(740),
+   484→    bookingTerms: "Currently occupied. Available from next lease cycle.",
+   485→    activeBookingId: "bkg_occupied_1",
+   486→    createdAt: daysAgo(60), updatedAt: daysAgo(15),
+   487→  },
+   488→
+   489→  // Akoka Heights — first floor
+   490→  {
+   491→    id: "room_ah_1101", identifier: "1-101", slug: "1-101",
+   492→    propertyId: "prop_akoka_heights", floorId: "flr_ah_1",
+   493→    unitType: "self_contain", status: "available",
+   494→    capacity: 1, bedrooms: 1, bathrooms: 1, hasBalcony: true, hasWindow: true, sizeSqM: 16,
+   495→    facilities: ["ac", "wardrobe", "desk_chair", "ensuite_bathroom", "balcony", "window"],
+   496→    furnishing: "fully_furnished",
+   497→    images: [img(PHOTOS.roomD, "1-101 — premium self-contain", { isVerified: true })],
+   498→    representativeImagesOnly: false,
+   499→    annualRentKobo: 55000000, rentalPeriod: "annual",
+   500→    additionalCharges: roomCharges([{ id: "chg_ac", label: "A/C surcharge", amountKobo: 1500000, frequency: "annual" }]),
+   501→    cautionDepositKobo: 12000000,
+   502→    availableFrom: days(3), availableTo: days(366),
+   503→    bookingTerms: "Premium room. Two instalments acceptable with management approval.",
+   504→    createdAt: daysAgo(50), updatedAt: daysAgo(1),
+   505→  },
+   506→  {
+   507→    id: "room_ah_1102", identifier: "1-102", slug: "1-102",
+   508→    propertyId: "prop_akoka_heights", floorId: "flr_ah_1",
+   509→    unitType: "self_contain", status: "held",
+   510→    capacity: 1, bedrooms: 1, bathrooms: 1, hasBalcony: false, hasWindow: true, sizeSqM: 14,
+   511→    facilities: ["ac", "wardrobe", "desk_chair", "ensuite_bathroom", "window"],
+   512→    furnishing: "fully_furnished",
+   513→    images: [img(PHOTOS.roomD, "1-102 — premium self-contain", { isVerified: true })],
+   514→    representativeImagesOnly: false,
+   515→    annualRentKobo: 53000000, rentalPeriod: "annual",
+   516→    additionalCharges: roomCharges(),
+   517→    cautionDepositKobo: 11000000,
+   518→    availableFrom: days(3), availableTo: days(366),
+   519→    bookingTerms: "Currently on temporary hold pending payment confirmation.",
+   520→    activeHoldId: "hold_1",
+   521→    createdAt: daysAgo(50), updatedAt: daysAgo(0),
+   522→  },
+   523→
+   524→  // Yaba Suites — apartments (entire unit, 2 bedrooms)
+   525→  {
+   526→    id: "room_ys_a1", identifier: "A-1", slug: "apartment-a1",
+   527→    propertyId: "prop_yaba_suites", floorId: "flr_ys_g",
+   528→    unitType: "apartment", status: "available",
+   529→    capacity: 2, bedrooms: 2, bathrooms: 2, hasBalcony: true, hasWindow: true, sizeSqM: 55,
+   530→    facilities: ["ac", "kitchen_private", "ensuite_bathroom", "balcony", "window", "wardrobe", "desk_chair"],
+   531→    furnishing: "fully_furnished",
+   532→    images: [
+   533→      img(PHOTOS.roomA, "Apartment A-1 — living room", { isVerified: true, position: 0 }),
+   534→      img(PHOTOS.kitchen, "Apartment A-1 — kitchen", { isVerified: true, position: 1 }),
+   535→      img(PHOTOS.bathroom, "Apartment A-1 — bathroom", { isVerified: true, position: 2 }),
+   536→    ],
+   537→    representativeImagesOnly: false,
+   538→    annualRentKobo: 120000000, rentalPeriod: "biannual",
+   539→    additionalCharges: [
+   540→      { id: "chg_service_ys", label: "Service charge", amountKobo: 12000000, frequency: "annual" },
+   541→      { id: "chg_caution_ys", label: "Caution deposit", amountKobo: 20000000, frequency: "one_time" },
+   542→    ],
+   543→    cautionDepositKobo: 20000000,
+   544→    availableFrom: days(14), availableTo: days(380),
+   545→    bookingTerms: "Entire apartment let as one unit. Quarterly rent option available.",
+   546→    createdAt: daysAgo(180), updatedAt: daysAgo(7),
+   547→  },
+   548→  {
+   549→    id: "room_ys_a2", identifier: "A-2", slug: "apartment-a2",
+   550→    propertyId: "prop_yaba_suites", floorId: "flr_ys_g",
+   551→    unitType: "apartment", status: "occupied",
+   552→    capacity: 2, bedrooms: 2, bathrooms: 2, hasBalcony: true, hasWindow: true, sizeSqM: 55,
+   553→    facilities: ["ac", "kitchen_private", "ensuite_bathroom", "balcony", "window", "wardrobe"],
+   554→    furnishing: "fully_furnished",
+   555→    images: [img(PHOTOS.roomA, "Apartment A-2 (representative)", { isVerified: false })],
+   556→    representativeImagesOnly: true,
+   557→    annualRentKobo: 120000000, rentalPeriod: "biannual",
+   558→    additionalCharges: [
+   559→      { id: "chg_service_ys2", label: "Service charge", amountKobo: 12000000, frequency: "annual" },
+   560→    ],
+   561→    availableFrom: days(200), availableTo: days(560),
+   562→    bookingTerms: "Currently occupied. Available from next lease cycle.",
+   563→    activeBookingId: "bkg_occupied_2",
+   564→    createdAt: daysAgo(180), updatedAt: daysAgo(20),
+   565→  },
+   566→];
+   567→
+   568→/* -------------------------------------------------------- Bookings & payments */
+   569→
+   570→export const bookings: Booking[] = [
+   571→  {
+   572→    id: "bkg_demo_1",
+   573→    reference: "NLG-BKG-7XQK4L",
+   574→    studentId: "dev_student_1",
+   575→    propertyId: "prop_akoka_heights",
+   576→    rentableUnitId: "room_ah_g101",
+   577→    status: "confirmed",
+   578→    currentStep: "booking_confirmation",
+   579→    checkIn: days(7),
+   580→    checkOut: days(372),
+   581→    rentalPeriod: "annual",
+   582→    baseRentKobo: 45000000,
+   583→    additionalChargesKobo: 5000000,
+   584→    cautionDepositKobo: 10000000,
+   585→    serviceFeeKobo: 2250000,
+   586→    totalKobo: 62250000,
+   587→    paidKobo: 62250000,
+   588→    outstandingKobo: 0,
+   589→    holdExpiresAt: daysAgo(2),
+   590→    confirmedAt: daysAgo(2),
+   591→    createdAt: daysAgo(5),
+   592→    updatedAt: daysAgo(2),
+   593→  },
+   594→  {
+   595→    id: "bkg_demo_2",
+   596→    reference: "NLG-BKG-3PD8TM",
+   597→    studentId: "dev_student_1",
+   598→    propertyId: "prop_yaba_suites",
+   599→    rentableUnitId: "room_ys_a1",
+   600→    status: "pending_payment",
+   601→    currentStep: "payment_initiation",
+   602→    checkIn: days(14),
+   603→    checkOut: days(379),
+   604→    rentalPeriod: "biannual",
+   605→    baseRentKobo: 120000000,
+   606→    additionalChargesKobo: 12000000,
+   607→    cautionDepositKobo: 20000000,
+   608→    serviceFeeKobo: 6000000,
+   609→    totalKobo: 158000000,
+   610→    paidKobo: 0,
+   611→    outstandingKobo: 158000000,
+   612→    holdExpiresAt: days(1),
+   613→    createdAt: daysAgo(0),
+   614→    updatedAt: daysAgo(0),
+   615→  },
+   616→  {
+   617→    id: "bkg_demo_3",
+   618→    reference: "NLG-BKG-9RE2XH",
+   619→    studentId: "dev_student_1",
+   620→    propertyId: "prop_bariga_gardens",
+   621→    rentableUnitId: "room_ah_g103",
+   622→    status: "completed",
+   623→    currentStep: "payment_reconciliation",
+   624→    checkIn: daysAgo(360),
+   625→    checkOut: daysAgo(5),
+   626→    rentalPeriod: "annual",
+   627→    baseRentKobo: 32000000,
+   628→    additionalChargesKobo: 5000000,
+   629→    cautionDepositKobo: 8000000,
+   630→    serviceFeeKobo: 1600000,
+   631→    totalKobo: 46600000,
+   632→    paidKobo: 46600000,
+   633→    outstandingKobo: 0,
+   634→    confirmedAt: daysAgo(365),
+   635→    createdAt: daysAgo(370),
+   636→    updatedAt: daysAgo(5),
+   637→  },
+   638→];
+   639→
+   640→export const payments: Payment[] = [
+   641→  {
+   642→    id: "pay_demo_1",
+   643→    reference: "NLG-PAY-AB12CD",
+   644→    gatewayReference: "PSK_Z9xy87654321",
+   645→    bookingId: "bkg_demo_1",
+   646→    studentId: "dev_student_1",
+   647→    amountKobo: 62250000,
+   648→    feeKobo: 1462500,
+   649→    netKobo: 60787500,
+   650→    currency: "NGN",
+   651→    channel: "card",
+   652→    status: "successful",
+   653→    confirmedByBackend: true,
+   654→    initiatedAt: daysAgo(5),
+   655→    confirmedAt: daysAgo(2),
+   656→    receiptUrl: "#receipt-1",
+   657→  },
+   658→  {
+   659→    id: "pay_demo_2",
+   660→    reference: "NLG-PAY-EF34GH",
+   661→    bookingId: "bkg_demo_2",
+   662→    studentId: "dev_student_1",
+   663→    amountKobo: 158000000,
+   664→    feeKobo: 3705000,
+   665→    netKobo: 154295000,
+   666→    currency: "NGN",
+   667→    channel: "card",
+   668→    status: "initiated",
+   669→    confirmedByBackend: false,
+   670→    initiatedAt: daysAgo(0),
+   671→  },
+   672→];
+   673→
+   674→export const payouts: Payout[] = [
+   675→  {
+   676→    id: "pot_demo_1",
+   677→    reference: "NLG-POT-QA12WB",
+   678→    landlordId: "dev_landlord_1",
+   679→    bookingId: "bkg_demo_1",
+   680→    grossKobo: 62250000,
+   681→    platformFeeKobo: 2250000,
+   682→    netKobo: 60000000,
+   683→    status: "settled",
+   684→    settledAt: daysAgo(1),
+   685→    bankAccountMasked: "GTBank •••• 4821",
+   686→    scheduledFor: daysAgo(1),
+   687→    createdAt: daysAgo(2),
+   688→  },
+   689→  {
+   690→    id: "pot_demo_2",
+   691→    reference: "NLG-POT-LM34ZR",
+   692→    landlordId: "dev_landlord_1",
+   693→    bookingId: "bkg_demo_3",
+   694→    grossKobo: 46600000,
+   695→    platformFeeKobo: 1600000,
+   696→    netKobo: 45000000,
+   697→    status: "settled",
+   698→    settledAt: daysAgo(120),
+   699→    bankAccountMasked: "GTBank •••• 4821",
+   700→    scheduledFor: daysAgo(120),
+   701→    createdAt: daysAgo(125),
+   702→  },
+   703→];
+   704→
+   705→/* --------------------------------------------------------------- Notifications */
+   706→
+   707→export const notifications: AppNotification[] = [
+   708→  {
+   709→    id: "ntf_1",
+   710→    userId: "dev_student_1",
+   711→    type: "booking_update",
+   712→    title: "Booking confirmed",
+   713→    body: "Your booking for G-101 at Akoka Heights Hostel has been confirmed. Move-in is in 7 days.",
+   714→    href: "/student/bookings/bkg_demo_1",
+   715→    read: false,
+   716→    createdAt: daysAgo(2),
+   717→  },
+   718→  {
+   719→    id: "ntf_2",
+   720→    userId: "dev_student_1",
+   721→    type: "payment_update",
+   722→    title: "Payment pending",
+   723→    body: "Your payment for Apartment A-1 at Yaba Suites is awaiting confirmation. Hold expires in 1 day.",
+   724→    href: "/student/bookings/bkg_demo_2",
+   725→    read: false,
+   726→    createdAt: daysAgo(0),
+   727→  },
+   728→  {
+   729→    id: "ntf_3",
+   730→    userId: "dev_student_1",
+   731→    type: "system",
+   732→    title: "Welcome to NetLodge",
+   733→    body: "Complete your profile to get personalised accommodation recommendations.",
+   734→    href: "/student/profile",
+   735→    read: true,
+   736→    createdAt: daysAgo(30),
+   737→  },
+   738→  {
+   739→    id: "ntf_l1",
+   740→    userId: "dev_landlord_1",
+   741→    type: "booking_update",
+   742→    title: "New booking received",
+   743→    body: "A student has placed a booking for G-101 at Akoka Heights Hostel.",
+   744→    href: "/landlord/bookings/bkg_demo_1",
+   745→    read: false,
+   746→    createdAt: daysAgo(5),
+   747→  },
+   748→  {
+   749→    id: "ntf_l2",
+   750→    userId: "dev_landlord_1",
+   751→    type: "verification_update",
+   752→    title: "Verification approved",
+   753→    body: "Your landlord verification has been approved. You can now publish listings publicly.",
+   754→    href: "/landlord/verification",
+   755→    read: true,
+   756→    createdAt: daysAgo(60),
+   757→  },
+   758→];
+   759→
+   760→/* ------------------------------------------------------------------- Support */
+   761→
+   762→export const supportTickets: SupportTicket[] = [
+   763→  {
+   764→    id: "tkt_1",
+   765→    reference: "NLG-TKT-2KQ8FV",
+   766→    userId: "dev_student_1",
+   767→    subject: "Question about caution deposit refund",
+   768→    category: "Payments",
+   769→    priority: "medium",
+   770→    status: "resolved",
+   771→    message:
+   772→      "Hello, my tenancy at Bariga Gardens ended last week. When will my caution deposit be refunded?",
+   773→    createdAt: daysAgo(10),
+   774→    updatedAt: daysAgo(7),
+   775→    replies: [
+   776→      {
+   777→        id: "r_1",
+   778→        author: "support",
+   779→        message:
+   780→          "Hello! Your caution deposit refund has been initiated and will land in your original payment account within 5–7 business days. Thank you for your patience.",
+   781→        createdAt: daysAgo(7),
+   782→      },
+   783→    ],
+   784→  },
+   785→];
+   786→
+   787→/* -------------------------------------------------------------------- Saved */
+   788→
+   789→export const savedProperties: SavedProperty[] = [
+   790→  {
+   791→    id: "sav_1",
+   792→    userId: "dev_student_1",
+   793→    propertyId: "prop_yaba_suites",
+   794→    savedAt: daysAgo(12),
+   795→    notes: "Worth the splurge if I get the postgraduate scholarship.",
+   796→  },
+   797→  {
+   798→    id: "sav_2",
+   799→    userId: "dev_student_1",
+   800→    propertyId: "prop_somolu_terraces",
+   801→    savedAt: daysAgo(4),
+   802→  },
+   803→];
+   804→
+   805→/* --------------------------------------------------- Convenience selectors */
+   806→
+   807→export function getUniversityBySlug(slug: string): University | undefined {
+   808→  return universities.find((u) => u.slug === slug);
+   809→}
+   810→
+   811→export function getNeighbourhoodBySlug(slug: string): Neighbourhood | undefined {
+   812→  return neighbourhoods.find((n) => n.slug === slug);
+   813→}
+   814→
+   815→export function getPropertyBySlug(slug: string): Property | undefined {
+   816→  return properties.find((p) => p.slug === slug);
+   817→}
+   818→
+   819→export function getRoomById(id: string): RentableUnit | undefined {
+   820→  return rooms.find((r) => r.id === id || r.slug === id);
+   821→}
+   822→
+   823→export function getRoomsForProperty(propertyId: string): RentableUnit[] {
+   824→  return rooms.filter((r) => r.propertyId === propertyId);
+   825→}
+   826→
+   827→export function getFloorsForProperty(propertyId: string): Floor[] {
+   828→  return floors.filter((f) => f.propertyId === propertyId);
+   829→}
+   830→
+   831→export function getBookingsForStudent(studentId: string): Booking[] {
+   832→  return bookings.filter((b) => b.studentId === studentId);
+   833→}
+   834→
+   835→export function getPaymentsForStudent(studentId: string): Payment[] {
+   836→  return payments.filter((p) => p.studentId === studentId);
+   837→}
+   838→
+   839→export function getNotificationsForUser(userId: string): AppNotification[] {
+   840→  return notifications
+   841→    .filter((n) => n.userId === userId)
+   842→    .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+   843→}
+   844→

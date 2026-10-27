@@ -23,20 +23,54 @@ by `NEXT_PUBLIC_REPOSITORY_ADAPTER`.
 - Enable Email/Password and (optionally) OAuth providers in the Supabase dashboard.
 - Configure email redirects to `https://netlodge.example/auth/callback`.
 - Use Supabase Row-Level Security (RLS) policies to enforce role-based access at the database level — **never rely on the frontend `role` field for security.**
-- Define a `profiles` table linked to `auth.users` with columns: `id` (uuid, FK to `auth.users.id`), `role` (enum: `student`, `landlord`, `manager`, `agent`, plus reserved roles for future phases), `first_name`, `last_name`, `phone`, `email_verified_at`, `phone_verified_at`, `created_at`.
+- Define a `profiles` table linked to `auth.users` with columns: `id` (uuid, FK to `auth.users.id`), `role` (enum: all 8 roles — `student`, `landlord`, `manager`, `agent`, `verification_officer`, `support_staff`, `finance_admin`, `super_admin`), `first_name`, `last_name`, `phone`, `email_verified_at`, `phone_verified_at`, `created_at`, `active` (boolean, default true), `deactivated_at`, `status_reason`, `status_changed_by`, `role_updated_at`, `role_changed_by`.
 
-### Reserved roles (excluded from this implementation phase but kept in the schema)
-- `verification_officer`
-- `support_staff`
-- `finance_admin`
-- `super_admin`
+### Administrative roles (now implemented)
 
-### Server actions to implement
-- `auth/register` — creates auth user + profile row
-- `auth/login` — exchanges credentials for session
-- `auth/forgot-password` — sends reset email via Supabase
-- `auth/reset-password` — updates password after token exchange
-- `auth/sign-out` — revokes session
+All four administrative roles are implemented in the frontend with full dashboards, workflows, and audit logging. In production, each role's permissions are enforced by Supabase RLS policies and server-action guards.
+
+| Role | Home route | Key permissions |
+|------|-----------|-----------------|
+| `verification_officer` | `/admin/verification` | Review/approve/reject verification cases, assign cases, escalate, record inspections |
+| `support_staff` | `/admin/support` | Handle tickets, assign, escalate, reply as staff, manage knowledge base |
+| `finance_admin` | `/admin/finance` | Approve/reject payouts and refunds, run reconciliation, view financial audit trail |
+| `super_admin` | `/admin` | Manage users, roles, settings, integrations; oversight of all operations |
+
+### Server actions to implement (administrative)
+
+Each of the following server actions must independently authorise the caller, record an audit log entry, and (for sensitive operations) require reauthentication:
+
+**Verification:**
+- `verification/listAll` — list cases with filters (officer-only)
+- `verification/approve` — approve a case (officer-only, audit-logged)
+- `verification/reject` — reject a case (officer-only, requires reason, audit-logged)
+- `verification/escalate` — escalate to super_admin or finance_admin (audit-logged)
+- `verification/assign` — assign case to officer
+- `verification/recordInspection` — record on-site inspection
+
+**Support:**
+- `support/listAll` — list all tickets (support-staff-only)
+- `support/replyAsStaff` — reply as staff (with internal-only flag)
+- `support/assign` — assign ticket to agent
+- `support/escalate` — escalate to verification/finance/super_admin (audit-logged)
+- `support/updateStatus` — change ticket status
+
+**Finance:**
+- `payout/approve` — approve payout (finance-admin-only, audit-logged)
+- `payout/reject` — reject payout (requires reason, audit-logged)
+- `payout/reverse` — reverse settled payout (critical severity, audit-logged, requires reauth)
+- `refund/approve` — approve refund (finance-admin-only, audit-logged)
+- `refund/reject` — reject refund (requires reason, audit-logged)
+- `reconciliation/run` — fetch Paystack settlement report and match against internal records
+- `reconciliation/resolve` — mark discrepancy resolved (audit-logged)
+
+**Super admin:**
+- `user/updateRole` — change user role (super-admin-only, audit-logged, requires reauth, cannot demote last super_admin)
+- `user/deactivate` — suspend account (super-admin-only, audit-logged, cannot suspend last super_admin)
+- `user/reactivate` — reactivate account (audit-logged)
+- `setting/update` — update platform setting (super-admin-only, audit-logged, reauth for sensitive settings)
+- `integration/toggle` — enable/disable integration (super-admin-only, audit-logged as critical when disabling)
+- `announcement/create` — publish system announcement (audit-logged)
 
 ---
 
@@ -145,6 +179,20 @@ The following tables are required. Naming follows the TypeScript types in
 ### `notifications`, `support_tickets`, `support_ticket_replies`, `saved_properties`
 — match the TypeScript types in `src/lib/types/index.ts`.
 
+### Administrative tables (new)
+
+These tables back the four administrative workspaces:
+
+- **`users`** (extends `profiles`): `active`, `deactivated_at`, `status_reason`, `status_changed_by`, `role_updated_at`, `role_changed_by`. The `active` column controls sign-in ability.
+- **`refunds`**: `id`, `reference`, `payment_id`, `payment_reference`, `booking_id`, `student_id`, `amount_kobo`, `currency`, `reason`, `reason_detail`, `status`, `reviewed_by`, `reviewed_at`, `review_notes`, `provider_reference`, `completed_at`, `failure_reason`, `created_at`, `updated_at`.
+- **`reconciliation_records`**: `id`, `internal_reference`, `provider_reference`, `internal_amount_kobo`, `provider_amount_kobo`, `internal_settled_at`, `provider_settled_at`, `status`, `resolved_by`, `resolved_at`, `resolution_notes`, `created_at`.
+- **`audit_logs`** (append-only — no UPDATE or DELETE permissions for any role): `id`, `timestamp`, `actor_id`, `actor_email`, `actor_role`, `category`, `action`, `resource_type`, `resource_id`, `summary`, `severity`, `ip_address`, `user_agent`, `before` (jsonb), `after` (jsonb).
+- **`platform_settings`**: `id`, `key`, `label`, `description`, `type`, `value`, `unit`, `category`, `requires_reauth`, `updated_at`, `updated_by`.
+- **`integration_health`**: `id`, `name`, `category`, `status`, `last_success_at`, `last_error`, `last_error_at`, `uptime_24h`, `avg_response_ms`, `enabled`.
+- **`knowledge_base_articles`**: `id`, `slug`, `title`, `category`, `excerpt`, `content`, `tags` (text[]), `views`, `published`, `updated_at`, `author_id`.
+- **`system_announcements`**: `id`, `title`, `body`, `audience`, `severity`, `active`, `starts_at`, `ends_at`, `created_at`, `created_by`.
+- **`disputes`**: `id`, `reference`, `booking_id`, `student_id`, `landlord_id`, `subject`, `description`, `status`, `amount_kobo`, `opened_at`, `updated_at`, `resolved_at`, `resolved_by`, `resolution_notes`, `evidence` (jsonb).
+
 ---
 
 ## 3. Image handling — Cloudinary
@@ -207,6 +255,8 @@ The following tables are required. Naming follows the TypeScript types in
 
 ## 6. Role-based access — RLS policies (Supabase)
 
+### Marketplace roles
+
 | Table              | student                | landlord                              | manager                              | agent                          |
 |--------------------|------------------------|---------------------------------------|--------------------------------------|--------------------------------|
 | profiles           | own row only           | own row                               | own row                              | own row                        |
@@ -221,8 +271,30 @@ The following tables are required. Naming follows the TypeScript types in
 | support_tickets    | own                    | own                                   | own                                  | own                            |
 | saved_properties   | own                    | n/a                                   | n/a                                  | n/a                            |
 
+### Administrative roles
+
+| Table                | verification_officer           | support_staff                  | finance_admin                | super_admin                     |
+|----------------------|--------------------------------|--------------------------------|------------------------------|---------------------------------|
+| users                | no access                      | read (for customer lookup)     | no access                    | read + update role + activate   |
+| verification_records | read + update (review/approve) | read (flag only)               | no access                    | read + escalate                 |
+| support_tickets      | read (related cases)           | read + update (assign/reply)   | no access                    | read + oversee                  |
+| payments             | no access                      | read (for ticket context)      | read all                     | read all                        |
+| payouts              | no access                      | no access                      | read + approve/reject/reverse| read all                       |
+| refunds              | no access                      | no access                      | read + approve/reject        | read all                        |
+| reconciliation       | no access                      | no access                      | read + resolve + run         | read all                        |
+| disputes             | no access                      | no access                      | read + resolve               | read + resolve                  |
+| audit_logs           | no access                      | no access                      | read (finance category only) | read all (append-only, no edit) |
+| platform_settings    | no access                      | no access                      | no access                    | read + update                   |
+| integration_health   | no access                      | no access                      | no access                    | read + toggle                   |
+| knowledge_base       | no access                      | read + manage                  | no access                    | read + manage                   |
+| system_announcements | no access                      | no access                      | no access                    | read + create + update          |
+
 **Critical**: RLS policies are the source of truth. The frontend `can()` helper
 in `src/lib/auth/permissions.ts` only decides which UI affordances to *show*.
+
+**Audit logs** are append-only — no role has UPDATE or DELETE permissions. INSERT
+is allowed only from authenticated server actions that have already verified the
+caller's identity and role.
 
 ---
 

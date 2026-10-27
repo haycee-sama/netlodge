@@ -12,16 +12,49 @@
 
 /* ------------------------------------------------------------------ Roles */
 
-export type UserRole = "student" | "landlord" | "manager" | "agent";
+export type UserRole =
+  | "student"
+  | "landlord"
+  | "manager"
+  | "agent"
+  | "verification_officer"
+  | "support_staff"
+  | "finance_admin"
+  | "super_admin";
 
 export const USER_ROLES: UserRole[] = [
   "student",
   "landlord",
   "manager",
   "agent",
+  "verification_officer",
+  "support_staff",
+  "finance_admin",
+  "super_admin",
 ];
 
-/** Roles excluded from this implementation phase but reserved in the schema. */
+/** Marketplace roles — students, landlords and their staff. */
+export const MARKETPLACE_ROLES: UserRole[] = [
+  "student",
+  "landlord",
+  "manager",
+  "agent",
+];
+
+/** Administrative / back-office roles. */
+export const ADMIN_ROLES: UserRole[] = [
+  "verification_officer",
+  "support_staff",
+  "finance_admin",
+  "super_admin",
+];
+
+/** Human-readable label for any role, with underscores replaced. */
+export function roleLabel(role: UserRole): string {
+  return role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/** @deprecated Use `UserRole` directly. Kept for backwards compatibility. */
 export type ReservedRole =
   | "verification_officer"
   | "support_staff"
@@ -42,6 +75,18 @@ export interface User {
   role: UserRole;
   createdAt: string;
   lastSeenAt?: string | null;
+  /** Account status — set by super_admin. Inactive accounts cannot sign in. */
+  active: boolean;
+  /** When the account was deactivated, if applicable. */
+  deactivatedAt?: string | null;
+  /** Reason recorded for the most recent activation/deactivation change. */
+  statusReason?: string | null;
+  /** ID of the admin who last changed the account's status. */
+  statusChangedBy?: string | null;
+  /** When the user's role was last changed. */
+  roleUpdatedAt?: string | null;
+  /** ID of the admin who last changed the user's role. */
+  roleChangedBy?: string | null;
 }
 
 export interface StudentProfile {
@@ -123,16 +168,54 @@ export interface VerificationEvidence {
 
 export interface VerificationRecord {
   id: string;
-  entityType: "landlord" | "property";
+  /** Public case reference, e.g. NLG-VER-3KQ8FV. */
+  reference: string;
+  entityType: "landlord" | "property" | "room" | "student";
   entityId: string;
+  /** Display name of the entity being verified (landlord name, property name, etc.). */
+  entityLabel: string;
+  /** Sub-type of the submission — drives the review checklist. */
+  submissionType:
+    | "student_kyc"
+    | "landlord_identity"
+    | "landlord_business"
+    | "property_listing"
+    | "room_evidence"
+    | "inspection_report";
   status: VerificationStatus;
+  /** Priority set by the queue or by escalation. */
+  priority: "low" | "medium" | "high" | "urgent";
   evidence: VerificationEvidence[];
   inspectionRecords: InspectionRecord[];
+  /** ID of the verification officer currently assigned. */
+  assignedOfficerId?: string | null;
+  /** SLA deadline for first review or resolution. */
+  slaDueAt?: string | null;
   submittedAt?: string | null;
   reviewedAt?: string | null;
   reviewerId?: string | null;
   reviewNotes?: string | null;
+  /** Internal notes — visible only to officers, never to applicants. */
+  internalNotes?: InternalNote[];
+  /** Reason recorded when status moved to rejected/escalated. */
+  rejectionReason?: string | null;
+  /** Escalation chain — populated when an officer escalates the case. */
+  escalatedFrom?: string | null;
+  escalatedTo?: "super_admin" | "finance_admin" | null;
+  escalatedAt?: string | null;
+  escalationReason?: string | null;
   outstandingActions: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Internal note attached to a verification case by an officer. */
+export interface InternalNote {
+  id: string;
+  authorId: string;
+  authorName: string;
+  message: string;
+  createdAt: string;
 }
 
 export interface InspectionRecord {
@@ -181,7 +264,6 @@ export interface Neighbourhood {
 /* ------------------------------------------------------ Properties */
 
 export type PropertyType =
-  | " hostel_block"
   | "hostel_block"
   | "apartment_building"
   | "terrace_house"
@@ -569,6 +651,16 @@ export interface Payout {
   bankAccountMasked: string;
   scheduledFor: string;
   createdAt: string;
+  /** ID of the finance admin who approved/rejected the payout. */
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+  /** Reason recorded when a payout was rejected or reversed. */
+  rejectionReason?: string | null;
+  reversalReason?: string | null;
+  /** Provider (Paystack transfer) reference, populated after dispatch. */
+  providerReference?: string | null;
+  /** Eligibility flags surfaced for the finance admin's review. */
+  eligibilityFlags: string[];
 }
 
 /* ------------------------------------------------------ Notifications */
@@ -610,6 +702,28 @@ export interface SupportTicket {
   priority: "low" | "medium" | "high" | "urgent";
   status: SupportTicketStatus;
   message: string;
+  /** ID of the support agent currently assigned. */
+  assignedTo?: string | null;
+  /** Team/category the ticket is routed to. */
+  team?: "general" | "payments" | "verification" | "safety" | "legal" | "technical" | null;
+  /** When the first agent responded. Drives first-response-time metric. */
+  firstResponseAt?: string | null;
+  /** When the ticket was resolved. */
+  resolvedAt?: string | null;
+  /** SLA deadline for first response. */
+  slaDueAt?: string | null;
+  /** Whether the ticket has been escalated beyond the front-line queue. */
+  escalated: boolean;
+  escalatedTo?: "verification_officer" | "finance_admin" | "super_admin" | null;
+  escalatedReason?: string | null;
+  /** Related booking reference, when the ticket concerns a specific booking. */
+  relatedBookingId?: string | null;
+  /** Related payment reference, when applicable. */
+  relatedPaymentReference?: string | null;
+  /** Related property ID, when applicable. */
+  relatedPropertyId?: string | null;
+  /** Internal-only notes attached by support staff. */
+  internalNotes?: InternalNote[];
   createdAt: string;
   updatedAt: string;
   replies: SupportTicketReply[];
@@ -618,7 +732,11 @@ export interface SupportTicket {
 export interface SupportTicketReply {
   id: string;
   author: "user" | "support";
+  /** Display name of the author (for support-side replies). */
+  authorName?: string | null;
   message: string;
+  /** Whether the reply is internal-only (not visible to the customer). */
+  internal?: boolean;
   createdAt: string;
 }
 
@@ -664,3 +782,331 @@ export interface SavedProperty {
   savedAt: string;
   notes?: string | null;
 }
+
+/* =========================================================================
+   ADMIN DOMAIN TYPES
+   =========================================================================
+   The types below back the four administrative workspaces (Verification
+   Officer, Support Agent, Finance Administrator, Super Administrator). They
+   are deliberately backend-agnostic and use the same conventions as the
+   marketplace types above (integer kobo for money, ISO timestamps, explicit
+   status enums).
+
+   These types are the contract the production adapter (Supabase + server
+   actions) will satisfy. The dev adapter returns deterministic fixtures in
+   the same shapes.
+   ========================================================================= */
+
+/* ------------------------------------------------------ Refunds */
+
+export type RefundStatus =
+  | "requested"
+  | "under_review"
+  | "approved"
+  | "rejected"
+  | "processing"
+  | "completed"
+  | "failed";
+
+export const REFUND_STATUS_LABELS: Record<RefundStatus, string> = {
+  requested: "Requested",
+  under_review: "Under review",
+  approved: "Approved",
+  rejected: "Rejected",
+  processing: "Processing",
+  completed: "Completed",
+  failed: "Failed",
+};
+
+export type RefundReason =
+  | "booking_cancelled_within_24h"
+  | "landlord_failed_to_confirm"
+  | "duplicate_payment"
+  | "failed_payment"
+  | "service_not_delivered"
+  | "mutual_agreement"
+  | "policy_violation"
+  | "other";
+
+export interface Refund {
+  id: string;
+  reference: string;
+  /** Original payment being refunded. */
+  paymentId: string;
+  paymentReference: string;
+  bookingId: string;
+  studentId: string;
+  /** Refund amount in kobo — may be partial. */
+  amountKobo: number;
+  currency: "NGN";
+  reason: RefundReason;
+  reasonDetail: string;
+  status: RefundStatus;
+  /** ID of the finance admin who approved/rejected. */
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
+  reviewNotes?: string | null;
+  /** Paystack refund reference, populated after provider confirms. */
+  providerReference?: string | null;
+  /** When the refund was actually completed by the provider. */
+  completedAt?: string | null;
+  failureReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/* ------------------------------------------------------ Reconciliation */
+
+export type ReconciliationStatus =
+  | "matched"
+  | "unmatched_provider"
+  | "unmatched_internal"
+  | "amount_discrepancy"
+  | "duplicate_reference"
+  | "settlement_date_mismatch"
+  | "resolved";
+
+export const RECONCILIATION_STATUS_LABELS: Record<ReconciliationStatus, string> = {
+  matched: "Matched",
+  unmatched_provider: "Unmatched (provider)",
+  unmatched_internal: "Unmatched (internal)",
+  amount_discrepancy: "Amount discrepancy",
+  duplicate_reference: "Duplicate reference",
+  settlement_date_mismatch: "Settlement date mismatch",
+  resolved: "Resolved",
+};
+
+export interface ReconciliationRecord {
+  id: string;
+  /** Internal transaction reference. */
+  internalReference: string;
+  /** Provider (Paystack) transaction reference. */
+  providerReference?: string | null;
+  internalAmountKobo: number;
+  providerAmountKobo?: number | null;
+  internalSettledAt?: string | null;
+  providerSettledAt?: string | null;
+  status: ReconciliationStatus;
+  /** Officer/admin who marked the record resolved. */
+  resolvedBy?: string | null;
+  resolvedAt?: string | null;
+  resolutionNotes?: string | null;
+  createdAt: string;
+}
+
+/* ------------------------------------------------------ Audit logs */
+
+/**
+ * Immutable record of an administrative action. Audit logs MUST NOT be
+ * editable or deletable through any ordinary application interface — they
+ * are the trust anchor for compliance and dispute resolution.
+ */
+export type AuditActionCategory =
+  | "auth"
+  | "user_management"
+  | "role_management"
+  | "verification"
+  | "support"
+  | "finance"
+  | "payout"
+  | "refund"
+  | "configuration"
+  | "security"
+  | "integration";
+
+export type AuditSeverity = "info" | "warning" | "critical";
+
+export interface AuditLog {
+  id: string;
+  /** When the action occurred. */
+  timestamp: string;
+  /** ID of the user who performed the action. */
+  actorId: string;
+  actorEmail: string;
+  actorRole: UserRole;
+  /** Category of the action — drives filtering in the audit log viewer. */
+  category: AuditActionCategory;
+  /** Specific action taken, e.g. "user.suspend", "payout.approve". */
+  action: string;
+  /** Type of resource affected, e.g. "user", "payout", "verification_case". */
+  resourceType: string;
+  /** ID of the affected resource. */
+  resourceId: string;
+  /** Human-readable summary of the action. */
+  summary: string;
+  /** Severity — drives alerting. */
+  severity: AuditSeverity;
+  /** IP address of the actor, when known. */
+  ipAddress?: string | null;
+  /** User agent of the actor, when known. */
+  userAgent?: string | null;
+  /** Before/after snapshot for state-changing actions. */
+  before?: Record<string, unknown> | null;
+  after?: Record<string, unknown> | null;
+}
+
+/* ------------------------------------------------------ Platform settings */
+
+export type PlatformSettingType =
+  | "string"
+  | "number"
+  | "boolean"
+  | "json"
+  | "percentage";
+
+export interface PlatformSetting {
+  id: string;
+  /** Dotted key, e.g. "commission.default_rate", "booking.hold_hours". */
+  key: string;
+  label: string;
+  description: string;
+  type: PlatformSettingType;
+  /** Current value, serialised as a string. */
+  value: string;
+  /** Unit hint for display, e.g. "%", "hours", "NGN". */
+  unit?: string | null;
+  /** Category for grouping in the admin UI. */
+  category: "commission" | "booking" | "verification" | "support" | "payments" | "operations" | "security";
+  /** Whether changing this setting requires reauthentication. */
+  requiresReauth: boolean;
+  /** Last updated at. */
+  updatedAt: string;
+  /** ID of the admin who last updated the setting. */
+  updatedBy?: string | null;
+}
+
+/* ------------------------------------------------------ Integration health */
+
+export type IntegrationStatus = "operational" | "degraded" | "outage" | "maintenance";
+
+export const INTEGRATION_STATUS_LABELS: Record<IntegrationStatus, string> = {
+  operational: "Operational",
+  degraded: "Degraded",
+  outage: "Outage",
+  maintenance: "Maintenance",
+};
+
+export interface IntegrationHealth {
+  id: string;
+  /** Integration name, e.g. "Paystack", "Supabase Auth", "Cloudinary". */
+  name: string;
+  /** Service category. */
+  category: "payments" | "database" | "storage" | "auth" | "email" | "sms" | "analytics";
+  status: IntegrationStatus;
+  /** Last successful heartbeat / ping timestamp. */
+  lastSuccessAt?: string | null;
+  /** Last error message, when degraded or in outage. */
+  lastError?: string | null;
+  lastErrorAt?: string | null;
+  /** Uptime percentage over the last 24 hours. */
+  uptime24h: number;
+  /** Average response time in ms over the last hour. */
+  avgResponseMs: number;
+  /** Whether the integration is currently enabled. */
+  enabled: boolean;
+}
+
+/* ------------------------------------------------------ Permissions (admin) */
+
+/**
+ * Coarse-grained permission groups. Each role maps to a set of these groups,
+ * and each group maps to a set of fine-grained `Action` values (defined in
+ * `@/lib/auth/permissions`). This two-level model keeps the role-permission
+ * matrix readable while staying extensible.
+ */
+export type PermissionGroup =
+  | "marketplace:student"
+  | "marketplace:landlord"
+  | "marketplace:manager"
+  | "marketplace:agent"
+  | "verification:review"
+  | "verification:assign"
+  | "verification:escalate"
+  | "support:handle"
+  | "support:assign"
+  | "support:escalate"
+  | "finance:view"
+  | "finance:refund"
+  | "finance:payout"
+  | "finance:reconcile"
+  | "admin:manage_users"
+  | "admin:manage_roles"
+  | "admin:manage_settings"
+  | "admin:view_audit"
+  | "admin:manage_integrations";
+
+/* ------------------------------------------------------ Knowledge base */
+
+export interface KnowledgeBaseArticle {
+  id: string;
+  slug: string;
+  title: string;
+  category: string;
+  excerpt: string;
+  content: string;
+  tags: string[];
+  /** Number of times the article has been viewed. */
+  views: number;
+  /** Whether the article is published and visible to support agents. */
+  published: boolean;
+  updatedAt: string;
+  authorId: string;
+}
+
+/* ------------------------------------------------------ Announcements */
+
+export interface SystemAnnouncement {
+  id: string;
+  title: string;
+  body: string;
+  /** Audience that will see the announcement. */
+  audience: "all" | "students" | "landlords" | "staff" | "admins";
+  severity: "info" | "warning" | "critical";
+  active: boolean;
+  /** When the announcement should start being shown. */
+  startsAt: string;
+  /** When the announcement should stop being shown. */
+  endsAt?: string | null;
+  createdAt: string;
+  createdBy: string;
+}
+
+/* ------------------------------------------------------ Disputes */
+
+export type DisputeStatus =
+  | "open"
+  | "under_investigation"
+  | "evidence_requested"
+  | "resolved_in_favor_of_student"
+  | "resolved_in_favor_of_landlord"
+  | "closed";
+
+export const DISPUTE_STATUS_LABELS: Record<DisputeStatus, string> = {
+  open: "Open",
+  under_investigation: "Under investigation",
+  evidence_requested: "Evidence requested",
+  resolved_in_favor_of_student: "Resolved for student",
+  resolved_in_favor_of_landlord: "Resolved for landlord",
+  closed: "Closed",
+};
+
+export interface Dispute {
+  id: string;
+  reference: string;
+  bookingId: string;
+  studentId: string;
+  landlordId: string;
+  subject: string;
+  description: string;
+  status: DisputeStatus;
+  /** Amount in dispute, in kobo. */
+  amountKobo: number;
+  openedAt: string;
+  updatedAt: string;
+  resolvedAt?: string | null;
+  resolvedBy?: string | null;
+  resolutionNotes?: string | null;
+  /** Evidence attached by either party. */
+  evidence: { id: string; uploaderId: string; fileName: string; uploadedAt: string }[];
+}
+

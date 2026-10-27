@@ -17,13 +17,34 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { homeRouteForRole } from "@/lib/auth/permissions";
 import { toast } from "sonner";
 import type { UserRole } from "@/lib/types";
+import { roleLabel as formatRoleLabel } from "@/lib/types";
 
-const demoAccounts: { role: UserRole; email: string; label: string; description: string }[] = [
+const marketplaceDemoAccounts: { role: UserRole; email: string; label: string; description: string }[] = [
   { role: "student", email: "ada@netlodge.demo", label: "Student", description: "Browse, save, book" },
   { role: "landlord", email: "landlord@netlodge.demo", label: "Landlord", description: "List properties, manage rooms" },
   { role: "manager", email: "manager@netlodge.demo", label: "Manager", description: "Operate assigned properties" },
   { role: "agent", email: "agent@netlodge.demo", label: "Agent", description: "Enquiries & referrals" },
 ];
+
+const adminDemoAccounts: { role: UserRole; email: string; label: string; description: string }[] = [
+  { role: "verification_officer", email: "officer@netlodge.demo", label: "Verification Officer", description: "Review KYC & listing submissions" },
+  { role: "support_staff", email: "support@netlodge.demo", label: "Support Agent", description: "Handle customer tickets" },
+  { role: "finance_admin", email: "finance@netlodge.demo", label: "Finance Admin", description: "Approve payouts & refunds" },
+  { role: "super_admin", email: "admin@netlodge.demo", label: "Super Admin", description: "Platform-wide control" },
+];
+
+/** Demo-only: infer a user's role from their email address. */
+function inferRoleFromEmail(email: string): UserRole {
+  const e = email.toLowerCase();
+  if (e.includes("officer") || e.includes("verification")) return "verification_officer";
+  if (e.includes("support")) return "support_staff";
+  if (e.includes("finance")) return "finance_admin";
+  if (e.includes("admin") || e.includes("root")) return "super_admin";
+  if (e.includes("landlord")) return "landlord";
+  if (e.includes("manager")) return "manager";
+  if (e.includes("agent")) return "agent";
+  return "student";
+}
 
 export default function LoginPage() {
   return (
@@ -58,16 +79,10 @@ function LoginForm() {
     setSubmitting(true);
     try {
       // Demo: infer role from email for convenience.
-      const role: UserRole = values.email.includes("landlord")
-        ? "landlord"
-        : values.email.includes("manager")
-          ? "manager"
-          : values.email.includes("agent")
-            ? "agent"
-            : "student";
+      const role: UserRole = inferRoleFromEmail(values.email);
       signIn({ email: values.email, role });
       toast.success("Signed in", {
-        description: `Welcome back. You're now in the ${role} dashboard.`,
+        description: `Welcome back. You're now in the ${formatRoleLabel(role)} workspace.`,
       });
       router.push(redirect ?? homeRouteForRole(role));
     } finally {
@@ -77,7 +92,7 @@ function LoginForm() {
 
   function quickSignIn(role: UserRole, email: string) {
     signIn({ email, role });
-    toast.success(`Signed in as ${role}`, {
+    toast.success(`Signed in as ${formatRoleLabel(role)}`, {
       description: "Demo mode — no real authentication backend is connected.",
     });
     router.push(homeRouteForRole(role));
@@ -169,20 +184,43 @@ function LoginForm() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        {demoAccounts.map((acc) => (
-          <Button
-            key={acc.role}
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => quickSignIn(acc.role, acc.email)}
-            className="h-auto flex-col items-start gap-0.5 p-3 text-left"
-          >
-            <span className="text-sm font-medium">{acc.label}</span>
-            <span className="text-xs font-normal text-muted-foreground">{acc.description}</span>
-          </Button>
-        ))}
+      <div className="space-y-3">
+        <div>
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Marketplace</p>
+          <div className="grid grid-cols-2 gap-2">
+            {marketplaceDemoAccounts.map((acc) => (
+              <Button
+                key={acc.role}
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => quickSignIn(acc.role, acc.email)}
+                className="h-auto flex-col items-start gap-0.5 p-3 text-left"
+              >
+                <span className="text-sm font-medium">{acc.label}</span>
+                <span className="text-xs font-normal text-muted-foreground">{acc.description}</span>
+              </Button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Administrative</p>
+          <div className="grid grid-cols-2 gap-2">
+            {adminDemoAccounts.map((acc) => (
+              <Button
+                key={acc.role}
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => quickSignIn(acc.role, acc.email)}
+                className="h-auto flex-col items-start gap-0.5 border-primary/30 bg-primary/5 p-3 text-left hover:bg-primary/10"
+              >
+                <span className="text-sm font-medium">{acc.label}</span>
+                <span className="text-xs font-normal text-muted-foreground">{acc.description}</span>
+              </Button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <p className="text-center text-sm text-muted-foreground">
