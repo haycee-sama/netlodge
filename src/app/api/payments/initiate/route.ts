@@ -87,6 +87,31 @@ export async function POST(request: NextRequest) {
     const origin = request.nextUrl.origin;
     const callbackUrl = `${origin}/api/payments/verify?reference=${reference}`;
 
+    // Record the payment in the database FIRST — with status='initiated' and
+    // confirmed_by_backend=false. If Paystack init fails below, we mark the
+    // payment as 'failed' but the row stays for audit. This avoids the
+    // partial-failure case where Paystack succeeds but the DB write fails
+    // (which would orphan the payment and break webhook reconciliation).
+    const adminClient = createAdminClient();
+    const { error: insertPaymentError } = await adminClient.from("payments").insert({
+      reference,
+      booking_id: bookingId,
+      student_id: user.id,
+      amount_kobo: amountKobo,
+      fee_kobo: Math.round(amountKobo * 0.0235),
+      net_kobo: amountKobo - Math.round(amountKobo * 0.0235),
+      currency: "NGN",
+      channel: "card",
+      status: "initiated",
+      confirmed_by_backend: false,
+    });
+
+    if (insertPaymentError) {
+      // Likely a unique-reference collision (extremely rare) — surface as 500.
+      console.error("[payments/initiate] Failed to insert payment:", insertPaymentError.message);
+      return NextResponse.json({ error: "Failed to record payment" }, { status: 500 });
+    }
+
     // Initialize with Paystack
     const result = await initializeTransaction({
       email: user.email ?? "",
@@ -101,26 +126,18 @@ export async function POST(request: NextRequest) {
     });
 
     if (!result.success || !result.authorizationUrl) {
+      // Mark the payment as failed so the audit trail is intact.
+      // payments.reference is unique, so this update targets exactly one row.
+      await adminClient.from("payments").update({
+        status: "failed",
+        failure_reason: result.error || "Paystack initialization failed",
+      }).eq("reference", reference);
+
       return NextResponse.json({
         error: "Failed to initialize payment",
         details: result.error,
       }, { status: 502 });
     }
-
-    // Record the payment in the database
-    const adminClient = createAdminClient();
-    await adminClient.from("payments").insert({
-      reference,
-      booking_id: bookingId,
-      student_id: user.id,
-      amount_kobo: amountKobo,
-      fee_kobo: Math.round(amountKobo * 0.0235),
-      net_kobo: amountKobo - Math.round(amountKobo * 0.0235),
-      currency: "NGN",
-      channel: "card",
-      status: "initiated",
-      confirmed_by_backend: false,
-    });
 
     // Update booking status
     await adminClient.from("bookings").update({

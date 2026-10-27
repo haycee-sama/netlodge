@@ -8,13 +8,15 @@ import { verifyWebhookSignature, verifyTransaction } from "@/lib/paystack/server
  * Handles Paystack webhook events.
  *
  * Security:
- * - Verifies the webhook signature using HMAC-SHA512
+ * - Verifies the webhook signature using HMAC-SHA512 (the same
+ *   PAYSTACK_SECRET_KEY used for API calls) with a timing-safe comparison
  * - Rejects invalid signatures with 401
- * - Processes events idempotently (duplicate deliveries are safe)
- * - For 'charge.success': verifies the transaction with Paystack's API
- *   before updating booking/payment state
+ * - For 'charge.success': re-verifies the transaction with Paystack's verify
+ *   API (defense in depth), validates amount + currency, then calls the
+ *   `confirm_payment` RPC for atomic, idempotent booking confirmation.
  * - For 'charge.failed': records the failure
- * - Returns 200 for processed events, 400 for invalid signatures
+ * - Returns 200 for processed events (including duplicates and unknown events)
+ *   so Paystack doesn't retry indefinitely
  *
  * The webhook URL must be configured in the Paystack Dashboard:
  * Settings → API Keys & Webhooks → Add Webhook URL
@@ -57,7 +59,7 @@ export async function POST(request: NextRequest) {
     // Find the payment record by reference
     const { data: payment, error: paymentError } = await adminClient
       .from("payments")
-      .select("*")
+      .select("id, reference, booking_id, amount_kobo, currency, status, confirmed_by_backend")
       .eq("reference", txnData.reference)
       .single();
 
@@ -101,91 +103,31 @@ export async function POST(request: NextRequest) {
         console.error(`[paystack/webhook] Currency mismatch: expected ${payment.currency}, got ${verified.currency}`);
         await adminClient.from("payments").update({
           status: "failed",
-          failure_reason: "Currency mismatch",
+          failure_reason: "Currency mismatch during webhook verification",
         }).eq("id", payment.id);
         return NextResponse.json({ status: "ok", message: "Currency mismatch" }, { status: 200 });
       }
 
-      // SUCCESS — update payment
-      const { error: updatePaymentErr } = await adminClient.from("payments").update({
-        status: "successful",
-        confirmed_by_backend: true,
-        confirmed_at: new Date().toISOString(),
-        gateway_reference: verified.reference,
-      }).eq("id", payment.id);
+      // Atomic, idempotent confirmation via RPC. The function locks both the
+      // payment and booking rows FOR UPDATE, prevents duplicate ledger entries
+      // via the unique (entry_type, reference) constraint, records an audit
+      // log, and handles all edge cases (cancelled bookings, already-confirmed
+      // bookings, etc.) safely.
+      const { data: rpcResult, error: rpcError } = await adminClient.rpc("confirm_payment", {
+        p_payment_id: payment.id,
+        p_gateway_reference: verified.reference,
+        p_actor_email: "system@netlodge.test",
+      });
 
-      if (updatePaymentErr) {
-        console.error("[paystack/webhook] Failed to update payment:", updatePaymentErr.message);
+      if (rpcError) {
+        console.error("[paystack/webhook] confirm_payment RPC failed:", rpcError.message);
         return NextResponse.json({ error: "Database error" }, { status: 500 });
       }
 
-      // Fetch the booking
-      const { data: booking } = await adminClient
-        .from("bookings")
-        .select("id, status, total_kobo, paid_kobo, outstanding_kobo")
-        .eq("id", payment.booking_id)
-        .single();
+      const result = String(rpcResult ?? "");
+      console.log(`[paystack/webhook] confirm_payment returned: ${result} for ${txnData.reference}`);
 
-      if (!booking) {
-        console.error(`[paystack/webhook] Booking not found: ${payment.booking_id}`);
-        return NextResponse.json({ status: "ok" }, { status: 200 });
-      }
-
-      // Check if booking is still valid
-      if (["cancelled", "expired", "refunded"].includes(booking.status)) {
-        // Payment succeeded but booking is invalid — needs reconciliation
-        console.error(`[paystack/webhook] Booking ${booking.id} is ${booking.status} but payment succeeded. Needs reconciliation.`);
-        // Don't confirm the booking — flag for manual review
-        return NextResponse.json({ status: "ok", message: "Needs reconciliation" }, { status: 200 });
-      }
-
-      // IDEMPOTENCY: Check if booking is already confirmed
-      if (booking.status === "confirmed" || booking.status === "active") {
-        console.log(`[paystack/webhook] Booking ${booking.id} already confirmed — skipping`);
-        return NextResponse.json({ status: "ok", message: "Already confirmed" }, { status: 200 });
-      }
-
-      // Update booking
-      const newPaidKobo = booking.paid_kobo + payment.amount_kobo;
-      const newOutstandingKobo = Math.max(0, booking.total_kobo - newPaidKobo);
-
-      await adminClient.from("bookings").update({
-        status: "confirmed",
-        current_step: "booking_confirmation",
-        paid_kobo: newPaidKobo,
-        outstanding_kobo: newOutstandingKobo,
-        confirmed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }).eq("id", booking.id);
-
-      // Update room status
-      await adminClient.from("rentable_units").update({
-        status: "occupied",
-        active_booking_id: booking.id,
-        active_hold_id: null,
-        updated_at: new Date().toISOString(),
-      }).eq("active_hold_id", booking.id);
-
-      // Record status history
-      await adminClient.from("booking_status_history").insert({
-        booking_id: booking.id,
-        from_status: booking.status,
-        to_status: "confirmed",
-        reason: `Payment confirmed via Paystack webhook (ref: ${txnData.reference})`,
-      });
-
-      // Insert ledger entry
-      await adminClient.from("ledger_entries").insert({
-        entry_type: "payment",
-        reference: payment.reference,
-        booking_id: booking.id,
-        payment_id: payment.id,
-        credit_kobo: payment.amount_kobo,
-        description: `Payment confirmed via Paystack webhook`,
-      });
-
-      console.log(`[paystack/webhook] Successfully processed charge.success for ${txnData.reference}`);
-      return NextResponse.json({ status: "ok" }, { status: 200 });
+      return NextResponse.json({ status: "ok", result }, { status: 200 });
     }
 
     if (eventType === "charge.failed") {
