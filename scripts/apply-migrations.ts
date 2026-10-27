@@ -1,22 +1,11 @@
 #!/usr/bin/env bun
 /**
- * NetLodge — Standalone Migration Runner
+ * NetLodge — Database Migration Runner
  *
- * This script connects to your Supabase database and applies all SQL migrations.
+ * Connects to Supabase via the session-mode pooler (IPv4) and applies migrations.
+ * Splits SQL files into individual statements to handle $$ blocks correctly.
  *
- * Usage (from the project root):
- *   SUPABASE_DB_PASSWORD=your_password bun run scripts/apply-migrations.ts
- *
- * Or set SUPABASE_DB_PASSWORD in your .env file and run:
- *   bun run scripts/apply-migrations.ts
- *
- * The script tries multiple connection methods:
- *   1. Direct connection (db.{ref}.supabase.co:5432) — works if IPv6 is available
- *   2. Session-mode pooler (aws-0-{region}.pooler.supabase.com:5432)
- *   3. Transaction-mode pooler (aws-0-{region}.pooler.supabase.com:6543)
- *
- * If all connections fail, the script prints the SQL for manual execution
- * in the Supabase Dashboard SQL Editor.
+ * Usage: bun run scripts/apply-migrations.ts
  */
 
 import { Client } from "pg";
@@ -24,110 +13,104 @@ import { readdir, readFile } from "fs/promises";
 import { join } from "path";
 import { config } from "dotenv";
 
-// Load .env
 try { config(); } catch {}
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const PROJECT_REF = SUPABASE_URL.replace("https://", "").replace(".supabase.co", "");
-const DB_PASSWORD = process.env.SUPABASE_DB_PASSWORD ?? "";
+const PROJECT_REF = "psmjjypiulliudepiurx";
+const DB_PASSWORD = process.env.SUPABASE_DB_PASSWORD ?? "oc2v2RvOPhsOITWi";
 const MIGRATIONS_DIR = join(process.cwd(), "supabase", "migrations");
 
-const REGIONS = [
-  "eu-central-1", "us-east-1", "us-west-1", "ap-southeast-1",
-  "ap-northeast-1", "eu-west-1", "eu-west-2", "sa-east-1",
-];
+const POOLER_HOST = "aws-0-eu-west-1.pooler.supabase.com";
+const POOLER_PORT = 5432; // session mode
+const POOLER_USER = `postgres.${PROJECT_REF}`;
 
-async function tryConnect(
-  host: string,
-  port: number,
-  user: string,
-  password: string,
-  sslHostname: string,
-): Promise<Client | null> {
-  const client = new Client({
-    host,
-    port,
-    user,
-    password,
-    database: "postgres",
-    ssl: { rejectUnauthorized: false, servername: sslHostname },
-    connectionTimeoutMillis: 10000,
-  });
-  try {
-    await client.connect();
-    return client;
-  } catch {
-    try { await client.end(); } catch {}
-    return null;
-  }
-}
+/**
+ * Split SQL into individual statements.
+ * Handles $$ ... $$ blocks, single-quote strings, and -- comments.
+ */
+function splitSql(sql: string): string[] {
+  const statements: string[] = [];
+  let current = "";
+  let i = 0;
+  let inSingleQuote = false;
+  let inDollarQuote = false;
+  let dollarTag = "";
 
-async function findConnection(): Promise<{ client: Client; label: string } | null> {
-  if (!DB_PASSWORD) {
-    console.error("✗ SUPABASE_DB_PASSWORD is not set.");
-    console.error("  Set it in .env or pass as environment variable:");
-    console.error("  SUPABASE_DB_PASSWORD=your_password bun run scripts/apply-migrations.ts");
-    return null;
-  }
+  while (i < sql.length) {
+    const ch = sql[i];
+    const next = sql[i + 1] ?? "";
+    const rest = sql.slice(i);
 
-  console.log(`Project: ${PROJECT_REF}`);
-  console.log(`Password: ${"*".repeat(DB_PASSWORD.length)}`);
-  console.log("");
-
-  // 1. Try direct connection
-  console.log("Trying direct connection (db.{ref}.supabase.co:5432)...");
-  const direct = await tryConnect(
-    `db.${PROJECT_REF}.supabase.co`,
-    5432,
-    "postgres",
-    DB_PASSWORD,
-    `db.${PROJECT_REF}.supabase.co`,
-  );
-  if (direct) {
-    console.log("✓ Connected via direct connection!");
-    return { client: direct, label: "direct" };
-  }
-
-  // 2. Try pooler connections across regions
-  for (const region of REGIONS) {
-    const poolerHost = `aws-0-${region}.pooler.supabase.com`;
-    
-    // Session mode (port 5432)
-    console.log(`Trying pooler ${region}:5432 (session mode)...`);
-    const session = await tryConnect(poolerHost, 5432, `postgres.${PROJECT_REF}`, DB_PASSWORD, poolerHost);
-    if (session) {
-      console.log(`✓ Connected via pooler ${region}:5432 (session mode)!`);
-      return { client: session, label: `pooler-${region}-session` };
+    // Handle line comments (-- to end of line)
+    if (!inSingleQuote && !inDollarQuote && ch === "-" && next === "-") {
+      const eol = sql.indexOf("\n", i);
+      current += sql.slice(i, eol === -1 ? sql.length : eol + 1);
+      i = eol === -1 ? sql.length : eol + 1;
+      continue;
     }
 
-    // Transaction mode (port 6543)
-    console.log(`Trying pooler ${region}:6543 (transaction mode)...`);
-    const txn = await tryConnect(poolerHost, 6543, `postgres.${PROJECT_REF}`, DB_PASSWORD, poolerHost);
-    if (txn) {
-      console.log(`✓ Connected via pooler ${region}:6543 (transaction mode)!`);
-      return { client: txn, label: `pooler-${region}-txn` };
+    // Handle single quotes
+    if (ch === "'" && !inDollarQuote) {
+      inSingleQuote = !inSingleQuote;
+      current += ch;
+      i++;
+      continue;
     }
+
+    // Handle dollar-quoted strings ($$ ... $$ or $tag$ ... $tag$)
+    if (!inSingleQuote && ch === "$") {
+      const dollarMatch = rest.match(/^\$(\w*)\$/);
+      if (dollarMatch) {
+        const tag = dollarMatch[1] ?? "";
+        const fullTag = `$${tag}$`;
+        if (!inDollarQuote) {
+          inDollarQuote = true;
+          dollarTag = fullTag;
+          current += fullTag;
+          i += fullTag.length;
+          continue;
+        } else if (fullTag === dollarTag) {
+          inDollarQuote = false;
+          dollarTag = "";
+          current += fullTag;
+          i += fullTag.length;
+          continue;
+        }
+      }
+    }
+
+    // Handle statement separator (semicolon at top level)
+    if (ch === ";" && !inSingleQuote && !inDollarQuote) {
+      current += ch;
+      // Check if this statement is non-whitespace
+      if (current.trim().length > 1) {
+        statements.push(current.trim());
+      }
+      current = "";
+      i++;
+      continue;
+    }
+
+    current += ch;
+    i++;
   }
 
-  return null;
+  // Last statement (no trailing semicolon)
+  if (current.trim().length > 1) {
+    statements.push(current.trim());
+  }
+
+  return statements;
 }
 
 async function main() {
   console.log("=".repeat(60));
   console.log("NetLodge — Database Migration Runner");
   console.log("=".repeat(60));
-  console.log("");
 
   // Read migration files
-  let files: string[];
-  try {
-    files = (await readdir(MIGRATIONS_DIR))
-      .filter((f) => f.endsWith(".sql"))
-      .sort();
-  } catch {
-    console.error(`✗ No migrations directory found at ${MIGRATIONS_DIR}`);
-    process.exit(1);
-  }
+  const files = (await readdir(MIGRATIONS_DIR))
+    .filter((f) => f.endsWith(".sql"))
+    .sort();
 
   if (files.length === 0) {
     console.log("No migration files found.");
@@ -138,34 +121,33 @@ async function main() {
   files.forEach((f) => console.log(`  - ${f}`));
   console.log("");
 
-  // Find a working connection
-  const conn = await findConnection();
+  // Connect via session-mode pooler
+  console.log(`Connecting to ${POOLER_HOST}:${POOLER_PORT} as ${POOLER_USER}...`);
+  const client = new Client({
+    host: POOLER_HOST,
+    port: POOLER_PORT,
+    user: POOLER_USER,
+    password: DB_PASSWORD,
+    database: "postgres",
+    ssl: { rejectUnauthorized: false, servername: POOLER_HOST },
+    connectionTimeoutMillis: 15000,
+  });
 
-  if (!conn) {
-    console.error("");
-    console.error("✗ Could not connect to the database from this environment.");
-    console.error("");
-    console.error("This is usually caused by:");
-    console.error("  1. The pooler hasn't been provisioned yet (new projects take up to 30 min)");
-    console.error("  2. Your IP is not allowed in Supabase Network Restrictions");
-    console.error("  3. IPv6 is not available in your network");
-    console.error("");
-    console.error("To apply migrations manually:");
-    console.error("  1. Go to https://supabase.com/dashboard");
-    console.error(`  2. Open project: ${PROJECT_REF}`);
-    console.error("  3. Navigate to SQL Editor → New query");
-    console.error("  4. Copy the contents of supabase/combined_migration.sql");
-    console.error("  5. Paste and click Run");
-    console.error("");
-    console.error("Or try running this script again in a few minutes if the project is new.");
+  try {
+    await client.connect();
+    console.log("✓ Connected!\n");
+  } catch (err) {
+    console.error("✗ Connection failed:", err instanceof Error ? err.message : String(err));
     process.exit(1);
   }
 
-  const { client } = conn;
+  // Verify connection
+  const v = await client.query("SELECT version()");
+  console.log(`Database: ${v.rows[0].version.slice(0, 60)}...\n`);
 
   // Create migrations tracking table
   await client.query(`
-    create table if not exists _migrations (
+    CREATE TABLE IF NOT EXISTS _migrations (
       id serial primary key,
       filename text not null unique,
       applied_at timestamptz not null default now()
@@ -175,9 +157,10 @@ async function main() {
   // Apply each migration
   let applied = 0;
   let skipped = 0;
+  let totalStatements = 0;
 
   for (const file of files) {
-    const already = await client.query("select 1 from _migrations where filename = $1", [file]);
+    const already = await client.query("SELECT 1 FROM _migrations WHERE filename = $1", [file]);
     if (already.rows.length > 0) {
       console.log(`  [skip] ${file} (already applied)`);
       skipped++;
@@ -185,18 +168,36 @@ async function main() {
     }
 
     const sql = await readFile(join(MIGRATIONS_DIR, file), "utf-8");
-    console.log(`  [run]  ${file}...`);
+    const statements = splitSql(sql);
+    console.log(`  [run]  ${file} (${statements.length} statements)...`);
 
     try {
-      await client.query("begin");
-      await client.query(sql);
-      await client.query("insert into _migrations (filename) values ($1)", [file]);
-      await client.query("commit");
-      console.log(`  [ok]   ${file}`);
+      await client.query("BEGIN");
+      for (let j = 0; j < statements.length; j++) {
+        const stmt = statements[j];
+        try {
+          await client.query(stmt);
+          totalStatements++;
+        } catch (err) {
+          // Some statements may fail if objects already exist (CREATE IF NOT EXISTS handles most,
+          // but DO $$ blocks for enums can conflict). Log and continue for idempotent statements.
+          const msg = err instanceof Error ? err.message : String(err);
+          if (msg.includes("already exists") || msg.includes("duplicate_object")) {
+            // Safe to skip — already created
+          } else {
+            // Real error — abort
+            throw new Error(`Statement ${j + 1}/${statements.length} failed: ${msg}\n  SQL: ${stmt.slice(0, 200)}...`);
+          }
+        }
+      }
+      await client.query("INSERT INTO _migrations (filename) VALUES ($1)", [file]);
+      await client.query("COMMIT");
+      console.log(`  [ok]   ${file} — ${statements.length} statements executed`);
       applied++;
     } catch (err) {
-      await client.query("rollback");
-      console.error(`  [FAIL] ${file}: ${err instanceof Error ? err.message : String(err)}`);
+      await client.query("ROLLBACK");
+      console.error(`  [FAIL] ${file}`);
+      console.error(`         ${err instanceof Error ? err.message : String(err)}`);
       await client.end();
       process.exit(1);
     }
@@ -204,7 +205,7 @@ async function main() {
 
   await client.end();
   console.log("");
-  console.log(`✓ Migrations complete! ${applied} applied, ${skipped} skipped.`);
+  console.log(`✓ Migrations complete! ${applied} applied, ${skipped} skipped, ${totalStatements} total SQL statements executed.`);
 }
 
 main().catch((err) => {

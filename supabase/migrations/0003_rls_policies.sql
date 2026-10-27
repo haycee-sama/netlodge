@@ -3,7 +3,16 @@
 -- ===========================================================================
 -- Enables RLS on every application table and defines restrictive policies.
 -- Run after 0001_schema.sql and 0002_functions_and_triggers.sql.
+-- Idempotent: drops existing policies before recreating.
 -- ===========================================================================
+
+-- Drop ALL existing policies on all application tables (idempotency)
+DO $$ DECLARE r record;
+BEGIN
+  FOR r IN SELECT schemaname, tablename, policyname FROM pg_policies WHERE schemaname = 'public' LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON %I.%I', r.policyname, r.schemaname, r.tablename);
+  END LOOP;
+END $$;
 
 -- ===========================================================================
 -- Enable RLS on ALL tables

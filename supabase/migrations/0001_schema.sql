@@ -801,7 +801,7 @@ create table if not exists public.knowledge_base_articles (
   tags text[] not null default '{}',
   views integer not null default 0,
   published boolean not null default false,
-  author_id uuid not null references public.profiles(id) on delete set null,
+  author_id uuid references public.profiles(id) on delete set null,
   updated_at timestamptz not null default now()
 );
 
@@ -902,18 +902,32 @@ begin
 end;
 $$ language plpgsql;
 
--- Apply updated_at triggers
-create trigger if not exists profiles_updated_at before update on public.profiles for each row execute function public.handle_updated_at();
-create trigger if not exists universities_updated_at before update on public.universities for each row execute function public.handle_updated_at();
-create trigger if not exists neighbourhoods_updated_at before update on public.neighbourhoods for each row execute function public.handle_updated_at();
-create trigger if not exists properties_updated_at before update on public.properties for each row execute function public.handle_updated_at();
-create trigger if not exists floors_updated_at before update on public.floors for each row execute function public.handle_updated_at();
-create trigger if not exists rentable_units_updated_at before update on public.rentable_units for each row execute function public.handle_updated_at();
-create trigger if not exists verification_cases_updated_at before update on public.verification_cases for each row execute function public.handle_updated_at();
-create trigger if not exists bookings_updated_at before update on public.bookings for each row execute function public.handle_updated_at();
-create trigger if not exists refunds_updated_at before update on public.refunds for each row execute function public.handle_updated_at();
-create trigger if not exists support_tickets_updated_at before update on public.support_tickets for each row execute function public.handle_updated_at();
-create trigger if not exists platform_settings_updated_at before update on public.platform_settings for each row execute function public.handle_updated_at();
-create trigger if not exists integration_health_updated_at before update on public.integration_health for each row execute function public.handle_updated_at();
-create trigger if not exists knowledge_base_updated_at before update on public.knowledge_base_articles for each row execute function public.handle_updated_at();
-create trigger if not exists disputes_updated_at before update on public.disputes for each row execute function public.handle_updated_at();
+-- Apply updated_at triggers (drop first for idempotency)
+drop trigger if exists profiles_updated_at on public.profiles;
+create trigger profiles_updated_at before update on public.profiles for each row execute function public.handle_updated_at();
+drop trigger if exists universities_updated_at on public.universities;
+create trigger universities_updated_at before update on public.universities for each row execute function public.handle_updated_at();
+drop trigger if exists neighbourhoods_updated_at on public.neighbourhoods;
+create trigger neighbourhoods_updated_at before update on public.neighbourhoods for each row execute function public.handle_updated_at();
+drop trigger if exists properties_updated_at on public.properties;
+create trigger properties_updated_at before update on public.properties for each row execute function public.handle_updated_at();
+drop trigger if exists floors_updated_at on public.floors;
+create trigger floors_updated_at before update on public.floors for each row execute function public.handle_updated_at();
+drop trigger if exists rentable_units_updated_at on public.rentable_units;
+create trigger rentable_units_updated_at before update on public.rentable_units for each row execute function public.handle_updated_at();
+drop trigger if exists verification_cases_updated_at on public.verification_cases;
+create trigger verification_cases_updated_at before update on public.verification_cases for each row execute function public.handle_updated_at();
+drop trigger if exists bookings_updated_at on public.bookings;
+create trigger bookings_updated_at before update on public.bookings for each row execute function public.handle_updated_at();
+drop trigger if exists refunds_updated_at on public.refunds;
+create trigger refunds_updated_at before update on public.refunds for each row execute function public.handle_updated_at();
+drop trigger if exists support_tickets_updated_at on public.support_tickets;
+create trigger support_tickets_updated_at before update on public.support_tickets for each row execute function public.handle_updated_at();
+drop trigger if exists platform_settings_updated_at on public.platform_settings;
+create trigger platform_settings_updated_at before update on public.platform_settings for each row execute function public.handle_updated_at();
+drop trigger if exists integration_health_updated_at on public.integration_health;
+create trigger integration_health_updated_at before update on public.integration_health for each row execute function public.handle_updated_at();
+drop trigger if exists knowledge_base_updated_at on public.knowledge_base_articles;
+create trigger knowledge_base_updated_at before update on public.knowledge_base_articles for each row execute function public.handle_updated_at();
+drop trigger if exists disputes_updated_at on public.disputes;
+create trigger disputes_updated_at before update on public.disputes for each row execute function public.handle_updated_at();
