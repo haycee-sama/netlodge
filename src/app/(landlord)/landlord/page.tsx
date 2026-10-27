@@ -2,62 +2,52 @@
 
 import * as React from "react";
 import Link from "next/link";
-import {
-  Building2,
-  DoorOpen,
-  CalendarCheck,
-  Banknote,
-  TrendingUp,
-  AlertCircle,
-  ArrowRight,
-  Plus,
-  Receipt,
-  BadgeCheck,
-} from "lucide-react";
+import { Building2, DoorOpen, CalendarCheck, Banknote, AlertCircle, Plus, Loader2, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, StatCard, EmptyState, SectionHeading } from "@/components/shared/page-components";
-import {
-  BookingStatusBadge,
-  PropertyStatusBadge,
-  VerificationBadge,
-} from "@/components/shared/status-badges";
+import { PropertyStatusBadge, VerificationBadge } from "@/components/shared/status-badges";
 import { Price } from "@/components/shared/price";
 import { useAuth } from "@/lib/auth/auth-context";
-import { getRepositories } from "@/lib/repositories";
-import {
-  properties as allProperties,
-  bookings as allBookings,
-  payouts as allPayouts,
-  rooms as allRooms,
-} from "@/lib/data/fixtures";
-import type { Property, Booking, Payout } from "@/lib/types";
+import { fetchLandlordProperties, fetchLandlordBookings, fetchLandlordVerificationCases } from "@/lib/supabase/landlord-service";
 import { formatNgn, formatRelativeTime } from "@/lib/utils/format";
+import { BookingStatusBadge } from "@/components/shared/status-badges";
 
 export default function LandlordDashboardPage() {
   const { session } = useAuth();
-  const [myProperties, setMyProperties] = React.useState<Property[]>([]);
-  const [myBookings, setMyBookings] = React.useState<Booking[]>([]);
-  const [myPayouts, setMyPayouts] = React.useState<Payout[]>([]);
-  const [verification, setVerification] = React.useState<"approved" | "pending" | "unverified">("approved");
+  const [properties, setProperties] = React.useState<any[]>([]);
+  const [bookings, setBookings] = React.useState<any[]>([]);
+  const [verification, setVerification] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const isSupabaseAuth = session?.authenticated === true;
 
   React.useEffect(() => {
-    if (!session) return;
-    const landlordId = session.userId || "dev_landlord_1";
-    getRepositories().properties.listByLandlord(landlordId).then(setMyProperties);
-    getRepositories().bookings.listByLandlord(landlordId).then(setMyBookings);
-    getRepositories().payouts.listByLandlord(landlordId).then(setMyPayouts);
-    getRepositories().verification.getForLandlord(landlordId).then((v) => setVerification(v.status));
-  }, [session]);
+    if (!session?.userId || !isSupabaseAuth) {
+      setLoading(false);
+      return;
+    }
+    Promise.all([
+      fetchLandlordProperties(),
+      fetchLandlordBookings(),
+      fetchLandlordVerificationCases(),
+    ]).then(([propsRes, bookingsRes, verifRes]) => {
+      if (propsRes.data) setProperties(propsRes.data);
+      if (bookingsRes.data) setBookings(bookingsRes.data);
+      if (verifRes.data) setVerification(verifRes.data);
+      if (propsRes.error) setError(propsRes.error);
+      setLoading(false);
+    });
+  }, [session, isSupabaseAuth]);
 
-  const totalUnits = myProperties.reduce((s, p) => s + p.totalUnits, 0);
-  const availableUnits = myProperties.reduce((s, p) => s + p.availableUnits, 0);
-  const occupiedUnits = myProperties.reduce((s, p) => s + p.occupiedUnits, 0);
-  const heldUnits = myProperties.reduce((s, p) => s + p.heldUnits, 0);
-  const pendingBookings = myBookings.filter((b) => ["pending_payment", "payment_initiated"].includes(b.status));
-  const confirmedBookings = myBookings.filter((b) => ["confirmed", "active"].includes(b.status));
-  const settledKobo = myPayouts.filter((p) => p.status === "settled").reduce((s, p) => s + p.netKobo, 0);
+  const totalUnits = properties.reduce((s, p) => s + (p.total_units || 0), 0);
+  const availableUnits = properties.reduce((s, p) => s + (p.available_units || 0), 0);
+  const occupiedUnits = properties.reduce((s, p) => s + (p.occupied_units || 0), 0);
+  const heldUnits = properties.reduce((s, p) => s + (p.held_units || 0), 0);
+  const pendingBookings = bookings.filter((b) => ["pending_payment", "payment_initiated"].includes(b.status));
+  const confirmedBookings = bookings.filter((b) => ["confirmed", "active"].includes(b.status));
+  const pendingVerification = verification.filter((v) => v.verification_status === "pending" || v.verification_status === "under_review");
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -75,212 +65,118 @@ export default function LandlordDashboardPage() {
         }
       />
 
-      {/* Verification banner */}
-      {verification !== "approved" && (
-        <Card className="border-warning/40 bg-warning/10">
-          <CardContent className="flex flex-col items-start gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="mt-0.5 h-5 w-5 text-warning-foreground" aria-hidden />
-              <div>
-                <p className="font-medium">Verification {verification === "pending" ? "in progress" : "required"}</p>
-                <p className="text-sm text-muted-foreground">
-                  You won't be able to publish listings until verification is complete.
-                </p>
-              </div>
-            </div>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/landlord/verification">Complete verification</Link>
-            </Button>
+      {!isSupabaseAuth && (
+        <Card className="border-warning/30 bg-warning/5">
+          <CardContent className="flex items-start gap-2 p-3 text-xs text-warning-foreground">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span>Demo mode — sign in with a real account to manage your properties.</span>
           </CardContent>
         </Card>
       )}
 
-      {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Total units"
-          value={totalUnits}
-          hint={`Across ${myProperties.length} ${myProperties.length === 1 ? "property" : "properties"}`}
-          icon={<DoorOpen className="h-4 w-4" aria-hidden />}
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden />
+        </div>
+      ) : error ? (
+        <EmptyState
+          icon={<AlertCircle className="h-5 w-5" aria-hidden />}
+          title="Could not load dashboard"
+          description={error}
+          action={<Button variant="outline" onClick={() => window.location.reload()}>Retry</Button>}
         />
-        <StatCard
-          label="Available"
-          value={availableUnits}
-          hint={`${occupiedUnits} occupied · ${heldUnits} on hold`}
-          icon={<Building2 className="h-4 w-4" aria-hidden />}
-        />
-        <StatCard
-          label="Pending bookings"
-          value={pendingBookings.length}
-          hint={`${confirmedBookings.length} confirmed`}
-          icon={<CalendarCheck className="h-4 w-4" aria-hidden />}
-        />
-        <StatCard
-          label="Settled payouts"
-          value={formatNgn(settledKobo)}
-          hint="Lifetime"
-          icon={<Banknote className="h-4 w-4" aria-hidden />}
-        />
-      </div>
-
-      {/* Properties */}
-      <section>
-        <SectionHeading
-          eyebrow="Portfolio"
-          title="Your properties"
-          action={
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/landlord/properties">All properties</Link>
-            </Button>
-          }
-        />
-        {myProperties.length === 0 ? (
-          <EmptyState
-            className="mt-4"
-            icon={<Building2 className="h-5 w-5" aria-hidden />}
-            title="No properties yet"
-            description="Add your first property to start listing rooms."
-            action={
-              <Button asChild size="sm">
-                <Link href="/landlord/properties/new">
-                  <Plus className="mr-2 h-4 w-4" aria-hidden />
-                  Add property
-                </Link>
-              </Button>
-            }
-          />
-        ) : (
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {myProperties.map((p) => (
-              <Card key={p.id}>
-                <CardContent className="space-y-3 p-5">
-                  <div className="flex items-start justify-between gap-2">
-                    <Link href={`/landlord/properties/${p.id}`} className="space-y-1">
-                      <p className="font-medium leading-tight hover:text-primary">{p.name}</p>
-                      <p className="text-xs text-muted-foreground">{p.publicAddressLine}</p>
-                    </Link>
-                    <PropertyStatusBadge status={p.status} />
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                    <div className="rounded-md bg-muted/40 p-2">
-                      <p className="font-semibold text-foreground">{p.totalUnits}</p>
-                      <p className="text-muted-foreground">Total</p>
-                    </div>
-                    <div className="rounded-md bg-success/10 p-2">
-                      <p className="font-semibold text-success">{p.availableUnits}</p>
-                      <p className="text-muted-foreground">Available</p>
-                    </div>
-                    <div className="rounded-md bg-info/10 p-2">
-                      <p className="font-semibold text-info">{p.occupiedUnits}</p>
-                      <p className="text-muted-foreground">Occupied</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <Price kobo={p.priceFromKobo} fromLabel period="/yr" />
-                    <Link href={`/landlord/properties/${p.id}/rooms`} className="text-primary hover:underline">
-                      Manage rooms →
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+      ) : (
+        <>
+          {/* Stats */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard label="Total units" value={totalUnits} hint={`Across ${properties.length} ${properties.length === 1 ? "property" : "properties"}`} icon={<DoorOpen className="h-4 w-4" aria-hidden />} />
+            <StatCard label="Available" value={availableUnits} hint={`${occupiedUnits} occupied · ${heldUnits} on hold`} icon={<Building2 className="h-4 w-4" aria-hidden />} />
+            <StatCard label="Pending bookings" value={pendingBookings.length} hint={`${confirmedBookings.length} confirmed`} icon={<CalendarCheck className="h-4 w-4" aria-hidden />} />
+            <StatCard label="Pending verification" value={pendingVerification.length} hint={pendingVerification.length === 0 ? "All clear" : "Needs attention"} icon={<CheckCircle2 className="h-4 w-4" aria-hidden />} />
           </div>
-        )}
-      </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Recent bookings */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Recent bookings</CardTitle>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/landlord/bookings">All</Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {myBookings.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">No bookings yet.</p>
+          {/* Properties */}
+          <section>
+            <SectionHeading
+              eyebrow="Portfolio"
+              title="Your properties"
+              action={<Button asChild variant="ghost" size="sm"><Link href="/landlord/properties">All properties</Link></Button>}
+            />
+            {properties.length === 0 ? (
+              <EmptyState
+                className="mt-4"
+                icon={<Building2 className="h-5 w-5" aria-hidden />}
+                title="No properties yet"
+                description="Add your first property to start listing rooms."
+                action={<Button asChild size="sm"><Link href="/landlord/properties/new"><Plus className="mr-2 h-4 w-4" aria-hidden />Add property</Link></Button>}
+              />
             ) : (
-              <ul className="divide-y divide-border">
-                {myBookings.slice(0, 4).map((b) => {
-                  const property = allProperties.find((p) => p.id === b.propertyId);
-                  return (
-                    <li key={b.id}>
-                      <Link
-                        href={`/landlord/bookings/${b.id}`}
-                        className="flex items-center justify-between gap-3 py-3 hover:bg-muted/40"
-                      >
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {properties.map((p) => (
+                  <Card key={p.id}>
+                    <CardContent className="space-y-3 p-5">
+                      <div className="flex items-start justify-between gap-2">
+                        <Link href={`/landlord/properties/${p.id}`} className="space-y-1">
+                          <p className="font-medium leading-tight hover:text-primary">{p.name}</p>
+                          <p className="text-xs text-muted-foreground">{p.public_address_line}</p>
+                        </Link>
+                        <PropertyStatusBadge status={p.status} />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <VerificationBadge status={p.verification_status} />
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                        <div className="rounded-md bg-muted/40 p-2">
+                          <p className="font-semibold text-foreground">{p.total_units}</p>
+                          <p className="text-muted-foreground">Total</p>
+                        </div>
+                        <div className="rounded-md bg-success/10 p-2">
+                          <p className="font-semibold text-success">{p.available_units}</p>
+                          <p className="text-muted-foreground">Available</p>
+                        </div>
+                        <div className="rounded-md bg-info/10 p-2">
+                          <p className="font-semibold text-info">{p.occupied_units}</p>
+                          <p className="text-muted-foreground">Occupied</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <Price kobo={p.price_from_kobo} fromLabel period="/yr" />
+                        <Link href={`/landlord/properties/${p.id}/rooms`} className="text-primary hover:underline">Manage rooms →</Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Recent bookings */}
+          {bookings.length > 0 && (
+            <section>
+              <SectionHeading eyebrow="Activity" title="Recent bookings" />
+              <Card className="mt-4">
+                <CardContent className="p-0">
+                  <ul className="divide-y divide-border">
+                    {bookings.slice(0, 5).map((b) => (
+                      <li key={b.id} className="flex items-center justify-between gap-3 p-4">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="truncate text-sm font-medium">{property?.name}</p>
+                            <p className="truncate font-medium">{b.properties?.name ?? "Property"}</p>
                             <BookingStatusBadge status={b.status} />
                           </div>
-                          <p className="text-xs text-muted-foreground">{b.reference} · {formatRelativeTime(b.createdAt)}</p>
+                          <p className="text-xs text-muted-foreground">{b.reference} · {formatRelativeTime(b.created_at)}</p>
+                          {b.rentable_units && <p className="text-xs text-muted-foreground">Unit {b.rentable_units.identifier}</p>}
                         </div>
-                        <Price kobo={b.totalKobo} compact />
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Recent payouts */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Recent payouts</CardTitle>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/landlord/payouts">All</Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {myPayouts.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">No payouts yet.</p>
-            ) : (
-              <ul className="divide-y divide-border">
-                {myPayouts.slice(0, 4).map((p) => (
-                  <li key={p.id} className="flex items-center justify-between py-3">
-                    <div>
-                      <p className="text-sm font-medium">{p.reference}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {p.bankAccountMasked} · {formatRelativeTime(p.settledAt ?? p.scheduledFor)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{formatNgn(p.netKobo)}</p>
-                      <Badge variant="outline" className="text-xs capitalize">{p.status}</Badge>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick actions */}
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { href: "/landlord/properties/new", icon: Building2, label: "List a property" },
-          { href: "/landlord/rooms/new", icon: DoorOpen, label: "Add a room" },
-          { href: "/landlord/transactions", icon: Receipt, label: "View transactions" },
-          { href: "/landlord/reports", icon: TrendingUp, label: "View reports" },
-        ].map((q) => (
-          <Link key={q.href} href={q.href}>
-            <Card className="h-full transition-all hover:shadow-md hover:-translate-y-0.5">
-              <CardContent className="flex items-center gap-3 p-4">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <q.icon className="h-4 w-4" aria-hidden />
-                </div>
-                <p className="flex-1 text-sm font-medium">{q.label}</p>
-                <ArrowRight className="h-4 w-4 text-muted-foreground" aria-hidden />
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </section>
+                        <Price kobo={b.total_kobo} compact />
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </section>
+          )}
+        </>
+      )}
     </div>
   );
 }
