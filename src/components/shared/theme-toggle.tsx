@@ -6,10 +6,10 @@ import { Moon, Sun, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * Three-mode segmented theme toggle: Light / Dark / System.
+ * Single-icon cycling theme toggle.
  *
- * Replaces the previous dropdown with an accessible segmented control.
- * The control uses a radiogroup pattern for screen-reader compatibility.
+ * Shows one icon representing the current mode. Each click advances to the
+ * next mode in the cycle: Light → Dark → System → Light → …
  *
  * Behaviour:
  *  - Light / Dark are explicit user choices that override system preference.
@@ -20,83 +20,52 @@ import { cn } from "@/lib/utils";
 
 type ThemeMode = "light" | "dark" | "system";
 
-const modes: { value: ThemeMode; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { value: "light", label: "Light", icon: Sun },
-  { value: "dark", label: "Dark", icon: Moon },
-  { value: "system", label: "System", icon: Monitor },
-];
+const cycle: ThemeMode[] = ["light", "dark", "system"];
+
+const modeMeta: Record<ThemeMode, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
+  light: { label: "Light", icon: Sun },
+  dark: { label: "Dark", icon: Moon },
+  system: { label: "System", icon: Monitor },
+};
 
 export function ThemeToggle({ compact = false }: { compact?: boolean }) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
 
-  // Before mount, render a placeholder to avoid hydration mismatch.
-  // The anti-flash script in layout.tsx has already applied the correct class.
   const current = (theme as ThemeMode) ?? "system";
+  const Meta = mounted ? modeMeta[current] : modeMeta.system;
+  const Icon = Meta.icon;
+
+  function handleClick() {
+    const idx = cycle.indexOf(current);
+    const next = cycle[(idx + 1) % cycle.length];
+    setTheme(next);
+  }
 
   if (compact) {
-    // Compact variant for headers — icon-only on mobile, full on >= sm.
     return (
-      <div
-        role="radiogroup"
-        aria-label="Colour theme"
-        className="inline-flex items-center rounded-lg border border-border bg-muted/50 p-0.5"
+      <button
+        onClick={handleClick}
+        aria-label={`Theme: ${Meta.label}. Click to change.`}
+        title={`Theme: ${Meta.label}`}
+        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
       >
-        {modes.map((m) => {
-          const isActive = mounted && current === m.value;
-          const Icon = m.icon;
-          return (
-            <button
-              key={m.value}
-              role="radio"
-              aria-checked={isActive}
-              aria-label={m.label}
-              title={m.label}
-              onClick={() => setTheme(m.value)}
-              className={cn(
-                "inline-flex h-7 w-7 items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                isActive
-                  ? "bg-background text-primary shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <Icon className="h-3.5 w-3.5" aria-hidden />
-            </button>
-          );
-        })}
-      </div>
+        <Icon className="h-4 w-4 transition-transform duration-200" aria-hidden />
+      </button>
     );
   }
 
-  // Full variant for settings pages — shows labels.
+  // Full variant for settings pages — shows label + icon.
   return (
-    <div
-      role="radiogroup"
-      aria-label="Colour theme"
-      className="inline-flex items-center rounded-lg border border-border bg-muted/50 p-0.5"
+    <button
+      onClick={handleClick}
+      aria-label={`Theme: ${Meta.label}. Click to change.`}
+      className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
     >
-      {modes.map((m) => {
-        const isActive = mounted && current === m.value;
-        const Icon = m.icon;
-        return (
-          <button
-            key={m.value}
-            role="radio"
-            aria-checked={isActive}
-            onClick={() => setTheme(m.value)}
-            className={cn(
-              "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-              isActive
-                ? "bg-background text-primary shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <Icon className="h-3.5 w-3.5" aria-hidden />
-            <span className="capitalize">{m.label}</span>
-          </button>
-        );
-      })}
-    </div>
+      <Icon className="h-4 w-4 transition-transform duration-200" aria-hidden />
+      <span>{Meta.label}</span>
+      <span className="text-xs text-muted-foreground">→ {cycle[(cycle.indexOf(current) + 1) % cycle.length]}</span>
+    </button>
   );
 }

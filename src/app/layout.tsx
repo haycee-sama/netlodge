@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/shared/theme-provider";
 import { AuthProvider } from "@/lib/auth/auth-context";
 import { QueryProvider } from "@/components/shared/query-provider";
+import { ChatWidget } from "@/components/shared/chat-widget";
 
 const sans = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -118,6 +119,7 @@ export default function RootLayout({
           <QueryProvider>
             <AuthProvider>
               <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+              <ChatWidget />
               <Toaster />
               <Sonner position="top-right" richColors closeButton />
             </AuthProvider>
