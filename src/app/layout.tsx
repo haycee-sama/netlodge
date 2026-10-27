@@ -98,10 +98,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Anti-flash theme script: applies persisted/system theme before paint */}
+        {/* Anti-flash theme script: resolves the persisted theme (including "system") and applies it before paint */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('netlodge-theme');var m=window.matchMedia('(prefers-color-scheme: dark)').matches;var d=t==='dark'||(!t&&m);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('netlodge-theme');var m=window.matchMedia('(prefers-color-scheme: dark)').matches;var d=t==='dark'||((t==='system'||!t)&&m);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`,
           }}
         />
       </head>

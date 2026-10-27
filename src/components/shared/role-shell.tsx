@@ -256,25 +256,26 @@ export function RoleShell({ role, children }: RoleShellProps) {
       </Sheet>
 
       {/* Main column */}
-      <div className="flex flex-1 flex-col lg:pl-64">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/85 px-4 backdrop-blur-lg sm:px-6">
+      <div className="flex min-w-0 flex-1 flex-col lg:pl-64">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 overflow-x-hidden border-b border-border bg-background/85 px-4 backdrop-blur-lg sm:px-6">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu">
+              <Button variant="ghost" size="icon" className="lg:hidden shrink-0" aria-label="Open menu">
                 <Menu className="h-5 w-5" aria-hidden />
               </Button>
             </SheetTrigger>
           </Sheet>
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex min-w-0 items-center gap-2 text-sm">
             <Badge
               variant="outline"
               className={cn(
-                "gap-1.5",
+                "gap-1.5 shrink-0",
                 ADMIN_ROLES.includes(role) && "border-primary/40 bg-primary/5 text-primary",
               )}
             >
               {ADMIN_ROLES.includes(role) && <ShieldCheck className="h-3 w-3" aria-hidden />}
-              {roleLabel} workspace
+              <span className="hidden sm:inline">{roleLabel} workspace</span>
+              <span className="sm:hidden">Admin</span>
             </Badge>
           </div>
           <div className="ml-auto flex items-center gap-1.5">
@@ -357,7 +358,7 @@ export function RoleShell({ role, children }: RoleShellProps) {
             </DropdownMenu>
           </div>
         </header>
-        <main id="main" className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <main id="main" className="min-w-0 flex-1 overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8">
           {children}
         </main>
       </div>

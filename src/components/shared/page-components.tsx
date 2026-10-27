@@ -139,7 +139,7 @@ export function StatCard({ label, value, hint, icon, trend, className }: StatCar
         {icon && <span className="text-muted-foreground">{icon}</span>}
       </CardHeader>
       <CardContent className="space-y-1">
-        <div className="font-display text-2xl font-bold tracking-tight">{value}</div>
+        <div className="font-display text-2xl font-bold tracking-tight tabular-nums">{value}</div>
         {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
         {trend && (
           <p

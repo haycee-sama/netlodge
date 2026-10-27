@@ -61,6 +61,17 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
+
+  /* Layout tokens */
+  --content-max-w: 80rem;
+  --sidebar-w: 16rem;
+  --header-h: 4rem;
+
+  /* Motion tokens */
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 :root {
@@ -214,6 +225,11 @@
   }
   .text-pretty {
     text-wrap: pretty;
+  }
+  /* Tabular numerals for financial data, metrics, references */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
   }
   /* Subtle brand gradient text */
   .text-gradient-brand {

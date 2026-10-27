@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { RoleBadge } from "@/components/shared/status-badges";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { useAuth } from "@/lib/auth/auth-context";
 import { initials } from "@/lib/utils/format";
 import { roleLabel as formatRoleLabel } from "@/lib/types";
@@ -88,7 +89,6 @@ export function AdminProfilePage({ roleLabel }: { roleLabel: string }) {
 }
 
 export function AdminSettingsPage({ roleLabel }: { roleLabel: string }) {
-  const { theme, setTheme } = useThemeSafe();
   const [emailNotif, setEmailNotif] = React.useState(true);
   const [urgentAlerts, setUrgentAlerts] = React.useState(true);
   const [dailyDigest, setDailyDigest] = React.useState(false);
@@ -105,13 +105,10 @@ export function AdminSettingsPage({ roleLabel }: { roleLabel: string }) {
 
       <Card>
         <CardHeader><CardTitle className="text-base">Appearance</CardTitle></CardHeader>
-        <CardContent>
-          <Label>Theme</Label>
-          <div className="mt-2 flex gap-2">
-            {(["light", "dark", "system"] as const).map((t) => (
-              <Button key={t} variant={theme === t ? "default" : "outline"} size="sm" onClick={() => setTheme(t)} className="capitalize">{t}</Button>
-            ))}
-          </div>
+        <CardContent className="space-y-2">
+          <Label>Colour theme</Label>
+          <p className="text-xs text-muted-foreground">Choose Light, Dark, or follow your system preference.</p>
+          <ThemeToggle />
         </CardContent>
       </Card>
 
@@ -134,11 +131,4 @@ export function AdminSettingsPage({ roleLabel }: { roleLabel: string }) {
       </Card>
     </div>
   );
-}
-
-// Safe hook wrapper to avoid importing next-themes at module top-level in case
-// the file is referenced from a server component accidentally.
-import { useTheme } from "next-themes";
-function useThemeSafe() {
-  return useTheme();
 }

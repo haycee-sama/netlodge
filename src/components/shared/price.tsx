@@ -34,7 +34,7 @@ export function Price({
       )}
       <span
         className={cn(
-          "font-display font-bold tracking-tight",
+          "font-display font-bold tracking-tight tabular-nums",
           gradient && "text-gradient-brand",
         )}
       >

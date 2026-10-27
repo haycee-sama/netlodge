@@ -1,19 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { Bell, Globe, Moon, Sun, Monitor, Mail, ShieldCheck } from "lucide-react";
+import { Bell, Globe, Mail, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useTheme } from "next-themes";
 import { PageHeader } from "@/components/shared/page-components";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { useAuth } from "@/lib/auth/auth-context";
 import { toast } from "sonner";
 
 export default function StudentSettingsPage() {
-  const { theme, setTheme } = useTheme();
   const { session } = useAuth();
   const [emailNotif, setEmailNotif] = React.useState(true);
   const [smsNotif, setSmsNotif] = React.useState(false);
@@ -32,30 +31,10 @@ export default function StudentSettingsPage() {
         <CardHeader>
           <CardTitle className="text-base">Appearance</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Theme</Label>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { value: "light", icon: Sun, label: "Light" },
-                { value: "dark", icon: Moon, label: "Dark" },
-                { value: "system", icon: Monitor, label: "System" },
-              ].map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => setTheme(opt.value)}
-                  className={`flex items-center justify-center gap-2 rounded-lg border p-3 text-sm transition-colors ${
-                    theme === opt.value
-                      ? "border-primary bg-primary/5 text-primary"
-                      : "border-border hover:bg-muted"
-                  }`}
-                >
-                  <opt.icon className="h-4 w-4" aria-hidden />
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
+        <CardContent className="space-y-2">
+          <Label>Colour theme</Label>
+          <p className="text-xs text-muted-foreground">Choose Light, Dark, or follow your system preference.</p>
+          <ThemeToggle />
         </CardContent>
       </Card>
 
