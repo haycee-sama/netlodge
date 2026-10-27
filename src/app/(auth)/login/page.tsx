@@ -13,39 +13,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/shared/logo";
 import { loginSchema, type LoginInput } from "@/lib/validators";
-import { useAuth } from "@/lib/auth/auth-context";
 import { homeRouteForRole } from "@/lib/auth/permissions";
 import { toast } from "sonner";
-import type { UserRole } from "@/lib/types";
 import { roleLabel as formatRoleLabel } from "@/lib/types";
 import { signInWithEmail } from "@/lib/supabase/auth-service";
-
-const marketplaceDemoAccounts: { role: UserRole; email: string; label: string; description: string }[] = [
-  { role: "student", email: "ada@netlodge.demo", label: "Student", description: "Browse, save, book" },
-  { role: "landlord", email: "landlord@netlodge.demo", label: "Landlord", description: "List properties, manage rooms" },
-  { role: "manager", email: "manager@netlodge.demo", label: "Manager", description: "Operate assigned properties" },
-  { role: "agent", email: "agent@netlodge.demo", label: "Agent", description: "Enquiries & referrals" },
-];
-
-const adminDemoAccounts: { role: UserRole; email: string; label: string; description: string }[] = [
-  { role: "verification_officer", email: "officer@netlodge.demo", label: "Verification Officer", description: "Review KYC & listing submissions" },
-  { role: "support_staff", email: "support@netlodge.demo", label: "Support Agent", description: "Handle customer tickets" },
-  { role: "finance_admin", email: "finance@netlodge.demo", label: "Finance Admin", description: "Approve payouts & refunds" },
-  { role: "super_admin", email: "admin@netlodge.demo", label: "Super Admin", description: "Platform-wide control" },
-];
-
-/** Demo-only: infer a user's role from their email address for demo quick-access. */
-function inferRoleFromEmail(email: string): UserRole {
-  const e = email.toLowerCase();
-  if (e.includes("officer") || e.includes("verification")) return "verification_officer";
-  if (e.includes("support")) return "support_staff";
-  if (e.includes("finance")) return "finance_admin";
-  if (e.includes("admin") || e.includes("root")) return "super_admin";
-  if (e.includes("landlord")) return "landlord";
-  if (e.includes("manager")) return "manager";
-  if (e.includes("agent")) return "agent";
-  return "student";
-}
 
 export default function LoginPage() {
   return (
@@ -59,7 +30,6 @@ function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const redirect = params.get("redirect");
-  const { signIn } = useAuth();
   const [showPw, setShowPw] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const [authError, setAuthError] = React.useState<string | null>(null);
@@ -77,7 +47,6 @@ function LoginForm() {
     setSubmitting(true);
     setAuthError(null);
     try {
-      // Try real Supabase Auth first
       const result = await signInWithEmail(values.email, values.password);
       if (result.success && result.session) {
         toast.success("Signed in", {
@@ -86,34 +55,12 @@ function LoginForm() {
         router.push(redirect ?? homeRouteForRole(result.session.role));
         return;
       }
-
-      // If Supabase auth fails, check if this is a demo account
-      if (values.email.endsWith("@netlodge.demo")) {
-        // Demo fallback for quick-access accounts
-        const role = inferRoleFromEmail(values.email);
-        signIn({ email: values.email, role });
-        toast.success(`Signed in as ${formatRoleLabel(role)} (demo)`, {
-          description: "Demo mode — not connected to Supabase Auth.",
-        });
-        router.push(redirect ?? homeRouteForRole(role));
-        return;
-      }
-
-      // Real auth failed and not a demo account — show error
       setAuthError(result.error ?? "Invalid email or password.");
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : "An unexpected error occurred.");
     } finally {
       setSubmitting(false);
     }
-  }
-
-  function quickSignIn(role: UserRole, email: string) {
-    signIn({ email, role });
-    toast.success(`Signed in as ${formatRoleLabel(role)} (demo)`, {
-      description: "Demo mode — not connected to Supabase Auth.",
-    });
-    router.push(homeRouteForRole(role));
   }
 
   return (
@@ -200,54 +147,6 @@ function LoginForm() {
         </Button>
       </form>
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">or try a demo account</span>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <div>
-          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Marketplace</p>
-          <div className="grid grid-cols-2 gap-2">
-            {marketplaceDemoAccounts.map((acc) => (
-              <Button
-                key={acc.role}
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => quickSignIn(acc.role, acc.email)}
-                className="h-auto flex-col items-start gap-0.5 p-3 text-left"
-              >
-                <span className="text-sm font-medium">{acc.label}</span>
-                <span className="text-xs font-normal text-muted-foreground">{acc.description}</span>
-              </Button>
-            ))}
-          </div>
-        </div>
-        <div>
-          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Administrative</p>
-          <div className="grid grid-cols-2 gap-2">
-            {adminDemoAccounts.map((acc) => (
-              <Button
-                key={acc.role}
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => quickSignIn(acc.role, acc.email)}
-                className="h-auto flex-col items-start gap-0.5 border-primary/30 bg-primary/5 p-3 text-left hover:bg-primary/10"
-              >
-                <span className="text-sm font-medium">{acc.label}</span>
-                <span className="text-xs font-normal text-muted-foreground">{acc.description}</span>
-              </Button>
-            ))}
-          </div>
-        </div>
-      </div>
-
       <p className="text-center text-sm text-muted-foreground">
         Don't have an account?{" "}
         <Link href="/register" className="font-medium text-primary hover:underline">
@@ -257,10 +156,10 @@ function LoginForm() {
 
       <Card className="border-dashed bg-muted/30">
         <CardContent className="p-3 text-xs text-muted-foreground">
-          <strong className="text-foreground">Authentication:</strong> Real sign-in uses Supabase
-          Auth. Demo quick-access buttons create a local preview session for UI testing. New
-          registrations always receive the student role only — admin roles require server-side
-          assignment.
+          <strong className="text-foreground">Authentication:</strong> Sign-in uses
+          Supabase Auth with server-side session verification. New registrations
+          always receive the student role only — admin roles require server-side
+          assignment by a Super Admin.
         </CardContent>
       </Card>
     </div>

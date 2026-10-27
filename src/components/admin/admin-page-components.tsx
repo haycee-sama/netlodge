@@ -67,8 +67,8 @@ export function AdminPageHeader({
 }
 
 /**
- * Demo-mode banner. Shown on admin pages to make clear that the data is
- * fixture-based and that privileged actions are simulated.
+ * Info banner shown on admin pages to clarify that data is live and
+ * privileged actions are server-authorised.
  */
 export function DemoModeBanner({ message }: { message?: string }) {
   return (
@@ -76,9 +76,9 @@ export function DemoModeBanner({ message }: { message?: string }) {
       <CardContent className="flex items-start gap-2 p-3 text-xs text-info">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
         <span>
-          <strong className="text-foreground">Demo mode:</strong>{" "}
+          <strong className="text-foreground">Live data:</strong>{" "}
           {message ??
-            "Data shown is fixture-based development data. Privileged actions (approvals, rejections, refunds) are simulated — they update local state but do not call a real backend. In production, each action is authorised server-side and audit-logged."}
+            "All data shown is from the production database. Privileged actions are authorised server-side and audit-logged."}
         </span>
       </CardContent>
     </Card>

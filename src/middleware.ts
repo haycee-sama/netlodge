@@ -5,16 +5,14 @@ import { NextResponse, type NextRequest } from "next/server";
  * Supabase session-refresh middleware.
  *
  * - Refreshes the user's Supabase auth session on every request.
- * - Protects dashboard routes — redirects to /login if no session.
- * - Allows demo-mode access via a cookie set by the auth context.
+ * - Protects dashboard routes — redirects to /login if no real session.
  * - Redirects authenticated users away from auth pages.
  *
- * The middleware is wrapped in try-catch to prevent 500 errors if
- * Supabase is unreachable or env vars are missing. In that case,
- * requests are allowed through (demo-mode cookie still works).
+ * There is no demo mode. All routes require a real Supabase Auth session.
+ * If Supabase is unreachable, protected routes redirect to /login (fail
+ * closed — never grant access on auth failure).
  */
 export async function middleware(request: NextRequest) {
-  // Quick check: if this is a static file or API route, skip entirely.
   const pathname = request.nextUrl.pathname;
   if (
     pathname.startsWith("/_next/") ||
@@ -25,21 +23,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check for demo-mode cookie (set by the auth context for UI preview)
-  const hasDevSession = request.cookies.has("netlodge-dev-session");
-
-  // Protected routes
   const protectedPaths = ["/student", "/landlord", "/manager", "/agent", "/admin"];
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
 
-  // Auth routes
   const authPaths = ["/login", "/register", "/forgot-password", "/reset-password"];
   const isAuthPage = authPaths.some((p) => pathname.startsWith(p));
 
   let supabaseResponse = NextResponse.next({ request });
   let user: { id: string } | null = null;
 
-  // Try to refresh the Supabase session — if this fails, fall back gracefully.
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -66,32 +58,19 @@ export async function middleware(request: NextRequest) {
       user = result.data.user;
     }
   } catch {
-    // Supabase unreachable or misconfigured — allow the request through.
-    // RLS and client-side auth will handle protection.
+    // Supabase unreachable — user stays null. Protected routes will redirect to /login.
   }
 
-  // Protect dashboard routes — redirect to login if no session.
-  // Admin routes (/admin) require a real Supabase session — demo-mode
-  // cookies are NOT sufficient. This is defense-in-depth: the admin API
-  // routes also reject demo users via server-side role checks.
+  // Protect dashboard routes — redirect to login if no real session.
   if (isProtected && !user) {
-    // Allow demo-mode access to marketplace routes only (not /admin)
-    if (pathname.startsWith("/admin")) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(url);
-    }
-    if (!hasDevSession) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(url);
-    }
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(url);
   }
 
   // Redirect authenticated users away from auth pages.
-  if (isAuthPage && (user || hasDevSession)) {
+  if (isAuthPage && user) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     url.searchParams.delete("redirect");

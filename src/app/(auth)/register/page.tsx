@@ -27,14 +27,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/shared/logo";
 import { registerSchema, type RegisterInput } from "@/lib/validators";
-import { useAuth } from "@/lib/auth/auth-context";
-import { homeRouteForRole } from "@/lib/auth/permissions";
 import { toast } from "sonner";
-import type { UserRole } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const roleOptions: {
-  role: UserRole;
+  role: "student" | "landlord" | "manager" | "agent";
   label: string;
   description: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -47,7 +44,6 @@ const roleOptions: {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { signIn } = useAuth();
   const [showPw, setShowPw] = React.useState(false);
   const [showConfirm, setShowConfirm] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
@@ -91,21 +87,7 @@ export default function RegisterPage() {
         return;
       }
 
-      // Supabase registration failed — fall back to demo mode for @netlodge.demo emails
-      if (values.email.endsWith("@netlodge.demo")) {
-        signIn({
-          email: values.email,
-          role: values.role,
-          firstName: values.firstName,
-          lastName: values.lastName,
-        });
-        toast.success("Account created (demo)", {
-          description: "Demo mode — not connected to Supabase Auth.",
-        });
-        router.push(homeRouteForRole(values.role));
-        return;
-      }
-
+      // Supabase registration failed — show error (no demo fallback)
       setAuthError(result.error ?? "Registration failed. Please try again.");
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : "An unexpected error occurred.");

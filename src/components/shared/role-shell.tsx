@@ -76,10 +76,9 @@ import {
   roleNavGroups,
   roleNavItems,
   homeRouteForRole,
-  type UserRole,
 } from "@/lib/auth/permissions";
+import type { UserRole } from "@/lib/types";
 import {
-  MARKETPLACE_ROLES,
   ADMIN_ROLES,
   roleLabel as formatRoleLabel,
 } from "@/lib/types";
@@ -104,7 +103,7 @@ interface RoleShellProps {
 export function RoleShell({ role, children }: RoleShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { session, isLoading, signOut, switchRole } = useAuth();
+  const { session, isLoading, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
   // Redirect to login if not signed in.
@@ -173,11 +172,6 @@ export function RoleShell({ role, children }: RoleShellProps) {
   function handleSignOut() {
     signOut();
     router.push("/");
-  }
-
-  function handleSwitchRole(r: UserRole) {
-    switchRole(r);
-    router.push(homeRouteForRole(r));
   }
 
   // Active-link check: a nav item is active if its href exactly matches the
@@ -327,28 +321,6 @@ export function RoleShell({ role, children }: RoleShellProps) {
                     Settings
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">
-                  Marketplace roles (demo)
-                </DropdownMenuLabel>
-                {MARKETPLACE_ROLES.map((r) => (
-                  <DropdownMenuItem key={r} onClick={() => handleSwitchRole(r)}>
-                    <span className="mr-2 h-2 w-2 rounded-full bg-muted-foreground/50" aria-hidden />
-                    <span>{formatRoleLabel(r)}</span>
-                    {r === session.role && <Badge variant="secondary" className="ml-auto">current</Badge>}
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">
-                  Administrative roles (demo)
-                </DropdownMenuLabel>
-                {ADMIN_ROLES.map((r) => (
-                  <DropdownMenuItem key={r} onClick={() => handleSwitchRole(r)}>
-                    <ShieldCheck className="mr-2 h-3.5 w-3.5 text-primary" aria-hidden />
-                    <span>{formatRoleLabel(r)}</span>
-                    {r === session.role && <Badge variant="secondary" className="ml-auto">current</Badge>}
-                  </DropdownMenuItem>
-                ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
                   <LogOut className="mr-2 h-4 w-4" aria-hidden />
