@@ -13,8 +13,7 @@ NEXT_PUBLIC_SITE_URL              # Public site URL for metadata
 ```
 SUPABASE_SECRET_KEY              # Service-role key — bypasses RLS
 SUPABASE_DB_PASSWORD             # Database password for migrations
-PAYSTACK_SECRET_KEY              # Paystack API secret
-PAYSTACK_WEBHOOK_SECRET          # Paystack webhook signing secret
+PAYSTACK_SECRET_KEY              # Paystack API secret (also used to verify webhook signatures — no separate webhook secret needed)
 CLOUDINARY_API_KEY               # Cloudinary API key
 CLOUDINARY_API_SECRET            # Cloudinary API secret
 ```
@@ -55,6 +54,66 @@ The login page has quick-access demo buttons for UI testing. These create a loca
 - Use Paystack test mode only (`pk_test_` / `sk_test_` keys).
 - Never use live payment credentials for testing.
 - Test transactions should be clearly labelled.
+
+### Paystack test cards (Nigerian test cards)
+
+These cards only work with `sk_test_` keys. Real cards will be declined in test mode.
+
+| Card number          | Type         | Behaviour                                  |
+|----------------------|--------------|--------------------------------------------|
+| `4084 0836 8058 5131`| Visa         | Successful charge (PIN `1234`)             |
+| `5399 8383 8383 8381`| Mastercard   | Successful charge (PIN `1234`)             |
+| `5060 6666 6666 6666`| Verve        | Successful charge (PIN `1234`)             |
+| `4084 0836 8058 5130`| Visa         | Declined — simulates insufficient funds    |
+| `5126 4490 0000 0006`| Mastercard   | Declined — generic failure                 |
+
+- Use any future expiry date and any 3-digit CVV.
+- For bank transfer / USSD channels, follow the on-screen instructions in the Paystack test checkout — they simulate a successful transfer automatically.
+
+### Paystack webhook setup (REQUIRED for production-grade confirmation)
+
+The webhook is the authoritative source of payment state — the redirect URL is not trusted.
+
+1. **Local development (tunnel required)** — Paystack cannot reach `localhost`. Use one of:
+   - `ngrok http 3000` → copy the `https://*.ngrok.io` URL
+   - `vercel dev` with a public preview URL
+   - `cloudflared tunnel --url http://localhost:3000`
+2. **Paystack Dashboard** → Settings → API Keys & Webhooks → Add Webhook URL:
+   - URL: `https://your-public-domain/api/paystack/webhook`
+   - Tick the events: `charge.success`, `charge.failed` (and `refund.processed` once refunds are wired)
+3. The webhook signature is computed with **the same `PAYSTACK_SECRET_KEY`** used for API calls (Paystack does not issue a separate webhook secret). The route verifies `x-paystack-signature` as HMAC-SHA512(secret, rawBody) using `crypto.timingSafeEqual` to prevent timing attacks.
+
+### End-to-end payment test plan
+
+Pre-conditions:
+- Supabase test project is reachable with valid env vars in `.env`.
+- A landlord test account exists with at least one verified property and one available room.
+- A student test account exists.
+- Paystack test keys are configured and the webhook URL is registered.
+
+Steps:
+1. Sign in as the student, browse to a verified property, open a room detail page.
+2. Click **Place a hold / Book now** — the `create_booking()` RPC should atomically create a `bookings` row (status `pending_payment`), a `holds` row, and flip `rentable_units.status = 'held'`.
+3. On `/student/bookings/[id]`, click **Pay ₦X**. The browser should redirect to Paystack's test checkout.
+4. Use the Visa test card `4084 0836 8058 5131` with PIN `1234`. Click **Pay**.
+5. Paystack redirects back to `/api/payments/verify?reference=NLG-PAY-...`. The server calls Paystack verify, then atomically:
+   - `payments.status = 'successful'`, `payments.confirmed_by_backend = true`
+   - `bookings.status = 'confirmed'`, `bookings.paid_kobo = total_kobo`
+   - `rentable_units.status = 'occupied'`, `active_booking_id` set
+   - `booking_status_history` row inserted
+   - `ledger_entries` row inserted
+   - `audit_logs` row inserted via `record_audit()` RPC
+6. The browser lands on `/student/bookings/[id]?payment=success` — the success banner should show.
+7. Visit `/student/payments` — the new payment should appear with a **Backend-verified** badge.
+8. Sign in as the landlord (same email domain as the property's `landlord_id`). Visit `/landlord/transactions` — the same payment should appear in the gross/net summary.
+9. Paystack should also deliver the `charge.success` webhook within a few seconds. Because the route is idempotent, a duplicate delivery should log "already confirmed — skipping" and return 200.
+10. Sign in as `finance_admin` (or `super_admin`) — the transaction should appear in the admin finance dashboards.
+
+Failure scenarios to test:
+- **Webhook signature mismatch** — POST an event with a wrong signature → expect 401.
+- **Amount tampering** — manually edit the `payments.amount_kobo` column before the webhook arrives → webhook should detect the mismatch and flip the payment to `failed`.
+- **Booking cancelled mid-flight** — cancel the booking after initiating payment but before confirming → webhook should detect the `cancelled` status and surface for reconciliation rather than confirming.
+- **Duplicate webhook** — replay the same webhook payload twice → second delivery should be a no-op (idempotent).
 
 ## Credential Cleanup Procedure
 

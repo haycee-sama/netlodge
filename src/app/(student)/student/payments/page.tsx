@@ -10,30 +10,36 @@ import { PageHeader, EmptyState } from "@/components/shared/page-components";
 import { PaymentStatusBadge } from "@/components/shared/status-badges";
 import { Price } from "@/components/shared/price";
 import { useAuth } from "@/lib/auth/auth-context";
-import { getRepositories } from "@/lib/repositories";
-import { bookings as allBookings } from "@/lib/data/fixtures";
-import type { Payment } from "@/lib/types";
+import { fetchStudentPayments, type PaymentWithBooking } from "@/lib/supabase/payment-service";
 import { formatNgn, formatDateTime } from "@/lib/utils/format";
 import { toast } from "sonner";
 
 export default function StudentPaymentsPage() {
   const { session } = useAuth();
-  const [payments, setPayments] = React.useState<Payment[]>([]);
+  const [payments, setPayments] = React.useState<PaymentWithBooking[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const isSupabaseAuth = session?.authenticated === true;
 
   React.useEffect(() => {
-    if (!session) return;
-    getRepositories()
-      .payments.listByStudent(session.userId || "dev_student_1")
-      .then((p) => {
-        setPayments(p);
-        setLoading(false);
-      });
-  }, [session]);
+    if (!isSupabaseAuth) {
+      setLoading(false);
+      return;
+    }
+    fetchStudentPayments().then((res) => {
+      if (res.error) {
+        setError(res.error);
+      } else if (res.data) {
+        setPayments(res.data);
+      }
+      setLoading(false);
+    });
+  }, [isSupabaseAuth]);
 
-  const totalPaid = payments.filter((p) => p.status === "successful").reduce((s, p) => s + p.amountKobo, 0);
+  const successful = payments.filter((p) => p.status === "successful");
+  const totalPaid = successful.reduce((s, p) => s + p.amount_kobo, 0);
 
-  function downloadReceipt(p: Payment) {
+  function downloadReceipt(p: PaymentWithBooking) {
     toast.info("Receipt download", {
       description: `In production, this would download a PDF receipt for ${p.reference}.`,
     });
@@ -44,10 +50,9 @@ export default function StudentPaymentsPage() {
       <PageHeader
         eyebrow="Payments"
         title="Payment history"
-        description="Every payment you've made through NetLodge, with backend-verified statuses."
+        description="Every payment you've made through NetLodge — amounts, fees, and backend-verified statuses."
       />
 
-      {/* Summary */}
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardContent className="space-y-1 p-5">
@@ -63,9 +68,9 @@ export default function StudentPaymentsPage() {
         </Card>
         <Card>
           <CardContent className="space-y-1 p-5">
-            <p className="text-xs text-muted-foreground">Successful</p>
+            <p className="text-xs text-muted-foreground">Backend-confirmed</p>
             <p className="font-display text-2xl font-bold">
-              {payments.filter((p) => p.status === "successful").length}
+              {successful.filter((p) => p.confirmed_by_backend).length}
             </p>
           </CardContent>
         </Card>
@@ -75,46 +80,68 @@ export default function StudentPaymentsPage() {
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden />
         </div>
+      ) : !isSupabaseAuth ? (
+        <EmptyState
+          icon={<CreditCard className="h-5 w-5" aria-hidden />}
+          title="Demo mode — no real payments"
+          description="Sign in with a real account to view your payment history."
+          action={<Button asChild><Link href="/login">Sign in</Link></Button>}
+        />
+      ) : error ? (
+        <EmptyState
+          icon={<CreditCard className="h-5 w-5" aria-hidden />}
+          title="Could not load payments"
+          description={error}
+          action={<Button variant="outline" onClick={() => window.location.reload()}>Retry</Button>}
+        />
       ) : payments.length === 0 ? (
         <EmptyState
           icon={<CreditCard className="h-5 w-5" aria-hidden />}
           title="No payments yet"
           description="When you make your first booking, your payment history will appear here."
+          action={<Button asChild><Link href="/properties">Browse properties</Link></Button>}
         />
       ) : (
         <Card>
           <CardContent className="p-0">
             <ul className="divide-y divide-border">
               {payments.map((p) => {
-                const booking = allBookings.find((b) => b.id === p.bookingId);
+                const booking = p.bookings;
                 return (
                   <li key={p.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0 space-y-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <p className="font-medium">{p.reference}</p>
                         <PaymentStatusBadge status={p.status} />
+                        {p.confirmed_by_backend && (
+                          <Badge variant="outline" className="text-xs text-success">Backend-verified</Badge>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {p.channel.toUpperCase()} · {formatDateTime(p.initiatedAt)}
-                        {p.gatewayReference && ` · Gateway: ${p.gatewayReference}`}
+                        {p.channel.toUpperCase()} · {formatDateTime(p.initiated_at)}
+                        {p.gateway_reference && ` · Gateway: ${p.gateway_reference}`}
                       </p>
+                      {p.failure_reason && (
+                        <p className="text-xs text-destructive">Reason: {p.failure_reason}</p>
+                      )}
                       {booking && (
                         <Link
                           href={`/student/bookings/${booking.id}`}
                           className="inline-block text-xs text-primary hover:underline"
                         >
                           Booking {booking.reference}
+                          {booking.properties ? ` · ${booking.properties.name}` : ""}
                         </Link>
                       )}
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <Price kobo={p.amountKobo} />
+                        <Price kobo={p.amount_kobo} />
                         <p className="text-xs text-muted-foreground">
-                          Fee: {formatNgn(p.feeKobo)}
+                          Fee: {formatNgn(p.fee_kobo)}
                         </p>
                       </div>
-                      {p.status === "successful" && p.confirmedByBackend && (
+                      {p.status === "successful" && p.confirmed_by_backend && (
                         <Button
                           variant="outline"
                           size="sm"

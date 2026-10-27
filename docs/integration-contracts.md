@@ -224,10 +224,10 @@ These tables back the four administrative workspaces:
   1. via Paystack's webhook → server route handler, or
   2. via a server-side `verify` call to Paystack's API.
 
-### Required server endpoints
-- `POST /api/payments/initiate` — body `{ bookingId, channel }`. Returns `{ paymentReference, paystackAuthorizationUrl }`.
-- `POST /api/paystack/webhook` — receives Paystack events. Verifies signature using `PAYSTACK_WEBHOOK_SECRET`. On `charge.success`, flips the corresponding payment's `confirmed_by_backend` to true and the booking's `status` to `confirmed`.
-- `POST /api/payments/verify` (optional, idempotent fallback) — calls Paystack's `GET /transaction/verify/:reference` and reconciles.
+### Required server endpoints (all implemented in Phase 5)
+- `POST /api/payments/initiate` — body `{ bookingId }`. Returns `{ authorizationUrl, reference }`. Amount is derived from the booking record (never from client input). Ownership checked server-side. Records a `payments` row with `status = 'initiated'` and flips the booking to `payment_initiated`.
+- `POST /api/paystack/webhook` — receives Paystack events. Verifies the HMAC-SHA512 signature in the `x-paystack-signature` header using `PAYSTACK_SECRET_KEY` (Paystack reuses the secret key for webhook signing). On `charge.success`: calls Paystack's `GET /transaction/verify/:reference` for defense-in-depth, validates amount + currency, flips `payments.status = 'successful'` and `payments.confirmed_by_backend = true`, then atomically flips `bookings.status = 'confirmed'`, releases the hold, sets `rentable_units.status = 'occupied'`, inserts a `ledger_entries` row, and records a `booking_status_history` entry. Idempotent — duplicate webhook deliveries are safe.
+- `GET /api/payments/verify?reference=...` — Paystack redirects here after the user completes or abandons the checkout. This is **not** proof of payment — the route calls Paystack's `GET /transaction/verify/:reference` server-side and applies the same atomic confirmation logic as the webhook (with audit-log + ledger entry). Falls back to a `pending` state if verification fails (waits for the webhook).
 
 ### Transaction flow (server-controlled)
 1. **Availability check** — atomic SQL query on `rentable_units.status = 'available'`.
