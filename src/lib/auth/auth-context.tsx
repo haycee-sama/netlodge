@@ -1,22 +1,13 @@
 /**
  * Frontend authentication abstraction.
  *
- * IMPORTANT — read this before changing anything in this file.
- *
- * This module is a **frontend-only development convenience**. It exists so that
- * role-specific UI shells can be browsed during development without a live
- * Supabase project. It MUST NOT be treated as a security boundary.
+ * This module integrates with Supabase Auth when available, and falls back to
+ * a dev-mode localStorage session for local development without a backend.
  *
  * Security rules:
  *  - The role stored here is used purely to decide which UI shell to render.
- *  - Any privileged operation (verification approval, payout, room reservation,
- *    payment confirmation, ownership transfer, etc.) MUST be authorised by a
- *    trusted backend. The frontend never grants these.
- *  - Do not store anything here that you would not want a curious user to read
- *    from localStorage.
- *
- * The production adapter is documented in `/docs/integration-contracts.md` and
- * is expected to wrap `supabase-js` plus a server-side session exchange.
+ *  - Any privileged operation MUST be authorised by a trusted backend.
+ *  - The frontend never grants privileges.
  */
 
 "use client";
@@ -35,16 +26,14 @@ export interface DevSession {
   role: UserRole;
   /** ISO timestamp when the dev session was created. */
   issuedAt: string;
+  /** Whether this session is backed by Supabase Auth (true) or dev mode (false). */
+  authenticated?: boolean;
 }
 
 export interface AuthContextValue {
-  /** Current session, or null when signed out. */
   session: DevSession | null;
-  /** True until the session has been hydrated from storage on mount. */
   isLoading: boolean;
-  /** Sign in with a development session. Does NOT call a real backend. */
   signIn: (input: { email: string; role: UserRole; firstName?: string; lastName?: string }) => DevSession;
-  /** Switch role for the current development session (UI preview only). */
   switchRole: (role: UserRole) => void;
   signOut: () => void;
 }
@@ -55,18 +44,79 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = React.useState<DevSession | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
 
-  // Hydrate from localStorage on mount.
+  // On mount, try to get a Supabase session first, then fall back to dev mode.
   React.useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        setSession(JSON.parse(raw) as DevSession);
+    let cancelled = false;
+
+    async function init() {
+      // Try Supabase Auth first
+      try {
+        const { getCurrentSession } = await import("@/lib/supabase/auth-service");
+        const supabaseSession = await getCurrentSession();
+        if (supabaseSession && !cancelled) {
+          setSession({ ...supabaseSession, authenticated: true });
+          setIsLoading(false);
+          return;
+        }
+      } catch {
+        // Supabase not configured or error — fall through to dev mode
       }
-    } catch {
-      // Ignore malformed storage.
-    } finally {
-      setIsLoading(false);
+
+      // Fall back to dev mode (localStorage)
+      if (cancelled) return;
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          setSession(JSON.parse(raw) as DevSession);
+        }
+      } catch {
+        // Ignore malformed storage
+      } finally {
+        setIsLoading(false);
+      }
     }
+
+    init();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Listen for Supabase auth state changes
+  React.useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+
+    async function setupListener() {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        const { data } = supabase.auth.onAuthStateChange(async (event, authSession) => {
+          if (event === "SIGNED_OUT") {
+            setSession(null);
+            // Clear dev mode too
+            try {
+              localStorage.removeItem(STORAGE_KEY);
+            } catch {}
+          } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+            if (authSession?.user) {
+              const { getCurrentSession } = await import("@/lib/supabase/auth-service");
+              const s = await getCurrentSession();
+              if (s) {
+                setSession({ ...s, authenticated: true });
+              }
+            }
+          }
+        });
+        unsubscribe = data.subscription.unsubscribe;
+      } catch {
+        // Supabase not configured — skip
+      }
+    }
+
+    setupListener();
+    return () => {
+      unsubscribe?.();
+    };
   }, []);
 
   const persist = React.useCallback((next: DevSession | null) => {
@@ -80,7 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem(ROLE_STORAGE_KEY);
       }
     } catch {
-      // Storage unavailable — non-fatal in dev.
+      // Storage unavailable — non-fatal in dev
     }
   }, []);
 
@@ -112,7 +162,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [persist],
   );
 
-  const signOut = React.useCallback(() => persist(null), [persist]);
+  const signOut = React.useCallback(async () => {
+    // Try Supabase sign out first
+    try {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch {
+      // Non-fatal
+    }
+    persist(null);
+  }, [persist]);
 
   const value = React.useMemo<AuthContextValue>(
     () => ({ session, isLoading, signIn, switchRole, signOut }),
@@ -128,7 +188,6 @@ export function useAuth(): AuthContextValue {
   return ctx;
 }
 
-/** Convenience hook for guarding role-specific shells. */
 export function useRequireRole(allowed: UserRole[]): DevSession | null {
   const { session, isLoading } = useAuth();
   if (isLoading) return null;
