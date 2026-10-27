@@ -125,9 +125,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (next) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
         localStorage.setItem(ROLE_STORAGE_KEY, next.role);
+        // Set a cookie so middleware allows demo access to protected routes.
+        // This is NOT a security token — it only tells the middleware that
+        // the user has a local dev session. RLS still controls all data access.
+        document.cookie = "netlodge-dev-session=1; path=/; max-age=86400; SameSite=Lax";
       } else {
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem(ROLE_STORAGE_KEY);
+        document.cookie = "netlodge-dev-session=; path=/; max-age=0";
       }
     } catch {
       // Storage unavailable — non-fatal in dev

@@ -18,6 +18,7 @@ import {
   Building2,
   Briefcase,
   CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,19 +65,50 @@ export default function RegisterPage() {
 
   const selectedRole = watch("role");
 
+  const [authError, setAuthError] = React.useState<string | null>(null);
+
   async function onSubmit(values: RegisterInput) {
     setSubmitting(true);
+    setAuthError(null);
     try {
-      signIn({
+      // Try real Supabase Auth registration
+      const { signUpWithEmail } = await import("@/lib/supabase/auth-service");
+      const result = await signUpWithEmail({
         email: values.email,
-        role: values.role,
+        password: values.password,
         firstName: values.firstName,
         lastName: values.lastName,
       });
-      toast.success("Account created", {
-        description: "Welcome to NetLodge. Complete your profile from your dashboard.",
-      });
-      router.push(homeRouteForRole(values.role));
+
+      if (result.success) {
+        // The handle_new_user trigger auto-creates a profile with the 'student' role.
+        // For non-student roles, the user gets student role initially and must be
+        // upgraded by an admin after verification.
+        toast.success("Account created", {
+          description: "Welcome to NetLodge. Please check your email to verify your account.",
+        });
+        router.push("/login?registered=true");
+        return;
+      }
+
+      // Supabase registration failed — fall back to demo mode for @netlodge.demo emails
+      if (values.email.endsWith("@netlodge.demo")) {
+        signIn({
+          email: values.email,
+          role: values.role,
+          firstName: values.firstName,
+          lastName: values.lastName,
+        });
+        toast.success("Account created (demo)", {
+          description: "Demo mode — not connected to Supabase Auth.",
+        });
+        router.push(homeRouteForRole(values.role));
+        return;
+      }
+
+      setAuthError(result.error ?? "Registration failed. Please try again.");
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : "An unexpected error occurred.");
     } finally {
       setSubmitting(false);
     }
@@ -93,6 +125,13 @@ export default function RegisterPage() {
           Join NetLodge as a student, landlord, manager or agent.
         </p>
       </div>
+
+      {authError && (
+        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <span>{authError}</span>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         {/* Role selector */}
