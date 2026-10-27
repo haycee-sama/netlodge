@@ -270,6 +270,85 @@ Notifications are **database-backed** (not real-time). The `notifications` table
 2. Add a client-side listener in the auth context.
 3. Show a toast when a new notification arrives.
 
+## Phase 8 — Student workflows, secure uploads, notifications
+
+### Student support tickets
+
+Students can now create, view, reply to, and close their own support tickets via live Supabase data.
+
+**API routes** (all require authenticated student session + rate limiting + CSRF validation):
+- `GET /api/student/support/tickets` — list the student's own tickets
+- `POST /api/student/support/tickets` — create a new ticket (subject 5–200 chars, category, priority, message 10–5000 chars)
+- `GET /api/student/support/tickets/[id]` — view ticket detail + conversation (internal notes filtered out)
+- `POST /api/student/support/tickets/[id]/reply` — reply to an open ticket
+- `POST /api/student/support/tickets/[id]/close` — close the student's own ticket
+
+**Security**: The `create_student_ticket`, `reply_to_ticket`, and `close_student_ticket` RPCs enforce ownership via `auth.uid()`. RLS on `support_tickets` ensures students only see their own. Internal notes are filtered out in the service layer (defense in depth — RLS on `ticket_messages` checks ticket ownership, not the `internal` flag).
+
+### Secure file uploads
+
+Three Supabase Storage buckets are configured:
+
+| Bucket | Public | Max size | Allowed MIME types | Access |
+|--------|--------|----------|-------------------|--------|
+| `property-images` | ✓ | 5 MB | JPEG, PNG, WebP, GIF | Public read; authenticated upload; owner/admin delete |
+| `verification-evidence` | ✗ | 10 MB | JPEG, PNG, PDF, WebP | Uploader + verification_officer + super_admin read; authenticated upload |
+| `ticket-attachments` | ✗ | 10 MB | JPEG, PNG, PDF, WebP, TXT | Owner + support_staff + admin read; authenticated upload |
+
+**API routes**:
+- `POST /api/uploads/property-image` — upload a property image (multipart/form-data: file + propertyId)
+- `POST /api/uploads/verification-evidence` — upload verification evidence (multipart/form-data: file + caseId)
+- `POST /api/uploads/ticket-attachment` — upload a ticket attachment (multipart/form-data: file + ticketId)
+- `POST /api/uploads/signed-url` — generate a 1-hour signed URL for a private file
+
+**Security**: Storage paths are server-generated (not user-supplied). File size + MIME type validated server-side. RLS policies on `storage.objects` enforce ownership + role checks. Private buckets return signed URLs (1-hour expiry); public buckets return the public URL.
+
+### Notifications
+
+Student and admin notification pages now use live Supabase data.
+
+**API routes**:
+- `GET /api/student/notifications` — list the user's notifications + unread count
+- `POST /api/student/notifications/[id]/read` — mark one as read
+- `POST /api/student/notifications` — mark all as read
+- `GET /api/admin/notifications` — same, for admin staff
+- `POST /api/admin/notifications/[id]/read` — same
+
+**Security**: RLS on `notifications` ensures users only see their own. The `create_notification` RPC deduplicates on (user_id, type, title, href) within 24 hours to prevent webhook-retry spam.
+
+### Paystack test-mode verification
+
+The Paystack integration uses the **real** test-mode API (`https://api.paystack.co`):
+- `initializeTransaction` calls `POST /transaction/initialize`
+- `verifyTransaction` calls `GET /transaction/verify/:reference`
+- `refundTransaction` calls `POST /refund` (refuses live keys — `sk_test_*` only)
+- `verifyWebhookSignature` uses HMAC-SHA512 + `crypto.timingSafeEqual`
+
+Run `bun run scripts/test-paystack-real-api.ts` to verify the API is reachable + the key is valid + webhook signature verification works.
+
+### Phase 8 test plan
+
+```bash
+# Student support + storage + notifications (30+ assertions against live Supabase)
+bun run scripts/test-phase8-student-storage.ts
+
+# Paystack real test-mode API verification
+bun run scripts/test-paystack-real-api.ts
+
+# Regression: Phase 5 (confirm_payment), Phase 6 (admin RPCs), Phase 7 (finance/support)
+bun run scripts/test-confirm-payment.ts
+bun run scripts/test-admin-rpcs.ts
+bun run scripts/test-finance-support-rpcs.ts
+```
+
+### Storage configuration
+
+The storage buckets + RLS policies are applied by:
+1. `supabase/migrations/0010_phase8_storage_student_tickets.sql` — creates the 3 buckets + student ticket RPCs.
+2. `supabase/migrations/0010b_storage_policies.sql` — documents the storage.objects RLS policies (applied via direct PG connection because the `storage.objects` table is owned by `supabase_storage_admin`, not `postgres`).
+
+If you need to re-apply the storage policies, run the SQL in `0010b_storage_policies.sql` via the Supabase Dashboard SQL Editor or a direct PG connection.
+
 ## Credential Cleanup Procedure
 
 When development is complete and temporary credentials are no longer needed:
