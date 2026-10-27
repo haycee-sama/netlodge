@@ -11,7 +11,7 @@ import { securityCheck } from "@/lib/security/api-security";
  * Returns: { signedUrl }
  */
 export async function POST(request: NextRequest) {
-  const sec = securityCheck(request, "signed-url", { capacity: 30, refillPerSecond: 2 });
+  const sec = await securityCheck(request, "signed-url", { capacity: 30, refillPerSecond: 2 });
   if (sec) return sec;
 
   let body: { bucket?: string; path?: string };

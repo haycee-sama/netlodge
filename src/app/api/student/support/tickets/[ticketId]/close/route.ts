@@ -6,7 +6,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { ticketId } = await params;
   if (!ticketId) return NextResponse.json({ error: "ticketId is required" }, { status: 400 });
 
-  const sec = securityCheck(request, "student-ticket-close", { capacity: 5, refillPerSecond: 0.2 });
+  const sec = await securityCheck(request, "student-ticket-close", { capacity: 5, refillPerSecond: 0.2 });
   if (sec) return sec;
 
   const result = await closeTicket(ticketId, request);

@@ -1,11 +1,10 @@
 /**
  * Security helpers for API routes.
  *
- * - rateLimit: simple in-memory token bucket per IP+endpoint.
- *   NOTE: This is per-instance only. In a multi-instance deployment (Vercel,
- *   Cloud Run, etc.) you need a shared store (Redis, Upstash, etc.) for
- *   true distributed rate limiting. This implementation is a fail-safe
- *   baseline that protects a single instance and degrades gracefully.
+ * - rateLimit: token bucket per IP+endpoint. Uses Upstash Redis when
+ *   configured (UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN), falls
+ *   back to in-memory for single-instance deployments. Sensitive endpoints
+ *   FAIL CLOSED if Redis is configured but unreachable (returns 429).
  *
  * - validateOrigin: checks the Origin header against the allowed origins
  *   for cookie-authenticated mutation requests. This is a CSRF mitigation
@@ -32,23 +31,65 @@ interface RateLimitOptions {
   capacity: number;
   /** Tokens added per second (sustained rate). */
   refillPerSecond: number;
+  /** If true, fail closed when the distributed store is unreachable. */
+  failClosed?: boolean;
 }
+
+// Upstash Redis configuration
+const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
+const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+const USE_DISTRIBUTED = !!(UPSTASH_URL && UPSTASH_TOKEN);
 
 /**
  * Check whether the request should be allowed under the rate limit.
  * Returns null if allowed, or a NextResponse (429) if rejected.
  *
- * The key is derived from the client IP + a scope (usually the route path).
- * Behind a proxy/load balancer, the X-Forwarded-For header is trusted.
+ * When Upstash Redis is configured, uses a distributed sliding-window
+ * counter. When not configured, falls back to in-memory (per-instance).
+ *
+ * For sensitive endpoints (failClosed=true), if Redis is configured but
+ * the request fails, the rate limiter REJECTS the request (429) rather
+ * than allowing it through.
  */
-export function rateLimit(
+export async function rateLimit(
   request: NextRequest,
   scope: string,
   options: RateLimitOptions,
-): NextResponse | null {
+): Promise<NextResponse | null> {
   const ip = getClientIp(request);
-  const key = `${ip}:${scope}`;
+  const key = `rl:${ip}:${scope}`;
 
+  // Try distributed rate limiting first
+  if (USE_DISTRIBUTED) {
+    try {
+      const allowed = await distributedRateLimit(key, options);
+      if (!allowed) {
+        const retryAfter = Math.ceil(1 / options.refillPerSecond);
+        return NextResponse.json(
+          { error: "Too many requests. Please retry later.", retryAfter },
+          { status: 429, headers: { "Retry-After": String(retryAfter) } },
+        );
+      }
+      return null;
+    } catch (err) {
+      // Redis error — fail closed for sensitive endpoints, fail open for others
+      if (options.failClosed) {
+        console.error("[rateLimit] Redis error (fail-closed):", err instanceof Error ? err.message : String(err));
+        return NextResponse.json(
+          { error: "Rate limit service unavailable" },
+          { status: 429, headers: { "Retry-After": "60" } },
+        );
+      }
+      // Fall through to in-memory
+      console.warn("[rateLimit] Redis error (falling back to in-memory):", err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  // In-memory rate limiting (per-instance fallback)
+  return inMemoryRateLimit(key, options);
+}
+
+function inMemoryRateLimit(key: string, options: RateLimitOptions): NextResponse | null {
   const now = Date.now();
   const bucket = buckets.get(key);
 
@@ -57,12 +98,10 @@ export function rateLimit(
     return null;
   }
 
-  // Refill tokens based on elapsed time
   const elapsedSeconds = (now - bucket.lastRefill) / 1000;
   const refilled = Math.min(options.capacity, bucket.tokens + elapsedSeconds * options.refillPerSecond);
 
   if (refilled < 1) {
-    // Rate limited
     const retryAfter = Math.ceil((1 - refilled) / options.refillPerSecond);
     return NextResponse.json(
       { error: "Too many requests. Please retry later.", retryAfter },
@@ -72,6 +111,41 @@ export function rateLimit(
 
   buckets.set(key, { tokens: refilled - 1, lastRefill: now });
   return null;
+}
+
+/**
+ * Distributed rate limiting via Upstash Redis.
+ * Uses a sliding-window counter with INCR + EXPIRE.
+ */
+async function distributedRateLimit(key: string, options: RateLimitOptions): Promise<boolean> {
+  if (!UPSTASH_URL || !UPSTASH_TOKEN) return true;
+
+  // Use a 1-second window — the counter resets every second
+  const windowKey = `${key}:${Math.floor(Date.now() / 1000)}`;
+
+  // Upstash REST API: INCR + EXPIRE in a single pipeline
+  const pipeline = [
+    { args: ["INCR", windowKey] },
+    { args: ["EXPIRE", windowKey, "2"] },
+  ];
+
+  const res = await fetch(`${UPSTASH_URL}/pipeline`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${UPSTASH_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(pipeline),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Upstash returned ${res.status}`);
+  }
+
+  const data = await res.json();
+  // Pipeline returns array of results — first is the INCR result
+  const count = data?.[0]?.result ?? 0;
+  return count <= options.capacity;
 }
 
 function getClientIp(request: NextRequest): string {
@@ -169,16 +243,18 @@ export function validateOrigin(request: NextRequest): NextResponse | null {
 /**
  * Combined security check: rate limit + origin validation.
  * Returns null if the request passes, or a NextResponse if it should be rejected.
+ *
+ * Now async because rateLimit may call Upstash Redis.
  */
-export function securityCheck(
+export async function securityCheck(
   request: NextRequest,
   scope: string,
   rateLimitOptions: RateLimitOptions,
-): NextResponse | null {
+): Promise<NextResponse | null> {
   const originError = validateOrigin(request);
   if (originError) return originError;
 
-  const rateLimitError = rateLimit(request, scope, rateLimitOptions);
+  const rateLimitError = await rateLimit(request, scope, rateLimitOptions);
   if (rateLimitError) return rateLimitError;
 
   return null;

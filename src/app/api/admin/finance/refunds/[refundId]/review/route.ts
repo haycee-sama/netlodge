@@ -6,7 +6,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { refundId } = await params;
   if (!refundId) return NextResponse.json({ error: "refundId is required" }, { status: 400 });
 
-  const sec = securityCheck(request, "finance-refund-review", { capacity: 5, refillPerSecond: 0.2 });
+  const sec = await securityCheck(request, "finance-refund-review", { capacity: 5, refillPerSecond: 0.2, failClosed: true });
   if (sec) return sec;
 
   let body: { action?: "approve" | "reject"; notes?: string };

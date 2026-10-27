@@ -13,7 +13,7 @@ import { securityCheck } from "@/lib/security/api-security";
  * Returns: { path, signedUrl }
  */
 export async function POST(request: NextRequest) {
-  const sec = securityCheck(request, "upload-ticket-attachment", { capacity: 10, refillPerSecond: 0.5 });
+  const sec = await securityCheck(request, "upload-ticket-attachment", { capacity: 10, refillPerSecond: 0.5 });
   if (sec) return sec;
 
   const formData = await request.formData().catch(() => null);

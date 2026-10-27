@@ -6,7 +6,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { payoutId } = await params;
   if (!payoutId) return NextResponse.json({ error: "payoutId is required" }, { status: 400 });
 
-  const sec = securityCheck(request, "finance-payout-approve", { capacity: 5, refillPerSecond: 0.2 });
+  const sec = await securityCheck(request, "finance-payout-approve", { capacity: 5, refillPerSecond: 0.2, failClosed: true });
   if (sec) return sec;
 
   const result = await approvePayout(payoutId, request);

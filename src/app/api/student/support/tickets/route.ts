@@ -7,7 +7,7 @@ import { securityCheck } from "@/lib/security/api-security";
  * POST /api/student/support/tickets — create a new ticket.
  */
 export async function GET(request: NextRequest) {
-  const sec = securityCheck(request, "student-tickets-list", { capacity: 30, refillPerSecond: 2 });
+  const sec = await securityCheck(request, "student-tickets-list", { capacity: 30, refillPerSecond: 2 });
   if (sec) return sec;
 
   const result = await fetchStudentTickets(request);
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const sec = securityCheck(request, "student-ticket-create", { capacity: 3, refillPerSecond: 0.1 });
+  const sec = await securityCheck(request, "student-ticket-create", { capacity: 3, refillPerSecond: 0.1 });
   if (sec) return sec;
 
   let body: CreateTicketInput;

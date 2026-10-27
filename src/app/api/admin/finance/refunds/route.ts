@@ -3,7 +3,7 @@ import { fetchRefunds, createRefund } from "@/lib/supabase/finance-service";
 import { securityCheck } from "@/lib/security/api-security";
 
 export async function GET(request: NextRequest) {
-  const sec = securityCheck(request, "finance-refunds", { capacity: 30, refillPerSecond: 2 });
+  const sec = await securityCheck(request, "finance-refunds", { capacity: 30, refillPerSecond: 2 });
   if (sec) return sec;
 
   const sp = request.nextUrl.searchParams;
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const sec = securityCheck(request, "finance-refund-create", { capacity: 5, refillPerSecond: 0.2 });
+  const sec = await securityCheck(request, "finance-refund-create", { capacity: 5, refillPerSecond: 0.2, failClosed: true });
   if (sec) return sec;
 
   let body: { paymentId?: string; amountKobo?: number; reason?: string; reasonDetail?: string };

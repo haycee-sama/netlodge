@@ -3,7 +3,7 @@ import { fetchTickets } from "@/lib/supabase/support-service";
 import { securityCheck } from "@/lib/security/api-security";
 
 export async function GET(request: NextRequest) {
-  const sec = securityCheck(request, "support-tickets", { capacity: 30, refillPerSecond: 2 });
+  const sec = await securityCheck(request, "support-tickets", { capacity: 30, refillPerSecond: 2 });
   if (sec) return sec;
 
   const sp = request.nextUrl.searchParams;

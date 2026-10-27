@@ -6,7 +6,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { notificationId } = await params;
   if (!notificationId) return NextResponse.json({ error: "notificationId is required" }, { status: 400 });
 
-  const sec = securityCheck(request, "notification-read", { capacity: 30, refillPerSecond: 2 });
+  const sec = await securityCheck(request, "notification-read", { capacity: 30, refillPerSecond: 2 });
   if (sec) return sec;
 
   const result = await markNotificationRead(notificationId, request);

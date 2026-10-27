@@ -3,7 +3,7 @@ import { fetchPayments } from "@/lib/supabase/finance-service";
 import { securityCheck } from "@/lib/security/api-security";
 
 export async function GET(request: NextRequest) {
-  const sec = securityCheck(request, "finance-payments", { capacity: 30, refillPerSecond: 2 });
+  const sec = await securityCheck(request, "finance-payments", { capacity: 30, refillPerSecond: 2 });
   if (sec) return sec;
 
   const sp = request.nextUrl.searchParams;

@@ -6,7 +6,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { ticketId } = await params;
   if (!ticketId) return NextResponse.json({ error: "ticketId is required" }, { status: 400 });
 
-  const sec = securityCheck(request, "support-ticket-detail", { capacity: 30, refillPerSecond: 2 });
+  const sec = await securityCheck(request, "support-ticket-detail", { capacity: 30, refillPerSecond: 2 });
   if (sec) return sec;
 
   const result = await fetchTicketDetail(ticketId, request);

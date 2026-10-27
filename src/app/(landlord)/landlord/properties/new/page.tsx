@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/components/shared/page-components";
+import { ImageUploadField, type UploadedFile } from "@/components/shared/image-upload-field";
 import { useAuth } from "@/lib/auth/auth-context";
 import { createProperty } from "@/lib/supabase/landlord-service";
 import { fetchUniversities, fetchNeighbourhoods } from "@/lib/supabase/property-service";
@@ -61,6 +62,7 @@ export default function NewPropertyPage() {
   const [privateAddress, setPrivateAddress] = React.useState("");
   const [facilities, setFacilities] = React.useState<string[]>([]);
   const [rules, setRules] = React.useState<string[]>([]);
+  const [pendingPhotos, setPendingPhotos] = React.useState<UploadedFile[]>([]);
 
   React.useEffect(() => {
     fetchUniversities().then((res) => { if (res.data) setUniversities(res.data); });
@@ -101,6 +103,29 @@ export default function NewPropertyPage() {
       if (result.error) {
         toast.error("Failed to create property", { description: result.error });
       } else if (result.data) {
+        // Persist uploaded photos to property_images table
+        if (pendingPhotos.length > 0) {
+          try {
+            const { createClient } = await import("@/lib/supabase/client");
+            const supabase = createClient();
+            const imageRows = pendingPhotos.map((p, i) => ({
+              property_id: result.data!.id,
+              storage_path: p.path,
+              public_url: p.publicUrl ?? null,
+              alt_text: p.alt_text || "",
+              position: i,
+            }));
+            const { error: imgErr } = await supabase.from("property_images").insert(imageRows);
+            if (imgErr) {
+              console.error("[properties/new] Failed to persist image rows:", imgErr.message);
+              toast.warning("Property created, but some photos could not be saved", {
+                description: "You can add photos from the property detail page.",
+              });
+            }
+          } catch (e) {
+            console.error("[properties/new] Image persistence error:", e);
+          }
+        }
         toast.success("Property created", { description: "You can now add floors and rooms." });
         router.push(`/landlord/properties/${result.data.id}`);
       }
@@ -261,15 +286,16 @@ export default function NewPropertyPage() {
         <Card>
           <CardContent className="p-6">
             <div className="space-y-4">
-              <div>
-                <Label>Property photographs</Label>
-                <p className="text-xs text-muted-foreground">Upload exterior, common areas, and at least one photo per typical room type.</p>
-              </div>
-              <div className="rounded-xl border-2 border-dashed border-border p-8 text-center">
-                <Camera className="mx-auto h-8 w-8 text-muted-foreground" aria-hidden />
-                <p className="mt-2 text-sm font-medium">Photo uploads coming soon</p>
-                <p className="text-xs text-muted-foreground">Supabase Storage bucket needs to be configured. You can add photos later.</p>
-              </div>
+              <ImageUploadField
+                endpoint="/api/uploads/property-image"
+                contextField="propertyId"
+                value={pendingPhotos}
+                onChange={setPendingPhotos}
+                maxFiles={10}
+                label="Property photographs"
+                description="Upload exterior, common areas, and at least one photo per typical room type. JPEG, PNG, WebP, or GIF. Max 5 MB each."
+                showAltText
+              />
               <div className="flex justify-between">
                 <Button variant="ghost" onClick={() => setStep(3)}><ArrowLeft className="mr-2 h-4 w-4" aria-hidden /> Back</Button>
                 <Button onClick={() => setStep(5)}>Continue <ArrowRight className="ml-2 h-4 w-4" aria-hidden /></Button>

@@ -3,7 +3,7 @@ import { fetchReconciliation, runReconciliation } from "@/lib/supabase/finance-s
 import { securityCheck } from "@/lib/security/api-security";
 
 export async function GET(request: NextRequest) {
-  const sec = securityCheck(request, "finance-reconciliation", { capacity: 30, refillPerSecond: 2 });
+  const sec = await securityCheck(request, "finance-reconciliation", { capacity: 30, refillPerSecond: 2 });
   if (sec) return sec;
 
   const sp = request.nextUrl.searchParams;

@@ -6,7 +6,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { recordId } = await params;
   if (!recordId) return NextResponse.json({ error: "recordId is required" }, { status: 400 });
 
-  const sec = securityCheck(request, "finance-reconciliation-resolve", { capacity: 5, refillPerSecond: 0.2 });
+  const sec = await securityCheck(request, "finance-reconciliation-resolve", { capacity: 5, refillPerSecond: 0.2 });
   if (sec) return sec;
 
   let body: { notes?: string };

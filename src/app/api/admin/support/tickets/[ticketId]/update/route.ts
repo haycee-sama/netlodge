@@ -12,7 +12,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { ticketId } = await params;
   if (!ticketId) return NextResponse.json({ error: "ticketId is required" }, { status: 400 });
 
-  const sec = securityCheck(request, "support-ticket-update", { capacity: 10, refillPerSecond: 0.5 });
+  const sec = await securityCheck(request, "support-ticket-update", { capacity: 10, refillPerSecond: 0.5 });
   if (sec) return sec;
 
   let body: { action?: TicketAction; value?: string; reason?: string };

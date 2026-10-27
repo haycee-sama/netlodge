@@ -13,17 +13,20 @@ import { securityCheck } from "@/lib/security/api-security";
  * Returns: { path, publicUrl }
  */
 export async function POST(request: NextRequest) {
-  const sec = securityCheck(request, "upload-property-image", { capacity: 10, refillPerSecond: 0.5 });
+  const sec = await securityCheck(request, "upload-property-image", { capacity: 10, refillPerSecond: 0.5 });
   if (sec) return sec;
 
   const formData = await request.formData().catch(() => null);
   if (!formData) return NextResponse.json({ error: "Expected multipart/form-data" }, { status: 400 });
 
   const file = formData.get("file");
-  const propertyId = formData.get("propertyId") as string | null;
 
   if (!file || !(file instanceof File)) return NextResponse.json({ error: "file is required" }, { status: 400 });
-  if (!propertyId) return NextResponse.json({ error: "propertyId is required" }, { status: 400 });
+
+  // propertyId is optional — if not provided (e.g. during property creation
+  // before the property exists), the path is user-scoped. The caller can
+  // later associate the storage_path with a property via property_images.
+  const propertyId = (formData.get("propertyId") as string | null) || undefined;
 
   const buffer = await file.arrayBuffer();
 

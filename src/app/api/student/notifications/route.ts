@@ -3,7 +3,7 @@ import { fetchNotifications, markAllNotificationsRead } from "@/lib/supabase/not
 import { securityCheck } from "@/lib/security/api-security";
 
 export async function GET(request: NextRequest) {
-  const sec = securityCheck(request, "notifications-list", { capacity: 30, refillPerSecond: 2 });
+  const sec = await securityCheck(request, "notifications-list", { capacity: 30, refillPerSecond: 2 });
   if (sec) return sec;
 
   const result = await fetchNotifications(request);
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const sec = securityCheck(request, "notifications-mark-all", { capacity: 10, refillPerSecond: 0.5 });
+  const sec = await securityCheck(request, "notifications-mark-all", { capacity: 10, refillPerSecond: 0.5 });
   if (sec) return sec;
 
   const result = await markAllNotificationsRead(request);

@@ -5,6 +5,18 @@ import { initializeTransaction } from "@/lib/paystack/server";
 import { securityCheck } from "@/lib/security/api-security";
 
 /**
+ * Paystack rejects emails with invalid TLDs (e.g. `.test`). This helper
+ * validates the email format against a reasonable pattern. If the email
+ * is not valid for Paystack, the route falls back to a safe placeholder.
+ */
+function isValidPaystackEmail(email: string): boolean {
+  if (!email) return false;
+  // Basic email regex — requires a valid-looking TLD (2+ alpha chars)
+  const re = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+  return re.test(email);
+}
+
+/**
  * POST /api/payments/initiate
  *
  * Initializes a Paystack test-mode transaction for a booking.
@@ -20,7 +32,7 @@ import { securityCheck } from "@/lib/security/api-security";
 export async function POST(request: NextRequest) {
   try {
     // Security: rate limit + origin validation
-    const sec = securityCheck(request, "payment-initiate", { capacity: 5, refillPerSecond: 0.2 });
+    const sec = await securityCheck(request, "payment-initiate", { capacity: 5, refillPerSecond: 0.2, failClosed: true });
     if (sec) return sec;
 
     const supabase = await createClient();
@@ -118,8 +130,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize with Paystack
+    // Paystack rejects emails with TLDs like .test — use a safe fallback
+    // if the student's email is not valid for Paystack (e.g. test accounts).
+    const studentEmail = user.email ?? "";
+    const safeEmail = isValidPaystackEmail(studentEmail)
+      ? studentEmail
+      : "student@netlodge.com";
     const result = await initializeTransaction({
-      email: user.email ?? "",
+      email: safeEmail,
       amountKobo,
       reference,
       callbackUrl,
@@ -127,6 +145,7 @@ export async function POST(request: NextRequest) {
         booking_id: bookingId,
         booking_reference: booking.reference,
         student_id: user.id,
+        student_email: studentEmail, // preserve the real email in metadata
       },
     });
 

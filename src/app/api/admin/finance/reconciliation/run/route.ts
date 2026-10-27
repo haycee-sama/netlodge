@@ -11,7 +11,7 @@ import { securityCheck } from "@/lib/security/api-security";
  * and flags discrepancies.
  */
 export async function POST(request: NextRequest) {
-  const sec = securityCheck(request, "finance-reconciliation-run", { capacity: 2, refillPerSecond: 0.1 });
+  const sec = await securityCheck(request, "finance-reconciliation-run", { capacity: 2, refillPerSecond: 0.1, failClosed: true });
   if (sec) return sec;
 
   let body: { from?: string; to?: string };
