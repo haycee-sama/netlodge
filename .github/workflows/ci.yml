@@ -37,6 +37,25 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Verify reset script refuses to run in CI
+        run: |
+          # The reset script must refuse to run in CI environments.
+          # This test confirms the safety guard works — it should exit
+          # with code 1 and print a refusal message.
+          set +e
+          output=$(bun run scripts/reset-database.ts 2>&1)
+          exit_code=$?
+          echo "$output"
+          if [ $exit_code -ne 1 ]; then
+            echo "✗ FAIL: reset script should exit with code 1 in CI, got $exit_code"
+            exit 1
+          fi
+          if ! echo "$output" | grep -q "Refusing to run in CI"; then
+            echo "✗ FAIL: reset script should print refusal message"
+            exit 1
+          fi
+          echo "✓ PASS: reset script correctly refuses to run in CI"
+
       - name: Run ESLint
         run: bun run lint
 

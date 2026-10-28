@@ -220,13 +220,20 @@ async function main() {
   const v = await client.query("SELECT version()");
   console.log(`Database: ${v.rows[0].version.slice(0, 60)}...\n`);
 
-  // Create migrations tracking table
+  // Create migrations tracking table in the internal schema (not exposed
+  // to PostgREST). RLS is enabled with deny-by-default; the service_role
+  // bypasses RLS so this direct PG connection can read/write freely.
   await client.query(`
-    CREATE TABLE IF NOT EXISTS _migrations (
+    CREATE SCHEMA IF NOT EXISTS netlodge_internal;
+    CREATE TABLE IF NOT EXISTS netlodge_internal._migrations (
       id serial primary key,
       filename text not null unique,
       applied_at timestamptz not null default now()
     );
+    ALTER TABLE netlodge_internal._migrations ENABLE ROW LEVEL SECURITY;
+    REVOKE USAGE ON SCHEMA netlodge_internal FROM anon, authenticated;
+    -- Drop the old public._migrations if it still exists (pre-0015)
+    DROP TABLE IF EXISTS public._migrations CASCADE;
   `);
 
   // Apply each migration
@@ -235,7 +242,7 @@ async function main() {
   let totalStatements = 0;
 
   for (const file of files) {
-    const already = await client.query("SELECT 1 FROM _migrations WHERE filename = $1", [file]);
+    const already = await client.query("SELECT 1 FROM netlodge_internal._migrations WHERE filename = $1", [file]);
     if (already.rows.length > 0) {
       console.log(`  [skip] ${file} (already applied)`);
       skipped++;
@@ -265,7 +272,7 @@ async function main() {
           }
         }
       }
-      await client.query("INSERT INTO _migrations (filename) VALUES ($1)", [file]);
+      await client.query("INSERT INTO netlodge_internal._migrations (filename) VALUES ($1)", [file]);
       await client.query("COMMIT");
       console.log(`  [ok]   ${file} — ${statements.length} statements executed`);
       applied++;

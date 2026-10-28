@@ -278,13 +278,18 @@ async function applyMigrations(projectRef: string, password: string): Promise<vo
     const v = await client.query("SELECT version()");
     console.log(`  Database: ${v.rows[0].version.slice(0, 60)}...`);
 
-    // Create migrations tracking table (idempotent)
+    // Create migrations tracking table in the internal schema (not exposed
+    // to PostgREST). RLS enabled, deny-by-default; service_role bypasses.
     await client.query(`
-      CREATE TABLE IF NOT EXISTS _migrations (
+      CREATE SCHEMA IF NOT EXISTS netlodge_internal;
+      CREATE TABLE IF NOT EXISTS netlodge_internal._migrations (
         id serial primary key,
         filename text not null unique,
         applied_at timestamptz not null default now()
       );
+      ALTER TABLE netlodge_internal._migrations ENABLE ROW LEVEL SECURITY;
+      REVOKE USAGE ON SCHEMA netlodge_internal FROM anon, authenticated;
+      DROP TABLE IF EXISTS public._migrations CASCADE;
     `);
 
     let applied = 0;
@@ -293,7 +298,7 @@ async function applyMigrations(projectRef: string, password: string): Promise<vo
 
     for (const file of files) {
       const already = await client.query(
-        "SELECT 1 FROM _migrations WHERE filename = $1",
+        "SELECT 1 FROM netlodge_internal._migrations WHERE filename = $1",
         [file],
       );
       if (already.rows.length > 0) {
@@ -327,7 +332,7 @@ async function applyMigrations(projectRef: string, password: string): Promise<vo
             }
           }
         }
-        await client.query("INSERT INTO _migrations (filename) VALUES ($1)", [file]);
+        await client.query("INSERT INTO netlodge_internal._migrations (filename) VALUES ($1)", [file]);
         await client.query("COMMIT");
         console.log(`  [ok]   ${file} — ${statements.length} statements executed`);
         applied++;
