@@ -1,0 +1,24 @@
+-- ===========================================================================
+-- NetLodge Schema Migration — Part 13: Fix booking overlap constraint
+-- ===========================================================================
+-- The uq_bookings_one_active_per_unit index from migration 0012 was too
+-- strict — it prevented ANY two active bookings on the same room, even
+-- for non-overlapping date ranges. This blocks sequential bookings
+-- (e.g. a confirmed Jan-Dec 2026 booking would block a new Jan 2027
+-- booking).
+--
+-- The correct protection is:
+-- 1. create_booking() RPC uses FOR UPDATE on the room row + checks
+--    date-range overlap (check_in < p_check_out AND p_check_in < check_out)
+-- 2. The overlap check is inside the locked transaction, so concurrent
+--    attempts serialize correctly.
+--
+-- A GiST exclusion constraint (USING GIST WITH daterange) would be the
+-- ideal DB-level protection, but it requires the btree_gist extension
+-- and a trigger to enforce status-dependent exclusion. The RPC-level
+-- FOR UPDATE lock is sufficient for correctness.
+--
+-- This migration drops the over-strict index.
+-- ===========================================================================
+
+drop index if exists public.uq_bookings_one_active_per_unit;
