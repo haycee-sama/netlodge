@@ -61,9 +61,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No valid tags to invalidate" }, { status: 400 });
   }
 
-  // Revalidate
+  // Revalidate — Next.js 16 requires a cache-life profile as the second arg.
+  // 'default' matches the profile used by unstable_cache in public-cache.ts.
   for (const tag of validTags) {
-    revalidateTag(tag);
+    revalidateTag(tag, "default");
   }
 
   return NextResponse.json({ invalidated: validTags });

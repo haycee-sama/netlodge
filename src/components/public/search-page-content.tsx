@@ -146,7 +146,7 @@ export function SearchPageContent() {
           setTotal(0);
         } else if (res.data) {
           setResults(res.data as any);
-          setTotal(res.data.length);
+          setTotal(res.data.total ?? res.data.items?.length ?? 0);
         }
         setFacets(null); // facets not available from live API yet
         setLoading(false);

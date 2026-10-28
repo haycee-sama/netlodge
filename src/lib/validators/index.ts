@@ -25,7 +25,7 @@ export const registerSchema = z
     confirmPassword: z.string(),
     role: z.enum(["student", "landlord", "manager", "agent"]),
     acceptTerms: z.literal(true, {
-      errorMap: () => ({ message: "You must accept the terms to continue" }),
+      error: "You must accept the terms to continue",
     }),
   })
   .refine((d) => d.password === d.confirmPassword, {
@@ -228,7 +228,7 @@ export const bookingInitiationSchema = z.object({
   checkIn: z.string().min(1, "Check-in date is required"),
   rentalPeriod: z.enum(["annual", "biannual", "quarterly", "monthly"]),
   acceptTerms: z.literal(true, {
-    errorMap: () => ({ message: "You must accept the booking terms" }),
+    error: "You must accept the booking terms",
   }),
 });
 export type BookingInitiationInput = z.infer<typeof bookingInitiationSchema>;

@@ -499,10 +499,9 @@ const payoutRepo = {
   },
   async listAll(filters: import("./contracts").PayoutListFilters) {
     await delay(150);
-    // Ensure every fixture payout has the new fields (backfill for old fixtures).
     const items = fixtures.payouts.map((p) => ({
-      eligibilityFlags: [] as string[],
       ...p,
+      eligibilityFlags: p.eligibilityFlags ?? [],
     }));
     let filtered = [...items];
     if (filters.status) filtered = filtered.filter((p) => p.status === filters.status);
@@ -523,7 +522,7 @@ const payoutRepo = {
     await delay();
     const p = fixtures.payouts.find((x) => x.id === id) ?? null;
     if (!p) return null;
-    return { eligibilityFlags: [], ...p };
+    return { ...p, eligibilityFlags: p.eligibilityFlags ?? [] };
   },
   async approve(id: string, approverId: string, _notes?: string) {
     await delay(200);

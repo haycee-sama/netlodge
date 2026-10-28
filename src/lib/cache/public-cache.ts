@@ -71,12 +71,13 @@ export const getCachedNeighbourhoods = unstable_cache(
 
 /**
  * Revalidate property cache after a mutation.
+ * Next.js 16 requires a cache-life profile as the second arg to revalidateTag.
  */
 export function revalidatePropertyCache() {
-  revalidateTag("properties");
+  revalidateTag("properties", "default");
 }
 
 export function revalidateUniversityCache() {
-  revalidateTag("universities");
-  revalidateTag("neighbourhoods");
+  revalidateTag("universities", "default");
+  revalidateTag("neighbourhoods", "default");
 }

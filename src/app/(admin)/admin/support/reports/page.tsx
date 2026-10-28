@@ -41,7 +41,7 @@ export default function AdminSupportReportsPage() {
       <div className="grid gap-4 sm:grid-cols-4">
         <Card><CardContent className="space-y-1 p-4"><div className="flex items-center gap-2"><AlertCircle className="h-4 w-4 text-warning-foreground" /><p className="text-xs text-muted-foreground">Open</p></div><p className="text-2xl font-bold">{stats.open}</p></CardContent></Card>
         <Card><CardContent className="space-y-1 p-4"><div className="flex items-center gap-2"><Clock className="h-4 w-4 text-info" /><p className="text-xs text-muted-foreground">In progress</p></div><p className="text-2xl font-bold">{stats.inProgress}</p></CardContent></Card>
-        <Card><CardContent className="space-y-1 p-4"><div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success" /><p className="text-xs text-muted-foreground">Resolved</p></div><p className="text-2xl font-bold">{stats.success || stats.resolved}</p></CardContent></Card>
+        <Card><CardContent className="space-y-1 p-4"><div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success" /><p className="text-xs text-muted-foreground">Resolved</p></div><p className="text-2xl font-bold">{stats.resolved}</p></CardContent></Card>
         <Card><CardContent className="space-y-1 p-4"><div className="flex items-center gap-2"><BarChart3 className="h-4 w-4" /><p className="text-xs text-muted-foreground">Total</p></div><p className="text-2xl font-bold">{stats.total}</p></CardContent></Card>
       </div>
       <Card><CardContent className="p-0">

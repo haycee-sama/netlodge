@@ -20,8 +20,8 @@ interface LandlordBooking {
   check_in: string;
   check_out: string;
   created_at: string;
-  rentable_units?: { identifier: string };
-  properties?: { name: string };
+  rentable_units?: { identifier: string }[];
+  properties?: { name: string }[];
 }
 
 export default function LandlordBookingsPage() {
@@ -93,11 +93,11 @@ export default function LandlordBookingsPage() {
                 <li key={b.id} className="flex flex-col gap-1 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0 space-y-1">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium">{b.properties?.name ?? "Property"}</p>
+                      <p className="font-medium">{b.properties?.[0]?.name ?? "Property"}</p>
                       <BookingStatusBadge status={b.status as any} />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {b.reference} · {b.rentable_units?.identifier ?? "Unit"} · {formatRelativeTime(b.created_at)}
+                      {b.reference} · {b.rentable_units?.[0]?.identifier ?? "Unit"} · {formatRelativeTime(b.created_at)}
                     </p>
                   </div>
                   <div className="text-right">

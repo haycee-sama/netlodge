@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     // Find the payment record by reference
     const { data: payment, error: paymentError } = await adminClient
       .from("payments")
-      .select("id, reference, booking_id, amount_kobo, currency, status, confirmed_by_backend")
+      .select("id, reference, booking_id, student_id, amount_kobo, currency, status, confirmed_by_backend")
       .eq("reference", txnData.reference)
       .single();
 

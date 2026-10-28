@@ -89,6 +89,8 @@ export function EmptyState({
 
 interface SectionHeadingProps {
   title: string;
+  /** Optional eyebrow label rendered above the title. */
+  eyebrow?: string;
   description?: string;
   action?: React.ReactNode;
   className?: string;
@@ -96,6 +98,7 @@ interface SectionHeadingProps {
 
 export function SectionHeading({
   title,
+  eyebrow,
   description,
   action,
   className,
@@ -108,6 +111,9 @@ export function SectionHeading({
       )}
     >
       <div className="space-y-1">
+        {eyebrow && (
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary">{eyebrow}</p>
+        )}
         <h2 className="font-display text-xl font-bold tracking-tight sm:text-2xl">
           {title}
         </h2>

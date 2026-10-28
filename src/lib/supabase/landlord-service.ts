@@ -377,7 +377,7 @@ export async function fetchRooms(propertyId: string, floorId?: string): Promise<
  */
 export async function createRoom(input: {
   propertyId: string;
-  floorId: string;
+  floorId?: string;
   identifier: string;
   unitType: string;
   capacity: number;
@@ -573,7 +573,7 @@ export async function bulkCreateRooms(input: {
       }
     }
 
-    const rooms = [];
+    const rooms: Array<Record<string, unknown>> = [];
     for (let i = 0; i < input.count; i++) {
       const num = input.startIndex + i;
       const identifier = `${input.prefix}-${String(num).padStart(3, "0")}`;

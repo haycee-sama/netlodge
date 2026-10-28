@@ -685,6 +685,7 @@ export const payouts: Payout[] = [
     bankAccountMasked: "GTBank •••• 4821",
     scheduledFor: daysAgo(1),
     createdAt: daysAgo(2),
+    eligibilityFlags: [],
   },
   {
     id: "pot_demo_2",
@@ -699,6 +700,7 @@ export const payouts: Payout[] = [
     bankAccountMasked: "GTBank •••• 4821",
     scheduledFor: daysAgo(120),
     createdAt: daysAgo(125),
+    eligibilityFlags: [],
   },
 ];
 
@@ -772,6 +774,7 @@ export const supportTickets: SupportTicket[] = [
       "Hello, my tenancy at Bariga Gardens ended last week. When will my caution deposit be refunded?",
     createdAt: daysAgo(10),
     updatedAt: daysAgo(7),
+    escalated: false,
     replies: [
       {
         id: "r_1",

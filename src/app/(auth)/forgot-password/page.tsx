@@ -24,7 +24,6 @@ export default function ForgotPasswordPage() {
   });
 
   async function onSubmit(values: ForgotPasswordInput) {
-    setSubmitting(true);
     try {
       const { resetPasswordForEmail } = await import("@/lib/supabase/auth-service");
       const result = await resetPasswordForEmail(values.email);
@@ -39,7 +38,8 @@ export default function ForgotPasswordPage() {
         });
       }
     } finally {
-      setSubmitting(false);
+      // isSubmitting is managed automatically by react-hook-form based on
+      // the async onSubmit promise state — no manual setSubmitting needed.
     }
   }
 
