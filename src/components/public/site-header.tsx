@@ -182,7 +182,9 @@ export function SiteHeader() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/student/settings">Settings</Link>
+                  <Link href={`${homeRouteForRole(session.role)}/settings`}>
+                    Settings
+                  </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

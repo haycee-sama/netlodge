@@ -52,7 +52,12 @@ function LoginForm() {
         toast.success("Signed in", {
           description: `Welcome back. You're now in the ${formatRoleLabel(result.session.role)} workspace.`,
         });
-        router.push(redirect ?? homeRouteForRole(result.session.role));
+        // Validate redirect: only allow relative paths starting with /
+        // to prevent open-redirect attacks.
+        const safeRedirect = redirect && redirect.startsWith("/") && !redirect.startsWith("//")
+          ? redirect
+          : homeRouteForRole(result.session.role);
+        router.push(safeRedirect);
         return;
       }
       setAuthError(result.error ?? "Invalid email or password.");

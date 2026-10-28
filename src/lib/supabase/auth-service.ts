@@ -106,10 +106,10 @@ export async function signUpWithEmail(input: {
       return { success: false, error: error.message };
     }
 
-    // The handle_new_user trigger automatically creates a profile and
-    // assigns the 'student' role. If the user registered as a landlord,
-    // we need to update their role via a server action (not done here
-    // for security — landlords must be verified separately).
+    // The handle_new_user trigger reads the role from user_metadata and
+    // assigns it to the user. Marketplace roles (student, landlord, manager,
+    // agent) are auto-assigned. Admin roles require manual assignment by
+    // a super_admin via the admin user management interface.
 
     return { success: true };
   } catch (err) {
@@ -203,7 +203,15 @@ export async function getCurrentSession(): Promise<SupabaseSession | null> {
       .select("role")
       .eq("user_id", user.id);
 
-    const role: UserRole = (roles?.[0]?.role as UserRole) ?? "student";
+    // Prioritize non-student roles: if a user has both 'student' and
+    // 'landlord' (or manager/agent), use the non-student role so they
+    // land on the correct dashboard. Admin roles take priority over all.
+    const rolePriority = [
+      "super_admin", "finance_admin", "support_staff", "verification_officer",
+      "landlord", "manager", "agent", "student",
+    ];
+    const userRoles = (roles ?? []).map((r: any) => r.role as string);
+    const role: UserRole = (rolePriority.find((r) => userRoles.includes(r)) ?? "student") as UserRole;
 
     return {
       userId: user.id,

@@ -108,16 +108,33 @@ export function RoleShell({ role, children }: RoleShellProps) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [signingOut, setSigningOut] = React.useState(false);
 
-  // Redirect to login if not signed in.
+  // Redirect to login if not signed in. Redirect to the user's own
+  // dashboard if their role doesn't match this shell's role (e.g., a
+  // student visiting /admin should be sent to /student). Admin roles
+  // can preview each other's sections (e.g., super_admin visiting
+  // /admin/finance) since they share the /admin prefix.
   React.useEffect(() => {
     if (isLoading) return;
     if (!session) {
       router.replace(`/login?redirect=${pathname}`);
       return;
     }
-    // In dev mode, we let any signed-in user preview any role's shell — the
-    // production backend enforces real authorisation. We do NOT auto-switch
-    // the session role here; the user must explicitly switch via the menu.
+    // Check if the user's role matches this shell. For admin roles,
+    // allow cross-previewing within /admin. For marketplace roles,
+    // redirect to the user's own dashboard.
+    const isAdminShell = role === "verification_officer" || role === "support_staff" || role === "finance_admin" || role === "super_admin";
+    const isUserAdmin = session.role === "verification_officer" || session.role === "support_staff" || session.role === "finance_admin" || session.role === "super_admin";
+
+    if (isAdminShell && isUserAdmin) {
+      // Admins can preview other admin sections — server-side RLS enforces actual data access.
+      return;
+    }
+
+    if (session.role !== role) {
+      // User is in the wrong shell — redirect to their own dashboard.
+      const userHome = homeRouteForRole(session.role);
+      router.replace(userHome);
+    }
   }, [isLoading, session, role, router, pathname]);
 
   if (isLoading) {
@@ -130,6 +147,18 @@ export function RoleShell({ role, children }: RoleShellProps) {
 
   if (!session) {
     return null; // redirect in effect
+  }
+
+  // Show a loading state while redirecting mismatched users.
+  const isAdminShell = role === "verification_officer" || role === "support_staff" || role === "finance_admin" || role === "super_admin";
+  const isUserAdmin = session.role === "verification_officer" || session.role === "support_staff" || session.role === "finance_admin" || session.role === "super_admin";
+  const roleMismatch = (isAdminShell && isUserAdmin) ? false : session.role !== role;
+  if (roleMismatch) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" aria-label="Redirecting" />
+      </div>
+    );
   }
 
   const groups = roleNavGroups(role);
