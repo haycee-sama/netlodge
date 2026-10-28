@@ -27,14 +27,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  // Verify the user has at least a landlord role (or admin)
+  // Verify the user has a role that can modify properties (landlord or admin
+  // roles that manage property data). Support staff and finance admins
+  // should NOT be able to trigger property cache invalidation.
   const { data: roles } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", user.id);
   const userRoles = (roles ?? []).map((r) => r.role as string);
   const allowed = userRoles.some((r) =>
-    ["landlord", "property_manager", "super_admin", "verification_officer", "finance_admin", "support_staff"].includes(r)
+    ["landlord", "property_manager", "super_admin", "verification_officer"].includes(r)
   );
   if (!allowed) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
