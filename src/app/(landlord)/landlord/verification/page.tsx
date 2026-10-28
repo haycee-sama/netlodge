@@ -1,158 +1,119 @@
 "use client";
 
 import * as React from "react";
-import {
-  BadgeCheck,
-  ShieldCheck,
-  FileText,
-  Eye,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  Upload,
-  Loader2,
-} from "lucide-react";
+import { BadgeCheck, ShieldCheck, FileText, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { PageHeader } from "@/components/shared/page-components";
+import { PageHeader, EmptyState } from "@/components/shared/page-components";
 import { VerificationBadge } from "@/components/shared/status-badges";
 import { useAuth } from "@/lib/auth/auth-context";
-import { getRepositories } from "@/lib/repositories";
-import type { VerificationRecord } from "@/lib/types";
-import { formatDate } from "@/lib/utils/format";
+import { createClient } from "@/lib/supabase/client";
+import { formatDateTime } from "@/lib/utils/format";
 import { toast } from "sonner";
+
+interface VerificationCase {
+  id: string;
+  reference: string;
+  entity_type: string;
+  entity_label: string;
+  submission_type: string;
+  status: string;
+  priority: string;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  review_notes: string | null;
+  rejection_reason: string | null;
+  created_at: string;
+}
 
 export default function LandlordVerificationPage() {
   const { session } = useAuth();
-  const [record, setRecord] = React.useState<VerificationRecord | null>(null);
-  const [submitting, setSubmitting] = React.useState(false);
+  const [cases, setCases] = React.useState<VerificationCase[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const isSupabaseAuth = session?.authenticated === true;
 
   React.useEffect(() => {
-    if (!session) return;
-    getRepositories().verification.getForLandlord(session.userId || "dev_landlord_1").then(setRecord);
-  }, [session]);
+    if (!isSupabaseAuth) { setLoading(false); return; }
+    const supabase = createClient();
+    supabase
+      .from("verification_cases")
+      .select("*")
+      .eq("entity_id", session!.userId)
+      .order("created_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (error) setError(error.message);
+        else setCases((data as VerificationCase[]) ?? []);
+        setLoading(false);
+      });
+  }, [isSupabaseAuth, session]);
 
-  async function submit() {
-    setSubmitting(true);
-    try {
-      const updated = await getRepositories().verification.submit(record?.entityId ?? "", []);
-      setRecord(updated);
-      toast.success("Verification submitted", { description: "We'll review within 3–5 business days." });
-    } finally {
-      setSubmitting(false);
-    }
+  if (!isSupabaseAuth) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-6">
+        <PageHeader eyebrow="Verification" title="Identity & listing verification" />
+        <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">Sign in with a real landlord account.</CardContent></Card>
+      </div>
+    );
   }
 
-  if (!record) {
-    return <div className="mx-auto max-w-4xl"><p className="text-sm text-muted-foreground">Loading…</p></div>;
-  }
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6">
       <PageHeader
         eyebrow="Verification"
-        title="Landlord verification"
-        description="Identity, address and ownership verification. Required before listings can be published."
+        title="Identity & listing verification"
+        description="Your verification status and submission history. All listings go through identity, address, and ownership verification."
       />
 
-      {/* Status banner */}
-      <Card className={record.status === "approved" ? "border-success/30 bg-success/5" : "border-warning/30 bg-warning/10"}>
-        <CardContent className="flex items-start gap-3 p-5">
-          {record.status === "approved" ? (
-            <CheckCircle2 className="mt-0.5 h-5 w-5 text-success" aria-hidden />
-          ) : (
-            <Clock className="mt-0.5 h-5 w-5 text-warning-foreground" aria-hidden />
-          )}
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <p className="font-medium">Verification {record.status.replace("_", " ")}</p>
-              <VerificationBadge status={record.status} />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {record.status === "approved"
-                ? "You can publish listings publicly. New properties will still go through property-level verification."
-                : "Listings cannot be published until verification is approved."}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Outstanding actions */}
-      {record.outstandingActions.length > 0 && (
-        <Card className="border-warning/30">
-          <CardHeader><CardTitle className="flex items-center gap-2 text-base"><AlertCircle className="h-4 w-4 text-warning-foreground" aria-hidden />Outstanding actions</CardTitle></CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm">
-              {record.outstandingActions.map((a, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-warning-foreground" aria-hidden />
-                  <span>{a}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+      {error && (
+        <Card className="border-destructive/40 bg-destructive/5"><CardContent className="p-4 text-sm text-destructive">{error}</CardContent></Card>
       )}
 
-      {/* Evidence */}
-      <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2 text-base"><FileText className="h-4 w-4 text-primary" aria-hidden />Submitted evidence</CardTitle></CardHeader>
-        <CardContent className="p-0">
-          <ul className="divide-y divide-border">
-            {record.evidence.map((e) => (
-              <li key={e.id} className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <FileText className="h-4 w-4" aria-hidden />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{e.label}</p>
-                    <p className="text-xs text-muted-foreground">{e.fileName} · uploaded {formatDate(e.uploadedAt)}</p>
-                  </div>
-                </div>
-                <Badge variant="outline" className={e.status === "approved" ? "border-success/30 bg-success/10 text-success" : e.status === "rejected" ? "border-destructive/30 bg-destructive/10 text-destructive" : "border-warning/30 bg-warning/10 text-warning-foreground"}>
-                  {e.status}
-                </Badge>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-
-      {/* Inspection records */}
-      {record.inspectionRecords.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Eye className="h-4 w-4 text-primary" aria-hidden />On-site inspections</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            {record.inspectionRecords.map((insp) => (
-              <div key={insp.id} className="rounded-lg border border-border p-4">
+      {cases.length === 0 ? (
+        <EmptyState
+          icon={<BadgeCheck className="h-5 w-5" aria-hidden />}
+          title="No verification submissions"
+          description="Your verification cases will appear here once submitted."
+        />
+      ) : (
+        <div className="space-y-4">
+          {cases.map((c) => (
+            <Card key={c.id}>
+              <CardHeader>
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">{insp.inspectorName}</p>
-                  <Badge variant="outline" className="capitalize">{insp.status}</Badge>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-primary" aria-hidden />
+                    {c.entity_label}
+                  </CardTitle>
+                  <VerificationBadge status={c.status as any} />
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Scheduled {formatDate(insp.scheduledAt)}
-                  {insp.completedAt && ` · Completed ${formatDate(insp.completedAt)}`}
-                </p>
-                <Separator className="my-3" />
-                <div className="space-y-1 text-sm">
-                  <p><span className="text-muted-foreground">Findings:</span> {insp.findings}</p>
-                  <p><span className="text-muted-foreground">Recommendations:</span> {insp.recommendations}</p>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Reference</span><span>{c.reference}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Type</span><span>{c.submission_type.replace(/_/g, " ")}</span></div>
+                {c.submitted_at && <div className="flex justify-between"><span className="text-muted-foreground">Submitted</span><span>{formatDateTime(c.submitted_at)}</span></div>}
+                {c.reviewed_at && <div className="flex justify-between"><span className="text-muted-foreground">Reviewed</span><span>{formatDateTime(c.reviewed_at)}</span></div>}
+                {c.rejection_reason && (
+                  <div className="rounded-md bg-destructive/5 p-2 text-destructive">
+                    <p className="text-xs font-medium">Rejection reason:</p>
+                    <p className="text-xs">{c.rejection_reason}</p>
+                  </div>
+                )}
+                {c.review_notes && (
+                  <div className="rounded-md bg-muted p-2">
+                    <p className="text-xs font-medium">Review notes:</p>
+                    <p className="text-xs">{c.review_notes}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
-
-      <Card className="border-dashed bg-muted/30">
-        <CardContent className="space-y-2 p-4 text-xs text-muted-foreground">
-          <ShieldCheck className="h-4 w-4 text-primary" aria-hidden />
-          <p><strong className="text-foreground">Important:</strong> You cannot approve your own verification. All verification is reviewed by NetLodge staff and may require an on-site inspection. Submitting false documents results in immediate account suspension.</p>
-        </CardContent>
-      </Card>
     </div>
   );
 }
