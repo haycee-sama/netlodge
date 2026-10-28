@@ -2,10 +2,47 @@
 
 This document covers everything required to deploy NetLodge to production on Vercel with Supabase and Paystack (test mode).
 
+## 0. Bootstrap a fresh Supabase project (one-shot)
+
+If you are setting up a NEW Supabase project (e.g. migrating from test to production, or creating a separate test project), use the bootstrap script:
+
+```bash
+# 1. Create a new Supabase project at https://supabase.com/dashboard/new
+#    Note the project ref (e.g. abcdefghijklmnop) and DB password.
+
+# 2. Create a .env.bootstrap file with the new project's credentials:
+cat > .env.bootstrap <<EOF
+NEXT_PUBLIC_SUPABASE_URL=https://<new-project-ref>.supabase.co
+SUPABASE_DB_PASSWORD=<your-db-password>
+SUPABASE_SECRET_KEY=<service-role-key-from-dashboard>
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<anon-key-from-dashboard>
+EOF
+
+# 3. Run the bootstrap script:
+bun run scripts/bootstrap-supabase.ts
+```
+
+The bootstrap script:
+- Applies all 14 SQL migrations (schema, RLS, functions, triggers, seed data, storage buckets, storage policies, performance indexes)
+- Creates 6 test user accounts (landlord, student, VO, SA, FA, SS — all `TestPass123!`)
+- Verifies all 43 tables, 3 storage buckets, and test accounts exist
+- Prints next-step instructions
+
+The script is **idempotent** — safe to re-run. It refuses to run against the known production project (`psmjjypiulliudepiurx`) unless `NETLODGE_BOOTSTRAP_ALLOW_PROD=1` is set.
+
+To run only the migrations (no test accounts, no verification):
+```bash
+bun run scripts/apply-migrations.ts
+```
+
+The migration runner also reads from env vars (no hardcoded project refs). It tries common Supabase pooler regions automatically; set `SUPABASE_POOLER_HOST` if your project is in a different region.
+
+**After bootstrap, complete the manual steps in sections 1–5 below.** The script cannot configure Supabase Auth URLs, Paystack webhooks, or Vercel env vars — those require dashboard access.
+
 ## Prerequisites
 
 - A Vercel account with the NetLodge repo connected
-- A Supabase project with all migrations applied (0001–0010b)
+- A Supabase project with all migrations applied (0001–0013)
 - A Paystack business account in test mode (`sk_test_*` + `pk_test_*` keys)
 
 ## 1. Vercel environment variables

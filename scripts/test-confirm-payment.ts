@@ -191,7 +191,7 @@ async function main() {
   // Verify NO duplicate ledger entry was created
   const { data: ledger2 } = await supabase.from("ledger_entries")
     .select("id").eq("entry_type", "payment").eq("reference", payment.reference);
-  assert(ledger2 && ledger2.length === 1, `no duplicate ledger entry (count: ${ledger2?.length})`);
+  assert(!!ledger2 && ledger2.length === 1, `no duplicate ledger entry (count: ${ledger2?.length})`);
 
   // Verify booking paid_kobo was NOT double-incremented
   const { data: booking2 } = await supabase.from("bookings").select("paid_kobo").eq("id", booking.id).single();

@@ -173,7 +173,7 @@ async function main() {
   // Verify audit log was created
   const { data: audit1 } = await supabase.from("audit_logs")
     .select("id, action, severity").eq("resource_id", vc.id).eq("action", "verification.approve");
-  assert(audit1 && audit1.length >= 1, "audit log entry created for approval");
+  assert(!!audit1 && audit1.length >= 1, "audit log entry created for approval");
 
   // ---- Test 3: Idempotent approve (already_approved) ----
   console.log("\n[5] Test 3: Idempotent approve...");
@@ -348,7 +348,7 @@ async function main() {
   // Verify audit log
   const { data: audit10 } = await supabase.from("audit_logs")
     .select("id, action, severity").eq("resource_id", voAuth.user.id).eq("action", "user.suspended");
-  assert(audit10 && audit10.length >= 1, "audit log entry created for suspension");
+  assert(!!audit10 && audit10.length >= 1, "audit log entry created for suspension");
 
   // ---- Test 11: platform_metrics requires super_admin ----
   console.log("\n[13] Test 11: platform_metrics requires super_admin...");

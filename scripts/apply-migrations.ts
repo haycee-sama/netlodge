@@ -5,7 +5,19 @@
  * Connects to Supabase via the session-mode pooler (IPv4) and applies migrations.
  * Splits SQL files into individual statements to handle $$ blocks correctly.
  *
+ * Reads target project + credentials from environment variables. No hardcoded
+ * project refs or passwords. Use scripts/bootstrap-supabase.ts for a complete
+ * one-shot setup (migrations + test accounts + verification).
+ *
  * Usage: bun run scripts/apply-migrations.ts
+ *
+ * Required env vars:
+ *   NEXT_PUBLIC_SUPABASE_URL  — e.g. https://<project-ref>.supabase.co
+ *   SUPABASE_DB_PASSWORD      — Database password (Dashboard → Database)
+ *
+ * Optional env var to specify a pooler region:
+ *   SUPABASE_POOLER_HOST      — e.g. aws-0-eu-west-1.pooler.supabase.com
+ *                               (if not set, common regions are tried in order)
  */
 
 import { Client } from "pg";
@@ -15,13 +27,76 @@ import { config } from "dotenv";
 
 try { config(); } catch {}
 
-const PROJECT_REF = "psmjjypiulliudepiurx";
-const DB_PASSWORD = process.env.SUPABASE_DB_PASSWORD ?? "oc2v2RvOPhsOITWi";
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const DB_PASSWORD = process.env.SUPABASE_DB_PASSWORD;
 const MIGRATIONS_DIR = join(process.cwd(), "supabase", "migrations");
 
-const POOLER_HOST = "aws-0-eu-west-1.pooler.supabase.com";
-const POOLER_PORT = 5432; // session mode
-const POOLER_USER = `postgres.${PROJECT_REF}`;
+/**
+ * Extract the project ref from a Supabase URL.
+ * URL form: https://<project-ref>.supabase.co
+ */
+function getProjectRef(url: string): string {
+  const match = url.match(/^https?:\/\/([a-z0-9]+)\.supabase\.(co|in)/i);
+  if (!match) {
+    throw new Error(
+      `Cannot parse project ref from NEXT_PUBLIC_SUPABASE_URL (got: ${url}). ` +
+      `Expected form: https://<project-ref>.supabase.co`,
+    );
+  }
+  return match[1];
+}
+
+/**
+ * Connect to the Supabase DB via pooler (preferred) or direct host.
+ * Tries common pooler regions in order if SUPABASE_POOLER_HOST is not set.
+ */
+async function connect(projectRef: string, password: string): Promise<Client> {
+  const explicitHost = process.env.SUPABASE_POOLER_HOST;
+  const poolerHosts = explicitHost
+    ? [explicitHost]
+    : [
+        "aws-0-eu-west-1.pooler.supabase.com",
+        "aws-0-us-east-1.pooler.supabase.com",
+        "aws-0-us-west-1.pooler.supabase.com",
+        "aws-0-ap-southeast-1.pooler.supabase.com",
+        "aws-0-eu-central-1.pooler.supabase.com",
+        "aws-0-ap-northeast-1.pooler.supabase.com",
+        "aws-0-sa-east-1.pooler.supabase.com",
+      ];
+
+  // Also try the direct DB host as a fallback.
+  const allHosts = [...poolerHosts, `db.${projectRef}.supabase.co`];
+
+  for (const host of allHosts) {
+    const isPooler = host.includes(".pooler.");
+    const user = isPooler ? `postgres.${projectRef}` : "postgres";
+    process.stdout.write(`  Trying ${host} as ${user}... `);
+
+    const client = new Client({
+      host,
+      port: 5432,
+      user,
+      password,
+      database: "postgres",
+      ssl: { rejectUnauthorized: false, servername: host },
+      connectionTimeoutMillis: 10000,
+    });
+
+    try {
+      await client.connect();
+      console.log("✓ connected");
+      return client;
+    } catch (err) {
+      console.log(`✗ ${err instanceof Error ? err.message.slice(0, 80) : "failed"}`);
+      try { await client.end(); } catch {}
+    }
+  }
+
+  throw new Error(
+    `Could not connect to Supabase DB for project ${projectRef}.\n` +
+    `Check SUPABASE_DB_PASSWORD and that the project is not paused.`,
+  );
+}
 
 /**
  * Split SQL into individual statements.
@@ -107,6 +182,23 @@ async function main() {
   console.log("NetLodge — Database Migration Runner");
   console.log("=".repeat(60));
 
+  // Validate env vars
+  if (!SUPABASE_URL) {
+    console.error("\n✗ NEXT_PUBLIC_SUPABASE_URL is not set.");
+    console.error("  Set it in .env or export it before running.");
+    console.error("  Example: NEXT_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co");
+    process.exit(1);
+  }
+  if (!DB_PASSWORD) {
+    console.error("\n✗ SUPABASE_DB_PASSWORD is not set.");
+    console.error("  Get it from Supabase Dashboard → Database → Database password.");
+    process.exit(1);
+  }
+
+  const projectRef = getProjectRef(SUPABASE_URL);
+  console.log(`Target project: ${projectRef}`);
+  console.log(`Migrations dir: ${MIGRATIONS_DIR}`);
+
   // Read migration files
   const files = (await readdir(MIGRATIONS_DIR))
     .filter((f) => f.endsWith(".sql"))
@@ -117,29 +209,12 @@ async function main() {
     return;
   }
 
-  console.log(`Found ${files.length} migration files:`);
+  console.log(`\nFound ${files.length} migration files:`);
   files.forEach((f) => console.log(`  - ${f}`));
   console.log("");
 
-  // Connect via session-mode pooler
-  console.log(`Connecting to ${POOLER_HOST}:${POOLER_PORT} as ${POOLER_USER}...`);
-  const client = new Client({
-    host: POOLER_HOST,
-    port: POOLER_PORT,
-    user: POOLER_USER,
-    password: DB_PASSWORD,
-    database: "postgres",
-    ssl: { rejectUnauthorized: false, servername: POOLER_HOST },
-    connectionTimeoutMillis: 15000,
-  });
-
-  try {
-    await client.connect();
-    console.log("✓ Connected!\n");
-  } catch (err) {
-    console.error("✗ Connection failed:", err instanceof Error ? err.message : String(err));
-    process.exit(1);
-  }
+  // Connect (tries common pooler regions + direct host)
+  const client = await connect(projectRef, DB_PASSWORD);
 
   // Verify connection
   const v = await client.query("SELECT version()");
