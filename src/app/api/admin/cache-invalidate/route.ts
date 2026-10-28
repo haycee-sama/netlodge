@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     .eq("user_id", user.id);
   const userRoles = (roles ?? []).map((r) => r.role as string);
   const allowed = userRoles.some((r) =>
-    ["landlord", "property_manager", "super_admin", "verification_officer"].includes(r)
+    ["landlord", "manager", "super_admin", "verification_officer"].includes(r)
   );
   if (!allowed) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

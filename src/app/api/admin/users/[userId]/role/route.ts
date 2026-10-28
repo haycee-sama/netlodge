@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { changeUserRole } from "@/lib/supabase/admin-service";
+import { securityCheck } from "@/lib/security/api-security";
 
 /**
  * POST /api/admin/users/[userId]/role
@@ -12,6 +13,8 @@ import { changeUserRole } from "@/lib/supabase/admin-service";
  * Body: { newRole: string, reason: string }
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
+  const sec = await securityCheck(request, "admin-api", { capacity: 30, refillPerSecond: 2 });
+  if (sec) return sec;
   const { userId } = await params;
   if (!userId) return NextResponse.json({ error: "userId is required" }, { status: 400 });
 

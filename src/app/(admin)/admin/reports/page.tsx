@@ -30,7 +30,7 @@ export default function AdminReportsPage() {
       {metrics ? (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {Object.entries({ student: "Students", landlord: "Landlords", property_manager: "Managers", agent: "Agents", verification_officer: "VOs", support_staff: "Support", finance_admin: "Finance", super_admin: "Super Admins" }).map(([role, label]) => (
+            {Object.entries({ student: "Students", landlord: "Landlords", manager: "Managers", agent: "Agents", verification_officer: "VOs", support_staff: "Support", finance_admin: "Finance", super_admin: "Super Admins" }).map(([role, label]) => (
               <Card key={role}><CardContent className="space-y-1 p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="text-2xl font-bold">{metrics.users?.[role] ?? 0}</p></CardContent></Card>
             ))}
           </div>

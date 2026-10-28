@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchAdminUsers, type UserListFilters } from "@/lib/supabase/admin-service";
+import { securityCheck } from "@/lib/security/api-security";
 
 /**
  * GET /api/admin/users
@@ -10,6 +11,8 @@ import { fetchAdminUsers, type UserListFilters } from "@/lib/supabase/admin-serv
  * Query: q, role, active (all|active|suspended), page, pageSize
  */
 export async function GET(request: NextRequest) {
+  const sec = await securityCheck(request, "admin-api", { capacity: 30, refillPerSecond: 2 });
+  if (sec) return sec;
   const sp = request.nextUrl.searchParams;
   const filters: UserListFilters = {
     q: sp.get("q") ?? undefined,

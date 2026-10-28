@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchAuditLogs } from "@/lib/supabase/admin-service";
+import { securityCheck } from "@/lib/security/api-security";
 
 /**
  * GET /api/admin/audit-logs
@@ -10,6 +11,8 @@ import { fetchAuditLogs } from "@/lib/supabase/admin-service";
  * Query: category, severity, q, resourceType, resourceId, page, pageSize
  */
 export async function GET(request: NextRequest) {
+  const sec = await securityCheck(request, "admin-api", { capacity: 30, refillPerSecond: 2 });
+  if (sec) return sec;
   const sp = request.nextUrl.searchParams;
   const result = await fetchAuditLogs({
     category: sp.get("category") ?? undefined,
