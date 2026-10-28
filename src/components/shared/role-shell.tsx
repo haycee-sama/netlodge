@@ -71,6 +71,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Logo } from "@/components/shared/logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { NotificationBell } from "@/components/shared/notification-bell";
 import { useAuth } from "@/lib/auth/auth-context";
 import {
   roleNavGroups,
@@ -105,6 +106,7 @@ export function RoleShell({ role, children }: RoleShellProps) {
   const router = useRouter();
   const { session, isLoading, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [signingOut, setSigningOut] = React.useState(false);
 
   // Redirect to login if not signed in.
   React.useEffect(() => {
@@ -169,9 +171,16 @@ export function RoleShell({ role, children }: RoleShellProps) {
             ? "/admin/settings"
             : `/${role}/settings`;
 
-  function handleSignOut() {
-    signOut();
+  async function handleSignOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await signOut();
+    } catch {
+      // Non-fatal — proceed with redirect
+    }
     router.push("/");
+    router.refresh();
   }
 
   // Active-link check: a nav item is active if its href exactly matches the
@@ -280,12 +289,7 @@ export function RoleShell({ role, children }: RoleShellProps) {
               </Link>
             </Button>
             <ThemeToggle compact />
-            <Button asChild variant="ghost" size="icon" aria-label="Notifications" className="relative">
-              <Link href={notificationsHref}>
-                <Bell className="h-4 w-4" aria-hidden />
-                <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-destructive" aria-hidden />
-              </Link>
-            </Button>
+            <NotificationBell notificationsHref={notificationsHref} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-2 pl-1.5">
@@ -322,9 +326,9 @@ export function RoleShell({ role, children }: RoleShellProps) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
+                <DropdownMenuItem onClick={handleSignOut} disabled={signingOut} className="text-destructive focus:text-destructive">
                   <LogOut className="mr-2 h-4 w-4" aria-hidden />
-                  Sign out
+                  {signingOut ? "Signing out…" : "Sign out"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

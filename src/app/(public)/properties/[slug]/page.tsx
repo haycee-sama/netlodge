@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   MapPin, Building2, DoorOpen, Layers, Home, Loader2, ChevronRight,
-  CheckCircle2, Info,
+  CheckCircle2, Info, Heart,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,9 @@ import { Price } from "@/components/shared/price";
 import { fetchPropertyBySlug, fetchFloors, fetchRentableUnits, type PropertyWithRelations, type FloorWithCounts, type RentableUnitWithRelations } from "@/lib/supabase/property-service";
 import { UNIT_TYPE_LABELS, RENTAL_PERIOD_LABELS } from "@/lib/types";
 import { formatNgn } from "@/lib/utils/format";
+import { useAuth } from "@/lib/auth/auth-context";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 const FACILITY_LABELS: Record<string, string> = {
   wifi: "Wi-Fi", power_backup: "Power backup", water_borehole: "Borehole water",
@@ -114,6 +117,7 @@ export default function PropertyDetailPage() {
           <p className="text-xs text-muted-foreground">
             {property.available_units} of {property.total_units} units available
           </p>
+          <SaveButton propertyId={property.id} />
         </div>
       </div>
 
@@ -210,5 +214,76 @@ export default function PropertyDetailPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function SaveButton({ propertyId }: { propertyId: string }) {
+  const { session } = useAuth();
+  const [saved, setSaved] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
+  const isSupabaseAuth = session?.authenticated === true;
+
+  React.useEffect(() => {
+    if (!isSupabaseAuth) { setLoading(false); return; }
+    const supabase = createClient();
+    supabase
+      .from("saved_properties")
+      .select("id")
+      .eq("property_id", propertyId)
+      .eq("user_id", session!.userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        setSaved(!!data);
+        setLoading(false);
+      });
+  }, [propertyId, session, isSupabaseAuth]);
+
+  async function toggle() {
+    if (!isSupabaseAuth) {
+      toast.info("Sign in to save properties", { description: "Create a free account to bookmark listings." });
+      return;
+    }
+    setLoading(true);
+    const supabase = createClient();
+    try {
+      if (saved) {
+        const { error } = await supabase
+          .from("saved_properties")
+          .delete()
+          .eq("property_id", propertyId)
+          .eq("user_id", session!.userId);
+        if (error) throw new Error(error.message);
+        setSaved(false);
+        toast.success("Removed from saved");
+      } else {
+        const { error } = await supabase
+          .from("saved_properties")
+          .insert({ property_id: propertyId, user_id: session!.userId });
+        if (error) throw new Error(error.message);
+        setSaved(true);
+        toast.success("Saved to your shortlist");
+      }
+    } catch (e) {
+      toast.error("Could not update saved properties", { description: e instanceof Error ? e.message : "" });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      disabled={loading}
+      className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
+        saved
+          ? "border-destructive/30 bg-destructive/5 text-destructive hover:bg-destructive/10"
+          : "border-border bg-background text-foreground hover:bg-muted"
+      }`}
+      aria-label={saved ? "Remove from saved" : "Save property"}
+    >
+      <Heart className={`h-4 w-4 ${saved ? "fill-current" : ""}`} aria-hidden />
+      {loading ? "…" : saved ? "Saved" : "Save"}
+    </button>
   );
 }
