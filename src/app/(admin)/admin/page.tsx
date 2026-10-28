@@ -94,13 +94,13 @@ export default function SuperAdminOverviewPage() {
                 <StatCard
                   key={role}
                   label={label}
-                  value={m.users[role] ?? 0}
+                  value={m.users?.[role] ?? 0}
                   icon={<Users className="h-4 w-4" aria-hidden />}
                 />
               ))}
             </div>
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              {Object.entries(m.users_by_status).map(([status, count]) => (
+              {Object.entries(m.users_by_status ?? {}).map(([status, count]) => (
                 <Badge key={status} variant="outline" className={status === "suspended" ? "border-destructive/30 text-destructive" : "text-success"}>
                   {status}: {count}
                 </Badge>
@@ -112,16 +112,16 @@ export default function SuperAdminOverviewPage() {
           <section>
             <SectionHeading title="Properties & rooms" />
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard label="Total properties" value={m.properties.total} icon={<Building2 className="h-4 w-4" aria-hidden />} />
-              <StatCard label="Total units" value={m.rentable_units.total} hint={`${m.rentable_units.by_status.available ?? 0} available, ${m.rentable_units.by_status.occupied ?? 0} occupied`} icon={<DoorOpen className="h-4 w-4" aria-hidden />} />
-              <StatCard label="Active bookings" value={(m.bookings.by_status.confirmed ?? 0) + (m.bookings.by_status.active ?? 0)} hint={`${m.bookings.total} total`} icon={<CalendarCheck className="h-4 w-4" aria-hidden />} />
-              <StatCard label="Pending verifications" value={m.verification_cases.by_status.pending ?? 0} hint={`${m.verification_cases.total} total cases`} icon={<BadgeCheck className="h-4 w-4" aria-hidden />} />
+              <StatCard label="Total properties" value={m.properties?.total ?? 0} icon={<Building2 className="h-4 w-4" aria-hidden />} />
+              <StatCard label="Total units" value={m.rentable_units?.total ?? 0} hint={`${m.rentable_units?.by_status?.available ?? 0} available, ${m.rentable_units?.by_status?.occupied ?? 0} occupied`} icon={<DoorOpen className="h-4 w-4" aria-hidden />} />
+              <StatCard label="Active bookings" value={(m.bookings?.by_status?.confirmed ?? 0) + (m.bookings?.by_status?.active ?? 0)} hint={`${m.bookings?.total ?? 0} total`} icon={<CalendarCheck className="h-4 w-4" aria-hidden />} />
+              <StatCard label="Pending verifications" value={m.verification_cases?.by_status?.pending ?? 0} hint={`${m.verification_cases?.total ?? 0} total cases`} icon={<BadgeCheck className="h-4 w-4" aria-hidden />} />
             </div>
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              {Object.entries(m.properties.by_status).map(([status, count]) => (
+              {Object.entries(m.properties?.by_status ?? {}).map(([status, count]) => (
                 <Badge key={status} variant="outline">Property {status}: {count}</Badge>
               ))}
-              {Object.entries(m.properties.by_verification).map(([status, count]) => (
+              {Object.entries(m.properties?.by_verification ?? {}).map(([status, count]) => (
                 <Badge key={status} variant="outline" className={status === "approved" ? "text-success" : status === "rejected" ? "text-destructive" : ""}>
                   Verification {status}: {count}
                 </Badge>
@@ -133,13 +133,13 @@ export default function SuperAdminOverviewPage() {
           <section>
             <SectionHeading title="Operations & finance" />
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard label="Open support tickets" value={m.support_tickets.open} hint={`${m.support_tickets.total} total`} icon={<Ticket className="h-4 w-4" aria-hidden />} />
-              <StatCard label="Successful payments" value={m.payments.by_status.successful ?? 0} hint={`${m.payments.count} total transactions`} icon={<Wallet className="h-4 w-4" aria-hidden />} />
-              <StatCard label="Total received (NGN)" value={formatNgn(m.payments.total_kobo)} icon={<Wallet className="h-4 w-4" aria-hidden />} />
-              <StatCard label="Verification cases" value={m.verification_cases.total} hint={`${m.verification_cases.by_status.pending ?? 0} pending`} icon={<BadgeCheck className="h-4 w-4" aria-hidden />} />
+              <StatCard label="Open support tickets" value={m.support_tickets?.open ?? 0} hint={`${m.support_tickets?.total ?? 0} total`} icon={<Ticket className="h-4 w-4" aria-hidden />} />
+              <StatCard label="Successful payments" value={m.payments?.by_status?.successful ?? 0} hint={`${m.payments?.count ?? 0} total transactions`} icon={<Wallet className="h-4 w-4" aria-hidden />} />
+              <StatCard label="Total received (NGN)" value={formatNgn(m.payments?.total_kobo ?? 0)} icon={<Wallet className="h-4 w-4" aria-hidden />} />
+              <StatCard label="Verification cases" value={m.verification_cases?.total ?? 0} hint={`${m.verification_cases?.by_status?.pending ?? 0} pending`} icon={<BadgeCheck className="h-4 w-4" aria-hidden />} />
             </div>
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              {Object.entries(m.payments.by_status).map(([status, count]) => (
+              {Object.entries(m.payments?.by_status ?? {}).map(([status, count]) => (
                 <Badge key={status} variant="outline" className={status === "successful" ? "text-success" : status === "failed" ? "text-destructive" : ""}>
                   Payments {status}: {count}
                 </Badge>
