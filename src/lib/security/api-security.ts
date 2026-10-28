@@ -167,8 +167,45 @@ const ALLOWED_ORIGINS = (() => {
   if (process.env.NODE_ENV !== "production") {
     origins.push("http://localhost:3000", "http://127.0.0.1:3000");
   }
+  // Allow Vercel deployment URLs (production + preview)
+  // Vercel assigns *.vercel.app domains for both production and preview
+  origins.push("https://netlodge.vercel.app");
   return origins;
 })();
+
+/**
+ * Check if an origin matches any allowed origin, including Vercel preview
+ * domains (*.vercel.app) and same-host matches.
+ */
+function isOriginAllowed(candidateOrigin: string, requestHost: string | null): boolean {
+  // Check explicit allowlist
+  for (const allowed of ALLOWED_ORIGINS) {
+    try {
+      if (new URL(candidateOrigin).origin === new URL(allowed).origin) {
+        return true;
+      }
+    } catch {
+      // invalid URL — skip
+    }
+  }
+
+  // Allow any *.vercel.app origin (preview deployments)
+  try {
+    const candidateUrl = new URL(candidateOrigin);
+    if (candidateUrl.hostname.endsWith(".vercel.app")) {
+      return true;
+    }
+    // Same-host check: if the origin's host matches the request's host,
+    // allow it (covers cases where NEXT_PUBLIC_SITE_URL isn't set correctly)
+    if (requestHost && candidateUrl.host === requestHost) {
+      return true;
+    }
+  } catch {
+    // invalid URL
+  }
+
+  return false;
+}
 
 /**
  * Validate the Origin header for mutation requests (POST/PUT/PATCH/DELETE).
@@ -222,15 +259,12 @@ export function validateOrigin(request: NextRequest): NextResponse | null {
     );
   }
 
-  const allowed = ALLOWED_ORIGINS.some((allowedOrigin) => {
-    try {
-      return new URL(candidate).origin === new URL(allowedOrigin).origin;
-    } catch {
-      return false;
-    }
-  });
-
-  if (!allowed) {
+  // Use the enhanced isOriginAllowed function which checks:
+  // 1. Explicit allowlist
+  // 2. *.vercel.app domains (preview deployments)
+  // 3. Same-host match (origin host === request host)
+  const requestHost = request.headers.get("host");
+  if (!isOriginAllowed(candidate, requestHost)) {
     return NextResponse.json(
       { error: "Origin not allowed" },
       { status: 403 },
