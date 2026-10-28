@@ -78,7 +78,10 @@ export default function StudentBookingsPage() {
             <ul className="divide-y divide-border">
               {bookings.map((b) => (
                 <li key={b.id}>
-                  <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <Link
+                    href={`/student/bookings/${b.id}`}
+                    className="flex flex-col gap-3 p-4 hover:bg-muted/40 transition-colors sm:flex-row sm:items-center sm:justify-between"
+                  >
                     <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-medium">{b.properties?.name ?? "Property"}</p>
@@ -108,7 +111,7 @@ export default function StudentBookingsPage() {
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
                     </div>
-                  </div>
+                  </Link>
                 </li>
               ))}
             </ul>
