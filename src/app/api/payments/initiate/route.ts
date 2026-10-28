@@ -13,7 +13,14 @@ function isValidPaystackEmail(email: string): boolean {
   if (!email) return false;
   // Basic email regex — requires a valid-looking TLD (2+ alpha chars)
   const re = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
-  return re.test(email);
+  if (!re.test(email)) return false;
+  // Paystack rejects .test TLDs and other fake domains used by test accounts.
+  // Explicitly reject them so we fall back to the safe placeholder.
+  const domain = email.split("@")[1]?.toLowerCase() ?? "";
+  const tld = domain.split(".").pop() ?? "";
+  const blockedTlds = ["test", "example", "localhost", "invalid", "local"];
+  if (blockedTlds.includes(tld)) return false;
+  return true;
 }
 
 /**
