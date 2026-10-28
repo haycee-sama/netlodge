@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { universities, neighbourhoods } from "@/lib/data/fixtures";
+import { fetchUniversities, fetchNeighbourhoods } from "@/lib/supabase/property-service";
 
 interface HeroSearchProps {
   className?: string;
@@ -29,14 +29,21 @@ export function HeroSearch({ className, variant = "banner" }: HeroSearchProps) {
   const [universityId, setUniversityId] = React.useState<string>("");
   const [neighbourhoodId, setNeighbourhoodId] = React.useState<string>("");
   const [maxRentNgn, setMaxRentNgn] = React.useState<string>("");
+  const [universities, setUniversities] = React.useState<any[]>([]);
+  const [neighbourhoods, setNeighbourhoods] = React.useState<any[]>([]);
 
-  const availableNeighbourhoods = React.useMemo(
-    () =>
-      universityId
-        ? neighbourhoods.filter((n) => n.universityId === universityId)
-        : neighbourhoods,
-    [universityId],
-  );
+  React.useEffect(() => {
+    fetchUniversities().then((res) => { if (res.data) setUniversities(res.data); });
+    fetchNeighbourhoods().then((res) => { if (res.data) setNeighbourhoods(res.data); });
+  }, []);
+
+  React.useEffect(() => {
+    if (universityId) {
+      fetchNeighbourhoods(universityId).then((res) => { if (res.data) setNeighbourhoods(res.data); });
+    } else {
+      fetchNeighbourhoods().then((res) => { if (res.data) setNeighbourhoods(res.data); });
+    }
+  }, [universityId]);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -91,9 +98,9 @@ export function HeroSearch({ className, variant = "banner" }: HeroSearchProps) {
               <SelectValue placeholder="Any university" />
             </SelectTrigger>
             <SelectContent>
-              {universities.map((u) => (
+              {universities.map((u: any) => (
                 <SelectItem key={u.id} value={u.id}>
-                  {u.shortName} — {u.name}
+                  {u.short_name} — {u.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -109,7 +116,7 @@ export function HeroSearch({ className, variant = "banner" }: HeroSearchProps) {
               <SelectValue placeholder="Any neighbourhood" />
             </SelectTrigger>
             <SelectContent>
-              {availableNeighbourhoods.map((n) => (
+              {neighbourhoods.map((n: any) => (
                 <SelectItem key={n.id} value={n.id}>
                   {n.name}
                 </SelectItem>

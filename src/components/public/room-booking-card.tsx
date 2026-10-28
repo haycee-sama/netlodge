@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth/auth-context";
-import { getRepositories } from "@/lib/repositories";
+import { createBooking } from "@/lib/supabase/property-service";
 import { RENTAL_PERIOD_LABELS, type RentableUnit, type Property, type RentalPeriod } from "@/lib/types";
 import { formatNgn } from "@/lib/utils/format";
 import { toast } from "sonner";
@@ -91,16 +91,30 @@ export function RoomBookingCard({ room, property }: RoomBookingCardProps) {
     }
     setSubmitting(true);
     try {
-      const booking = await getRepositories().bookings.initiate({
+      const checkOut = new Date(checkIn);
+      checkOut.setFullYear(checkOut.getFullYear() + 1);
+
+      const result = await createBooking({
         studentId: session!.userId,
-        rentableUnitId: room.id,
-        checkIn: new Date(checkIn).toISOString(),
-        rentalPeriod,
+        unitId: room.id,
+        checkIn,
+        checkOut: checkOut.toISOString().slice(0, 10),
+        rentalPeriod: room.rentalPeriod ?? "annual",
+        baseRentKobo: room.annualRentKobo,
+        additionalChargesKobo: 0,
+        cautionDepositKobo: room.cautionDepositKobo ?? 0,
+        serviceFeeKobo: Math.round((room.annualRentKobo ?? 0) * 0.05),
+        totalKobo: (room.annualRentKobo ?? 0) + Math.round((room.annualRentKobo ?? 0) * 0.05) + (room.cautionDepositKobo ?? 0),
       });
-      toast.success("Hold placed", {
-        description: `Booking ${booking.reference} reserved for 24 hours pending payment.`,
-      });
-      router.push(`/student/bookings/${booking.id}`);
+
+      if (result.error) {
+        toast.error("Booking failed", { description: result.error });
+      } else if (result.data) {
+        toast.success("Hold placed", {
+          description: "Booking reserved for 24 hours pending payment.",
+        });
+        router.push(`/student/bookings/${result.data.bookingId}`);
+      }
     } catch (e) {
       toast.error("Could not initiate booking", {
         description: e instanceof Error ? e.message : "Please try again.",

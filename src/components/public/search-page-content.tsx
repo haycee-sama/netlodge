@@ -33,8 +33,7 @@ import {
 } from "@/components/ui/sheet";
 import { PropertyCard } from "@/components/public/property-card";
 import { PageHeader, EmptyState } from "@/components/shared/page-components";
-import { universities, neighbourhoods } from "@/lib/data/fixtures";
-import { getRepositories } from "@/lib/repositories";
+import { fetchUniversities, fetchNeighbourhoods, fetchProperties } from "@/lib/supabase/property-service";
 import type { Property, SearchFilters, RentableUnitType, Facility } from "@/lib/types";
 import { FACILITY_LABELS, UNIT_TYPE_LABELS } from "@/lib/types";
 import { ngnToKobo } from "@/lib/utils/format";
@@ -83,13 +82,26 @@ export function SearchPageContent() {
     (searchParams.get("sortBy") as typeof sortBy) ?? "relevance",
   );
 
+  const [universities, setUniversities] = React.useState<any[]>([]);
+  const [neighbourhoods, setNeighbourhoods] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    fetchUniversities().then((res) => { if (res.data) setUniversities(res.data); });
+  }, []);
+
   const availableNeighbourhoods = React.useMemo(
     () =>
       universityId
-        ? neighbourhoods.filter((n) => n.universityId === universityId)
+        ? neighbourhoods.filter((n: any) => n.university_id === universityId || !n.university_id)
         : neighbourhoods,
-    [universityId],
+    [universityId, neighbourhoods],
   );
+
+  React.useEffect(() => {
+    fetchNeighbourhoods(universityId || undefined).then((res) => {
+      if (res.data) setNeighbourhoods(res.data);
+    });
+  }, [universityId]);
 
   // Re-run search when filters change (debounced via effect).
   React.useEffect(() => {
@@ -120,14 +132,25 @@ export function SearchPageContent() {
 
     setLoading(true);
     const t = setTimeout(() => {
-      getRepositories()
-        .properties.search(filters)
-        .then((r) => {
-          setResults(r.items);
-          setTotal(r.total);
-          setFacets(r.facets);
-        })
-        .finally(() => setLoading(false));
+      fetchProperties({
+        q: q || undefined,
+        universityId: universityId || undefined,
+        neighbourhoodId: neighbourhoodId || undefined,
+        minPriceKobo: minRentNgn ? ngnToKobo(Number(minRentNgn)) : undefined,
+        maxPriceKobo: maxRentNgn ? ngnToKobo(Number(maxRentNgn)) : undefined,
+        page: 1,
+        pageSize: 50,
+      }).then((res) => {
+        if (res.error) {
+          setResults([]);
+          setTotal(0);
+        } else if (res.data) {
+          setResults(res.data as any);
+          setTotal(res.data.length);
+        }
+        setFacets(null); // facets not available from live API yet
+        setLoading(false);
+      });
     }, 180);
     return () => clearTimeout(t);
   }, [q, universityId, neighbourhoodId, minRentNgn, maxRentNgn, unitTypes, facilities, sortBy]);
@@ -168,9 +191,9 @@ export function SearchPageContent() {
             <SelectValue placeholder="Any university" />
           </SelectTrigger>
           <SelectContent>
-            {universities.map((u) => (
+            {universities.map((u: any) => (
               <SelectItem key={u.id} value={u.id}>
-                {u.shortName} — {u.name}
+                {u.short_name} — {u.name}
               </SelectItem>
             ))}
           </SelectContent>
