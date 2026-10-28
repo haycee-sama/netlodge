@@ -33,13 +33,15 @@ interface VerifyTxnResponse {
   data: {
     id: number;
     reference: string;
-    amount: number; // in kobo
+    amount: number; // total amount charged (includes fees)
+    requested_amount: number; // amount we originally specified (excludes fees)
     currency: string;
     status: string;
     gateway_response: string;
     paid_at: string | null;
     created_at: string;
     channel: string;
+    fees: number;
     customer: {
       email: string;
     };

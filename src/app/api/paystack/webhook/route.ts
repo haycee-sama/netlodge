@@ -88,9 +88,13 @@ export async function POST(request: NextRequest) {
 
       const verified = verifyResult.data;
 
-      // Validate amount
-      if (verified.amount !== payment.amount_kobo) {
-        console.error(`[paystack/webhook] Amount mismatch: expected ${payment.amount_kobo}, got ${verified.amount}`);
+      // Validate amount — Paystack's `amount` includes fees; `requested_amount` is what we sent
+      const verifiedAmount = Number(verified.amount);
+      const verifiedRequested = Number((verified as any).requested_amount ?? verifiedAmount);
+      const expectedAmount = Number(payment.amount_kobo);
+
+      if (verifiedAmount !== expectedAmount && verifiedRequested !== expectedAmount) {
+        console.error(`[paystack/webhook] Amount mismatch: expected ${expectedAmount}, got amount=${verifiedAmount}, requested_amount=${verifiedRequested}`);
         await adminClient.from("payments").update({
           status: "failed",
           failure_reason: "Amount mismatch during webhook verification",

@@ -73,9 +73,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL(`/student/bookings/${payment.booking_id}?payment=failed`, request.nextUrl.origin));
     }
 
-    // Validate amount matches the trusted payment record
-    if (txn.amount !== payment.amount_kobo) {
-      console.error(`[payments/verify] Amount mismatch: expected ${payment.amount_kobo}, got ${txn.amount}`);
+    // Validate amount matches the trusted payment record.
+    // Paystack's `amount` field includes fees (total charged to customer).
+    // The `requested_amount` field is what we originally specified.
+    // Accept if either matches our payment.amount_kobo.
+    const txnAmount = Number(txn.amount);
+    const txnRequestedAmount = Number((txn as any).requested_amount ?? txnAmount);
+    const expectedAmount = Number(payment.amount_kobo);
+
+    if (txnAmount !== expectedAmount && txnRequestedAmount !== expectedAmount) {
+      console.error(`[payments/verify] Amount mismatch: expected ${expectedAmount}, got amount=${txnAmount}, requested_amount=${txnRequestedAmount}`);
       await adminClient.from("payments").update({
         status: "failed",
         failure_reason: "Amount mismatch during Paystack verification",
