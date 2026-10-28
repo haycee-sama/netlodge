@@ -47,6 +47,7 @@ export default function RoomDetailPage() {
   const [checkIn, setCheckIn] = React.useState("");
   const [accept, setAccept] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (!params.id) return;
@@ -75,19 +76,23 @@ export default function RoomDetailPage() {
   const isSupabaseAuth = session?.authenticated === true;
 
   async function handleBooking() {
+    console.log('[booking] handleBooking called, room:', !!room, 'session:', !!session, 'checkIn:', checkIn, 'isSupabaseAuth:', isSupabaseAuth);
     if (!room || !session) return;
     if (!checkIn) {
       toast.error("Choose a check-in date");
+      setConfirmOpen(false);
       return;
     }
     if (!accept) {
       toast.error("Please accept the booking terms");
+      setConfirmOpen(false);
       return;
     }
     if (!isSupabaseAuth) {
       toast.error("Please sign in to book", {
         description: "You need a NetLodge account to place a booking.",
       });
+      setConfirmOpen(false);
       return;
     }
 
@@ -95,6 +100,8 @@ export default function RoomDetailPage() {
     try {
       const checkOut = new Date(checkIn);
       checkOut.setFullYear(checkOut.getFullYear() + 1);
+
+      console.log('[booking] calling createBooking with:', { unitId: room.id, checkIn, checkOut: checkOut.toISOString().slice(0, 10) });
 
       const result = await createBooking({
         studentId: session.userId,
@@ -109,18 +116,23 @@ export default function RoomDetailPage() {
         totalKobo: total,
       });
 
+      console.log('[booking] result:', result);
+
       if (result.error) {
         toast.error("Booking failed", { description: result.error });
+        setConfirmOpen(false);
       } else if (result.data) {
         toast.success("Hold placed", {
           description: `Booking reserved for 24 hours pending payment.`,
         });
+        setConfirmOpen(false);
         router.push("/student/bookings");
       }
     } catch (e) {
       toast.error("Could not create booking", {
         description: e instanceof Error ? e.message : "Please try again.",
       });
+      setConfirmOpen(false);
     } finally {
       setSubmitting(false);
     }
@@ -254,9 +266,12 @@ export default function RoomDetailPage() {
                 </span>
               </label>
 
-              <AlertDialog>
+              <AlertDialog open={confirmOpen} onOpenChange={(open) => {
+                console.log('[booking] onOpenChange:', open, 'submitting:', submitting);
+                if (!submitting) setConfirmOpen(open);
+              }}>
                 <AlertDialogTrigger asChild>
-                  <Button className="w-full" disabled={!isAvailable || !accept || submitting}>
+                  <Button className="w-full" disabled={!isAvailable || !accept || submitting} onClick={() => setConfirmOpen(true)}>
                     <Lock className="mr-2 h-4 w-4" aria-hidden />
                     Place hold & continue
                   </Button>
@@ -272,10 +287,13 @@ export default function RoomDetailPage() {
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleBooking} disabled={submitting}>
+                    <AlertDialogCancel disabled={submitting}>Cancel</AlertDialogCancel>
+                    <Button
+                      onClick={handleBooking}
+                      disabled={submitting}
+                    >
                       {submitting ? "Placing hold…" : "Place hold"}
-                    </AlertDialogAction>
+                    </Button>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
