@@ -25,7 +25,7 @@ interface Metrics {
 const ROLE_LABELS: Record<string, string> = {
   student: "Students",
   landlord: "Landlords",
-  property_manager: "Managers",
+  manager: "Managers",
   agent: "Agents",
   verification_officer: "Verification Officers",
   support_staff: "Support Staff",
