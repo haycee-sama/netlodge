@@ -15,6 +15,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { fetchLandlordProperty, updateProperty } from "@/lib/supabase/landlord-service";
 import { fetchUniversities, fetchNeighbourhoods } from "@/lib/supabase/property-service";
 import { toast } from "sonner";
+import { invalidateCache, CACHE_TAGS } from "@/lib/cache/invalidate-client";
 
 const PROPERTY_TYPES = [
   { value: "hostel_block", label: "Hostel block" },
@@ -115,6 +116,7 @@ export default function EditPropertyPage() {
       toast.error("Failed to save", { description: result.error });
     } else {
       toast.success("Property updated");
+      await invalidateCache([CACHE_TAGS.PROPERTIES, CACHE_TAGS.UNITS]);
       router.push(`/landlord/properties/${property.id}`);
     }
     setSaving(false);

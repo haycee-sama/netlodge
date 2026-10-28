@@ -15,6 +15,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { updateRoom } from "@/lib/supabase/landlord-service";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { invalidateCache, CACHE_TAGS } from "@/lib/cache/invalidate-client";
 
 const UNIT_TYPES = [
   { value: "self_contain", label: "Self-contain" },
@@ -112,6 +113,7 @@ export default function EditRoomPage() {
       toast.error("Failed to save", { description: result.error });
     } else {
       toast.success("Room updated");
+      await invalidateCache([CACHE_TAGS.PROPERTIES, CACHE_TAGS.UNITS]);
       router.push(`/landlord/rooms/${room.id}`);
     }
     setSaving(false);

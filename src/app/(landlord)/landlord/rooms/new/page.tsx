@@ -15,6 +15,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { createRoom } from "@/lib/supabase/landlord-service";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { invalidateCache, CACHE_TAGS } from "@/lib/cache/invalidate-client";
 
 const UNIT_TYPES = [
   { value: "self_contain", label: "Self-contain" },
@@ -90,6 +91,7 @@ export default function NewRoomPage() {
       toast.error("Failed to create room", { description: result.error });
     } else if (result.data) {
       toast.success("Room created");
+      await invalidateCache([CACHE_TAGS.PROPERTIES, CACHE_TAGS.UNITS]);
       router.push(`/landlord/properties/${propertyId}/rooms`);
     }
     setSaving(false);

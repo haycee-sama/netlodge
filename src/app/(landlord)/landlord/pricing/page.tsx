@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/client";
 import { updateRoom } from "@/lib/supabase/landlord-service";
 import { formatNgn } from "@/lib/utils/format";
 import { toast } from "sonner";
+import { invalidateCache, CACHE_TAGS } from "@/lib/cache/invalidate-client";
 
 export default function PricingPage() {
   const { session } = useAuth();
@@ -49,7 +50,8 @@ export default function PricingPage() {
     setSaving(unitId);
     const res = await updateRoom(unitId, { annualRentKobo: newPrice });
     if (res.error) toast.error("Failed to update price", { description: res.error });
-    else { toast.success("Price updated"); setUnits((arr) => arr.map((u) => u.id === unitId ? { ...u, annual_rent_kobo: newPrice } : u)); }
+    else { toast.success("Price updated");
+      await invalidateCache([CACHE_TAGS.PROPERTIES, CACHE_TAGS.UNITS]); setUnits((arr) => arr.map((u) => u.id === unitId ? { ...u, annual_rent_kobo: newPrice } : u)); }
     setSaving(null);
   }
 
