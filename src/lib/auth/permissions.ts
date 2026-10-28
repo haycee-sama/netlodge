@@ -414,6 +414,7 @@ export function roleNavGroups(role: UserRole): NavGroup[] {
           { href: "/admin/locations", label: "Locations", icon: "MapPin" },
           { href: "/admin/facilities", label: "Facilities", icon: "Sparkles" },
           { href: "/admin/commissions", label: "Commissions", icon: "Percent" },
+          { href: "/admin/testimonials", label: "Testimonials", icon: "MessageSquare" },
           { href: "/admin/announcements", label: "Announcements", icon: "Megaphone" },
         ]},
         { label: "Trust & system", items: [

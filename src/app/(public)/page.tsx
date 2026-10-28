@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import {
   Accordion,
   AccordionContent,
@@ -38,7 +39,7 @@ import {
 import { HeroSearch } from "@/components/public/hero-search";
 import { UniversityCard } from "@/components/public/university-card";
 import { SectionHeading } from "@/components/shared/page-components";
-import { fetchPropertiesServer, fetchUniversitiesServer } from "@/lib/supabase/property-server";
+import { fetchPropertiesServer, fetchUniversitiesServer, fetchHomepageStatsServer, fetchPublishedTestimonialsServer } from "@/lib/supabase/property-server";
 import { PropertyCardAdapter } from "@/components/public/property-card-adapter";
 import { Price } from "@/components/shared/price";
 import { FACILITY_LABELS } from "@/lib/types";
@@ -141,6 +142,8 @@ const trustSteps = [
 export default async function HomePage() {
   const { data: liveProperties } = await fetchPropertiesServer({ page: 1, pageSize: 10 });
   const { data: liveUniversities } = await fetchUniversitiesServer();
+  const { data: stats } = await fetchHomepageStatsServer();
+  const { data: testimonials } = await fetchPublishedTestimonialsServer(6);
 
   const featured = (liveProperties ?? []).slice(0, 6);
   const carouselItems = (liveProperties ?? []).slice(0, 5);
@@ -181,16 +184,16 @@ export default async function HomePage() {
               </div>
               <dl className="grid grid-cols-3 gap-4 pt-4 text-sm">
                 <div className="space-y-0.5">
-                  <dt className="text-muted-foreground">Listings</dt>
-                  <dd className="font-display text-2xl font-bold">Verified</dd>
+                  <dt className="text-muted-foreground">Properties</dt>
+                  <dd className="font-display text-2xl font-bold tabular-nums">{stats?.verifiedProperties ?? 0}</dd>
                 </div>
                 <div className="space-y-0.5">
-                  <dt className="text-muted-foreground">Bookable</dt>
-                  <dd className="font-display text-2xl font-bold">Per room</dd>
+                  <dt className="text-muted-foreground">Rooms</dt>
+                  <dd className="font-display text-2xl font-bold tabular-nums">{stats?.availableRooms ?? 0}</dd>
                 </div>
                 <div className="space-y-0.5">
                   <dt className="text-muted-foreground">Universities</dt>
-                  <dd className="font-display text-2xl font-bold">6</dd>
+                  <dd className="font-display text-2xl font-bold tabular-nums">{stats?.universities ?? 0}</dd>
                 </div>
               </dl>
             </div>
@@ -491,8 +494,55 @@ export default async function HomePage() {
         </Card>
       </section>
 
+      {/* ------------------------------------------------------- Testimonials */}
+      {testimonials && testimonials.length > 0 && (
+        <section className="border-y border-border bg-card/30">
+          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+            <SectionHeading
+              eyebrow="From the NetLodge community"
+              title="What students and landlords say"
+              description="Real reviews from verified NetLodge users. Every testimonial is reviewed by our team before publication."
+            />
+            <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {testimonials.map((t) => (
+                <Card key={t.id} className="flex flex-col">
+                  <CardContent className="flex flex-1 flex-col gap-3 p-5">
+                    {t.rating && (
+                      <div className="flex gap-0.5" aria-label={`${t.rating} out of 5 stars`}>
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={cn("h-4 w-4", i < t.rating! ? "fill-primary text-primary" : "text-muted-foreground/30")}
+                            aria-hidden
+                          />
+                        ))}
+                      </div>
+                    )}
+                    <blockquote className="flex-1 text-sm leading-relaxed text-pretty">
+                      &ldquo;{t.quote}&rdquo;
+                    </blockquote>
+                    <div className="space-y-0.5 border-t border-border pt-3">
+                      <p className="text-sm font-semibold">{t.authorName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t.authorRole === "student" && t.authorUniversity
+                          ? `Student, ${t.authorUniversity}${t.authorLevel ? ` · ${t.authorLevel}` : ""}`
+                          : t.authorRole === "landlord"
+                            ? "Landlord"
+                            : t.authorRole === "parent"
+                              ? "Parent"
+                              : "Staff"}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ------------------------------------------------------- How it works CTA */}
-      <section className="border-y border-border bg-card/30">
+      <section className={cn("border-y border-border bg-card/30", testimonials && testimonials.length > 0 && "border-t-0")}>
         <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
           <h2 className="font-display text-2xl font-bold tracking-tight text-balance sm:text-3xl">
             Ready to find your student home?

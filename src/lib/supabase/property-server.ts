@@ -149,3 +149,135 @@ export async function fetchPropertyBySlugServer(
     };
   }
 }
+
+// ---------------------------------------------------------------------------
+// Homepage stats — real numbers from the database, never fabricated.
+// ---------------------------------------------------------------------------
+
+export interface HomepageStats {
+  /** Count of verified, approved properties. */
+  verifiedProperties: number;
+  /** Count of active universities. */
+  universities: number;
+  /** Count of active neighbourhoods. */
+  neighbourhoods: number;
+  /** Count of available rentable units across all verified properties. */
+  availableRooms: number;
+  /** Count of confirmed bookings (all-time). */
+  totalBookings: number;
+}
+
+export async function fetchHomepageStatsServer(): Promise<{
+  data: HomepageStats | null;
+  error: string | null;
+}> {
+  try {
+    const supabase = await createClient();
+
+    // Run all counts in parallel for speed.
+    const [
+      { count: verifiedProperties },
+      { count: universities },
+      { count: neighbourhoods },
+      { count: availableRooms },
+      { count: totalBookings },
+    ] = await Promise.all([
+      supabase
+        .from("properties")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "verified")
+        .eq("verification_status", "approved"),
+      supabase
+        .from("universities")
+        .select("*", { count: "exact", head: true })
+        .eq("active", true),
+      supabase
+        .from("neighbourhoods")
+        .select("*", { count: "exact", head: true })
+        .eq("active", true),
+      supabase
+        .from("rentable_units")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "available"),
+      supabase
+        .from("bookings")
+        .select("*", { count: "exact", head: true })
+        .in("status", ["confirmed", "active", "completed"]),
+    ]);
+
+    return {
+      data: {
+        verifiedProperties: verifiedProperties ?? 0,
+        universities: universities ?? 0,
+        neighbourhoods: neighbourhoods ?? 0,
+        availableRooms: availableRooms ?? 0,
+        totalBookings: totalBookings ?? 0,
+      },
+      error: null,
+    };
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Failed to fetch homepage stats",
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Testimonials — admin-managed, only approved + published shown publicly.
+// ---------------------------------------------------------------------------
+
+export interface Testimonial {
+  id: string;
+  authorName: string;
+  authorRole: string;
+  authorUniversity: string | null;
+  authorLevel: string | null;
+  quote: string;
+  rating: number | null;
+  displayOrder: number;
+  createdAt: string;
+}
+
+/**
+ * Fetch approved + published testimonials for the public homepage.
+ * Ordered by display_order ASC, then created_at DESC.
+ * Limited to `limit` results (default 6).
+ */
+export async function fetchPublishedTestimonialsServer(limit: number = 6): Promise<{
+  data: Testimonial[] | null;
+  error: string | null;
+}> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("testimonials")
+      .select("id, author_name, author_role, author_university, author_level, quote, rating, display_order, created_at")
+      .eq("status", "approved")
+      .eq("published", true)
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error) return { data: null, error: error.message };
+
+    const testimonials = (data ?? []).map((t: any) => ({
+      id: t.id,
+      authorName: t.author_name,
+      authorRole: t.author_role,
+      authorUniversity: t.author_university,
+      authorLevel: t.author_level,
+      quote: t.quote,
+      rating: t.rating,
+      displayOrder: t.display_order,
+      createdAt: t.created_at,
+    }));
+
+    return { data: testimonials, error: null };
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Failed to fetch testimonials",
+    };
+  }
+}
