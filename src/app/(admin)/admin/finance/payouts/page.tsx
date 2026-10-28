@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -153,7 +154,9 @@ export default function FinancePayoutsPage() {
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0 space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-medium">{p.reference}</p>
+                          <Link href={`/admin/finance/payouts/${p.id}`} className="font-medium text-primary hover:underline">
+                            {p.reference}
+                          </Link>
                           <PayoutStatusBadge status={p.status as any} />
                         </div>
                         <p className="text-xs text-muted-foreground">

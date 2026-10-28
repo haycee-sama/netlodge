@@ -124,7 +124,9 @@ export default function FinanceTransactionsPage() {
                   <li key={p.id} className="flex flex-col gap-1 p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-medium">{p.reference}</p>
+                        <Link href={`/admin/finance/transactions/${p.id}`} className="font-medium text-primary hover:underline">
+                          {p.reference}
+                        </Link>
                         <PaymentStatusBadge status={p.status as any} />
                         {p.confirmed_by_backend && <Badge variant="outline" className="text-xs text-success">Backend-verified</Badge>}
                       </div>

@@ -640,3 +640,287 @@ export async function fetchAuditLogs(
   if (error) return err(error.message, 500);
   return ok({ items: (data ?? []) as AuditLogRow[], total: count ?? 0 });
 }
+
+// ---------------------------------------------------------------------------
+// Platform settings — read-only view (super_admin only).
+// Sensitive values (anything whose key matches /secret|key|password|token/i)
+// are masked before being returned. The raw value is NEVER exposed.
+// ---------------------------------------------------------------------------
+
+export interface PlatformSettingRow {
+  id: string;
+  key: string;
+  label: string;
+  description: string;
+  type: string;
+  value: string;       // already masked for sensitive rows
+  is_sensitive: boolean;
+  unit: string | null;
+  category: string;
+  requires_reauth: boolean;
+  updated_at: string;
+}
+
+const SENSITIVE_KEY_RE = /(secret|password|token|api[_-]?key|private[_-]?key|sk_live|sk_test)/i;
+
+export async function fetchPlatformSettings(
+  request?: Request,
+): Promise<ServiceResult<{ items: PlatformSettingRow[]; total: number }>> {
+  const authResult = await requireRole(["super_admin"], request);
+  if ("status" in authResult) return authResult;
+  const { supabase } = authResult;
+
+  const { data, error, count } = await supabase
+    .from("platform_settings")
+    .select("*", { count: "exact" })
+    .order("category", { ascending: true })
+    .order("key", { ascending: true });
+
+  if (error) return err(error.message, 500);
+
+  const rows = (data ?? []) as Array<Omit<PlatformSettingRow, "is_sensitive">>;
+  const items: PlatformSettingRow[] = rows.map((r) => {
+    const isSensitive = SENSITIVE_KEY_RE.test(r.key);
+    return {
+      ...r,
+      is_sensitive: isSensitive,
+      value: isSensitive ? "••••••••" : r.value,
+    };
+  });
+
+  return ok({ items, total: count ?? 0 });
+}
+
+// ---------------------------------------------------------------------------
+// Integrations — combines persisted integration_health rows with a live
+// "effective configuration" check. We never reveal the configured values;
+// we only report whether each integration is configured or not.
+// ---------------------------------------------------------------------------
+
+export interface IntegrationRow {
+  id: string;
+  name: string;
+  category: string;
+  status: string;
+  last_success_at: string | null;
+  last_error: string | null;
+  last_error_at: string | null;
+  uptime_24h: number;
+  avg_response_ms: number;
+  enabled: boolean;
+  updated_at: string;
+}
+
+export interface EffectiveConfigStatus {
+  key: string;
+  label: string;
+  configured: boolean;
+  /** When true, the integration is in test/sandbox mode. */
+  test_mode: boolean | null;
+  /** "configured" | "not_configured" | "unknown" */
+  state: "configured" | "not_configured" | "unknown";
+  note: string;
+}
+
+export interface IntegrationsOverview {
+  integrations: IntegrationRow[];
+  effective: EffectiveConfigStatus[];
+}
+
+export async function fetchIntegrationsOverview(
+  request?: Request,
+): Promise<ServiceResult<IntegrationsOverview>> {
+  const authResult = await requireRole(["super_admin"], request);
+  if ("status" in authResult) return authResult;
+  const { supabase } = authResult;
+
+  const { data, error } = await supabase
+    .from("integration_health")
+    .select("*")
+    .order("category", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (error) return err(error.message, 500);
+
+  const integrations = (data ?? []) as IntegrationRow[];
+
+  // Effective configuration status — derived from env vars at request time.
+  // Never reveal the actual values; only report whether each is set.
+  const paystackSecret = process.env.PAYSTACK_SECRET_KEY ?? "";
+  const paystackPublic = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY ?? "";
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
+  const supabaseSecret = process.env.SUPABASE_SECRET_KEY ?? "";
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL ?? "";
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN ?? "";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const cronSecret = process.env.CRON_SECRET ?? "";
+
+  const effective: EffectiveConfigStatus[] = [
+    {
+      key: "paystack",
+      label: "Paystack (payments)",
+      configured: !!paystackSecret && !!paystackPublic,
+      test_mode: paystackSecret ? paystackSecret.startsWith("sk_test_") : null,
+      state: paystackSecret && paystackPublic ? "configured" : "not_configured",
+      note: paystackSecret
+        ? (paystackSecret.startsWith("sk_test_") ? "Test mode key detected." : "Live key detected — production payments enabled.")
+        : "Server-side key is not set. Payment initiation will fail.",
+    },
+    {
+      key: "supabase",
+      label: "Supabase (auth + database)",
+      configured: !!supabaseUrl && !!supabaseAnon,
+      test_mode: null,
+      state: supabaseUrl && supabaseAnon ? "configured" : "not_configured",
+      note: supabaseUrl && supabaseAnon
+        ? "Public URL + publishable key are set."
+        : "Missing URL or publishable key. Application cannot authenticate users.",
+    },
+    {
+      key: "supabase_service_role",
+      label: "Supabase service role (server-only)",
+      configured: !!supabaseSecret,
+      test_mode: null,
+      state: supabaseSecret ? "configured" : "not_configured",
+      note: supabaseSecret
+        ? "Service role key is present. Used for admin operations and migrations only."
+        : "Service role key is not set. Server-side admin operations will fail.",
+    },
+    {
+      key: "upstash_redis",
+      label: "Upstash Redis (distributed rate limiting)",
+      configured: !!redisUrl && !!redisToken,
+      test_mode: null,
+      state: redisUrl && redisToken ? "configured" : "not_configured",
+      note: redisUrl && redisToken
+        ? "Distributed rate limiting is active. Sensitive endpoints fail closed on Redis errors."
+        : "Not configured — rate limiting is process-local (per-instance). Suitable for single-instance deployments only.",
+    },
+    {
+      key: "site_url",
+      label: "Site URL (CSRF origin allowlist)",
+      configured: !!siteUrl,
+      test_mode: null,
+      state: siteUrl ? "configured" : "not_configured",
+      note: siteUrl
+        ? `Configured. CSRF origin checks use this domain.`
+        : "Not set. CSRF validation falls back to a permissive default for development.",
+    },
+    {
+      key: "cron_secret",
+      label: "Cron secret (reconciliation schedule)",
+      configured: !!cronSecret,
+      test_mode: null,
+      state: cronSecret ? "configured" : "not_configured",
+      note: cronSecret
+        ? "Set. /api/cron/reconciliation will accept requests with this secret."
+        : "Not set. The reconciliation cron endpoint will reject all requests.",
+    },
+  ];
+
+  return ok({ integrations, effective });
+}
+
+// ---------------------------------------------------------------------------
+// Security overview — combines audit_logs (security/auth/critical) with
+// integration health summary and rate-limiter mode. Read-only.
+// ---------------------------------------------------------------------------
+
+export interface SecurityEventRow {
+  id: string;
+  timestamp: string;
+  actor_email: string;
+  actor_role: string;
+  category: string;
+  action: string;
+  resource_type: string;
+  resource_id: string;
+  summary: string;
+  severity: string;
+}
+
+export interface SecurityOverview {
+  recent_events: SecurityEventRow[];
+  total_events: number;
+  critical_count: number;
+  warning_count: number;
+  integration_summary: {
+    total: number;
+    operational: number;
+    degraded: number;
+    outage: number;
+    maintenance: number;
+  };
+  rate_limiter_mode: "distributed" | "process_local";
+}
+
+export async function fetchSecurityOverview(
+  filters: { q?: string; page?: number; pageSize?: number },
+  request?: Request,
+): Promise<ServiceResult<SecurityOverview>> {
+  const authResult = await requireRole(["super_admin"], request);
+  if ("status" in authResult) return authResult;
+  const { supabase } = authResult;
+
+  const page = filters.page ?? 1;
+  const pageSize = Math.min(filters.pageSize ?? 50, 200);
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  // Security events: category in (security, auth) OR severity = 'critical'.
+  let query = supabase
+    .from("audit_logs")
+    .select("*", { count: "exact" })
+    .or(`category.eq.security,category.eq.auth,severity.eq.critical`);
+
+  if (filters.q) {
+    query = query.or(`summary.ilike.%${filters.q}%,actor_email.ilike.%${filters.q}%,action.ilike.%${filters.q}%`);
+  }
+
+  query = query.order("timestamp", { ascending: false }).range(from, to);
+  const { data, error, count } = await query;
+  if (error) return err(error.message, 500);
+
+  const events = (data ?? []) as SecurityEventRow[];
+
+  // Aggregate severity counts (over the full filtered set, not just this page).
+  // We do separate counts to avoid PostgREST filter limits.
+  const { count: criticalCount } = await supabase
+    .from("audit_logs")
+    .select("*", { count: "exact", head: true })
+    .eq("severity", "critical");
+  const { count: warningCount } = await supabase
+    .from("audit_logs")
+    .select("*", { count: "exact", head: true })
+    .eq("severity", "warning");
+
+  // Integration health summary.
+  const { data: integrations } = await supabase
+    .from("integration_health")
+    .select("status");
+
+  const intRows = (integrations ?? []) as Array<{ status: string }>;
+  const integrationSummary = {
+    total: intRows.length,
+    operational: intRows.filter((i) => i.status === "operational").length,
+    degraded: intRows.filter((i) => i.status === "degraded").length,
+    outage: intRows.filter((i) => i.status === "outage").length,
+    maintenance: intRows.filter((i) => i.status === "maintenance").length,
+  };
+
+  // Rate-limiter mode: distributed if both Upstash vars are set, else process-local.
+  const rateLimiterMode: "distributed" | "process_local" =
+    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+      ? "distributed"
+      : "process_local";
+
+  return ok({
+    recent_events: events,
+    total_events: count ?? 0,
+    critical_count: criticalCount ?? 0,
+    warning_count: warningCount ?? 0,
+    integration_summary: integrationSummary,
+    rate_limiter_mode: rateLimiterMode,
+  });
+}

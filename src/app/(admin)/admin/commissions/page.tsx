@@ -1,7 +1,16 @@
 "use client";
 
-import { UnavailablePage } from "@/components/shared/unavailable-page";
+import { CommissionsView } from "@/components/admin/commissions-view";
 
-export default function Page() {
-  return <UnavailablePage eyebrow="Platform configuration" title="Commissions" description="Commission settings are being connected to live data." />;
+/**
+ * /admin/commissions — super_admin view of the platform commission summary.
+ * Reuses the same shared component as /admin/finance/commissions.
+ */
+export default function AdminCommissionsPage() {
+  return (
+    <CommissionsView
+      eyebrow="Platform configuration"
+      breadcrumbs={[{ label: "Super Admin", href: "/admin" }, { label: "Commissions" }]}
+    />
+  );
 }

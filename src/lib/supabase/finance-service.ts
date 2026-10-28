@@ -573,3 +573,312 @@ export async function resolveReconciliation(
   }
   return ok({ newStatus: String(data ?? "") });
 }
+
+// ---------------------------------------------------------------------------
+// Detail fetches — single-record reads for finance detail pages.
+// All return 404 when the record does not exist (or RLS hides it).
+// ---------------------------------------------------------------------------
+
+export interface PayoutDetail {
+  payout: PayoutRow;
+  booking: { id: string; reference: string; property_id: string; properties?: { id: string; name: string } | null } | null;
+  ledger: Array<{
+    id: string;
+    entry_type: string;
+    reference: string;
+    debit_kobo: number;
+    credit_kobo: number;
+    description: string;
+    created_at: string;
+  }>;
+  audit: Array<{
+    id: string;
+    timestamp: string;
+    actor_email: string;
+    action: string;
+    summary: string;
+    severity: string;
+  }>;
+}
+
+export async function fetchPayoutById(
+  payoutId: string,
+  request?: Request,
+): Promise<ServiceResult<PayoutDetail>> {
+  const authResult = await requireRole(["finance_admin", "super_admin"], request);
+  if ("status" in authResult) return authResult;
+  const { supabase } = authResult;
+
+  const { data: payout, error } = await supabase
+    .from("payouts")
+    .select("*")
+    .eq("id", payoutId)
+    .single();
+  if (error) {
+    if (error.code === "PGRST116") return err("Payout not found", 404);
+    return err(error.message, 500);
+  }
+  if (!payout) return err("Payout not found", 404);
+
+  // Pull the related booking (with property name) — best-effort, not fatal.
+  let booking: PayoutDetail["booking"] = null;
+  if (payout.booking_id) {
+    const { data: b } = await supabase
+      .from("bookings")
+      .select("id, reference, property_id, properties ( id, name )")
+      .eq("id", payout.booking_id)
+      .single();
+    if (b) booking = b as PayoutDetail["booking"];
+  }
+
+  // Ledger entries linked to this payout.
+  const { data: ledger } = await supabase
+    .from("ledger_entries")
+    .select("id, entry_type, reference, debit_kobo, credit_kobo, description, created_at")
+    .eq("payout_id", payoutId)
+    .order("created_at", { ascending: "desc" })
+    .limit(20);
+
+  // Audit entries for this payout.
+  const { data: audit } = await supabase
+    .from("audit_logs")
+    .select("id, timestamp, actor_email, action, summary, severity")
+    .eq("resource_type", "payout")
+    .eq("resource_id", payoutId)
+    .order("timestamp", { ascending: false })
+    .limit(20);
+
+  return ok({
+    payout: payout as PayoutRow,
+    booking,
+    ledger: (ledger ?? []) as PayoutDetail["ledger"],
+    audit: (audit ?? []) as PayoutDetail["audit"],
+  });
+}
+
+export interface PaymentDetail {
+  payment: PaymentRow;
+  booking: { id: string; reference: string; property_id: string; properties?: { id: string; name: string } | null } | null;
+  refunds: Array<{
+    id: string;
+    reference: string;
+    amount_kobo: number;
+    status: string;
+    reason: string;
+    created_at: string;
+    reviewed_at: string | null;
+  }>;
+  ledger: Array<{
+    id: string;
+    entry_type: string;
+    reference: string;
+    debit_kobo: number;
+    credit_kobo: number;
+    description: string;
+    created_at: string;
+  }>;
+  audit: Array<{
+    id: string;
+    timestamp: string;
+    actor_email: string;
+    action: string;
+    summary: string;
+    severity: string;
+  }>;
+}
+
+export async function fetchPaymentById(
+  paymentId: string,
+  request?: Request,
+): Promise<ServiceResult<PaymentDetail>> {
+  const authResult = await requireRole(["finance_admin", "super_admin"], request);
+  if ("status" in authResult) return authResult;
+  const { supabase } = authResult;
+
+  const { data: payment, error } = await supabase
+    .from("payments")
+    .select("*, bookings ( id, reference, property_id, properties ( id, name ) )")
+    .eq("id", paymentId)
+    .single();
+  if (error) {
+    if (error.code === "PGRST116") return err("Transaction not found", 404);
+    return err(error.message, 500);
+  }
+  if (!payment) return err("Transaction not found", 404);
+
+  const p = payment as PaymentRow;
+  const booking = (p.bookings ?? null) as PaymentDetail["booking"];
+
+  // Refunds linked to this payment.
+  const { data: refunds } = await supabase
+    .from("refunds")
+    .select("id, reference, amount_kobo, status, reason, created_at, reviewed_at")
+    .eq("payment_id", paymentId)
+    .order("created_at", { ascending: false });
+
+  // Ledger entries linked to this payment.
+  const { data: ledger } = await supabase
+    .from("ledger_entries")
+    .select("id, entry_type, reference, debit_kobo, credit_kobo, description, created_at")
+    .eq("payment_id", paymentId)
+    .order("created_at", { ascending: "desc" })
+    .limit(20);
+
+  // Audit entries for this payment.
+  const { data: audit } = await supabase
+    .from("audit_logs")
+    .select("id, timestamp, actor_email, action, summary, severity")
+    .eq("resource_type", "payment")
+    .eq("resource_id", paymentId)
+    .order("timestamp", { ascending: false })
+    .limit(20);
+
+  return ok({
+    payment: p,
+    booking,
+    refunds: (refunds ?? []) as PaymentDetail["refunds"],
+    ledger: (ledger ?? []) as PaymentDetail["ledger"],
+    audit: (audit ?? []) as PaymentDetail["audit"],
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Disputes — real disputes table (created in 0001_schema.sql).
+// Read-only: no create/update RPCs exist, so we only expose listing + detail.
+// ---------------------------------------------------------------------------
+
+export interface DisputeRow {
+  id: string;
+  reference: string;
+  booking_id: string;
+  student_id: string;
+  landlord_id: string;
+  subject: string;
+  description: string;
+  status: string;
+  amount_kobo: number;
+  resolved_at: string | null;
+  resolved_by: string | null;
+  resolution_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function fetchDisputes(
+  filters: { status?: string; q?: string; page?: number; pageSize?: number },
+  request?: Request,
+): Promise<ServiceResult<{ items: DisputeRow[]; total: number }>> {
+  const authResult = await requireRole(["finance_admin", "super_admin"], request);
+  if ("status" in authResult) return authResult;
+  const { supabase } = authResult;
+
+  const page = filters.page ?? 1;
+  const pageSize = Math.min(filters.pageSize ?? 20, 100);
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = supabase.from("disputes").select("*", { count: "exact" });
+  if (filters.status && filters.status !== "all") query = query.eq("status", filters.status);
+  if (filters.q) query = query.or(`reference.ilike.%${filters.q}%,subject.ilike.%${filters.q}%`);
+  query = query.order("created_at", { ascending: false }).range(from, to);
+
+  const { data, error, count } = await query;
+  if (error) return err(error.message, 500);
+  return ok({ items: (data ?? []) as DisputeRow[], total: count ?? 0 });
+}
+
+// ---------------------------------------------------------------------------
+// Commission summary — derived from real persisted data.
+//
+// Definition (documented for clarity, NOT changed):
+//   - "Platform commission" is the platform_fee_kobo retained by NetLodge on
+//     each landlord payout. It is recorded at payout creation and is a fixed
+//     percentage of the gross_kobo (booking total minus any refunds).
+//   - "Accrued commission"  = sum of platform_fee_kobo across ALL payouts
+//     (regardless of status). This represents commission that has been earned
+//     but not yet released to the landlord.
+//   - "Paid commission"     = sum of platform_fee_kobo for settled payouts.
+//     The landlord has been paid their net share; the platform keeps this.
+//   - "Pending commission"  = accrued - paid (scheduled + in_flight payouts).
+//   - "Configured rate"     = `commission.default_rate` in platform_settings
+//     (a percentage, e.g. 5.5%). This is the rate applied to NEW payouts at
+//     creation time; it is NOT applied retroactively.
+//   - "Service fee" is separate — it is charged to the STUDENT on top of rent
+//     (booking.service_fee_rate, default 5%) and flows into gross_kobo. It is
+//     NOT counted as commission to avoid double-counting.
+//   - Paystack processing fees (payments.fee_kobo) are pass-through costs and
+//     are NOT commission.
+// ---------------------------------------------------------------------------
+
+export interface CommissionSummary {
+  configured_rate_percentage: number | null;
+  service_fee_rate_percentage: number | null;
+  accrued_commission_kobo: number;
+  paid_commission_kobo: number;
+  pending_commission_kobo: number;
+  payout_count_total: number;
+  payout_count_settled: number;
+  payout_count_pending: number;
+  recent_commission_ledger: Array<{
+    id: string;
+    reference: string;
+    description: string;
+    credit_kobo: number;
+    created_at: string;
+    booking_id: string | null;
+    payout_id: string | null;
+  }>;
+}
+
+export async function fetchCommissionSummary(
+  request?: Request,
+): Promise<ServiceResult<CommissionSummary>> {
+  const authResult = await requireRole(["finance_admin", "super_admin"], request);
+  if ("status" in authResult) return authResult;
+  const { supabase } = authResult;
+
+  // Configured rates from platform_settings.
+  const { data: settings } = await supabase
+    .from("platform_settings")
+    .select("key, value")
+    .in("key", ["commission.default_rate", "booking.service_fee_rate"]);
+
+  const settingsRows = (settings ?? []) as Array<{ key: string; value: string }>;
+  const commissionRate = settingsRows.find((s) => s.key === "commission.default_rate")?.value;
+  const serviceFeeRate = settingsRows.find((s) => s.key === "booking.service_fee_rate")?.value;
+
+  const configuredRate = commissionRate != null ? Number(commissionRate) : null;
+  const serviceFeeRatePct = serviceFeeRate != null ? Number(serviceFeeRate) : null;
+
+  // Accrued = sum of platform_fee_kobo across ALL payouts.
+  const { data: allPayouts } = await supabase
+    .from("payouts")
+    .select("platform_fee_kobo, status");
+
+  const payouts = (allPayouts ?? []) as Array<{ platform_fee_kobo: number; status: string }>;
+  const accrued = payouts.reduce((s, p) => s + Number(p.platform_fee_kobo || 0), 0);
+  const paid = payouts
+    .filter((p) => p.status === "settled")
+    .reduce((s, p) => s + Number(p.platform_fee_kobo || 0), 0);
+  const pending = accrued - paid;
+
+  // Recent commission ledger entries (entry_type='commission').
+  const { data: ledger } = await supabase
+    .from("ledger_entries")
+    .select("id, reference, description, credit_kobo, created_at, booking_id, payout_id")
+    .eq("entry_type", "commission")
+    .order("created_at", { ascending: false })
+    .limit(15);
+
+  return ok({
+    configured_rate_percentage: Number.isFinite(configuredRate) ? configuredRate : null,
+    service_fee_rate_percentage: Number.isFinite(serviceFeeRatePct) ? serviceFeeRatePct : null,
+    accrued_commission_kobo: accrued,
+    paid_commission_kobo: paid,
+    pending_commission_kobo: pending,
+    payout_count_total: payouts.length,
+    payout_count_settled: payouts.filter((p) => p.status === "settled").length,
+    payout_count_pending: payouts.filter((p) => p.status === "scheduled" || p.status === "in_flight").length,
+    recent_commission_ledger: (ledger ?? []) as CommissionSummary["recent_commission_ledger"],
+  });
+}
