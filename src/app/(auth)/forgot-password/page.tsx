@@ -59,13 +59,6 @@ export default function ForgotPasswordPage() {
             The link expires in 30 minutes.
           </p>
         </div>
-        <Card className="border-dashed bg-muted/30">
-          <CardContent className="p-3 text-xs text-muted-foreground">
-            <strong className="text-foreground">Demo mode:</strong> No email is actually sent. In
-            production, Supabase Auth sends a password reset email with a tokenised link to{" "}
-            <code>/reset-password?token=…</code>.
-          </CardContent>
-        </Card>
         <Button asChild variant="outline" className="w-full">
           <Link href="/login">
             <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />

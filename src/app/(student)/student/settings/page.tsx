@@ -126,13 +126,6 @@ export default function StudentSettingsPage() {
           </div>
         </CardContent>
       </Card>
-
-      <Card className="border-dashed bg-muted/30">
-        <CardContent className="flex items-start gap-2 p-3 text-xs text-muted-foreground">
-          <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span>Preferences are saved to local storage in demo mode. In production, they sync to your Supabase profile.</span>
-        </CardContent>
-      </Card>
     </div>
   );
 }

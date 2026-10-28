@@ -251,13 +251,6 @@ export default function RegisterPage() {
           Sign in
         </Link>
       </p>
-
-      <Card className="border-dashed bg-muted/30">
-        <CardContent className="p-3 text-xs text-muted-foreground">
-          <strong className="text-foreground">Demo mode:</strong> Registration creates a local
-          development session only. No email is sent and no real account is created.
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -10,17 +10,75 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/shared/page-components";
 import { useAuth } from "@/lib/auth/auth-context";
+import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 export default function StudentSecurityPage() {
-  const { session } = useAuth();
+  const { session, signOut } = useAuth();
+  const [currentPw, setCurrentPw] = React.useState("");
+  const [newPw, setNewPw] = React.useState("");
+  const [submitting, setSubmitting] = React.useState(false);
+
+  async function handlePasswordUpdate() {
+    if (!currentPw.trim() || !newPw.trim()) {
+      toast.error("Both fields are required");
+      return;
+    }
+    if (newPw.length < 8) {
+      toast.error("New password must be at least 8 characters");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({
+        password: newPw,
+      });
+      if (error) {
+        toast.error("Password update failed", { description: error.message });
+      } else {
+        toast.success("Password updated", {
+          description: "Your password has been changed. Please use the new password next time you sign in.",
+        });
+        setCurrentPw("");
+        setNewPw("");
+      }
+    } catch (e) {
+      toast.error("Could not update password", {
+        description: e instanceof Error ? e.message : "Please try again.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleSignOutAllDevices() {
+    setSubmitting(true);
+    try {
+      // Sign out from the current session, which invalidates the current
+      // refresh token. Other devices' sessions will expire when their
+      // access tokens expire (Supabase doesn't support global session
+      // revocation from the client SDK).
+      const supabase = createClient();
+      await supabase.auth.signOut({ scope: "global" });
+      toast.success("Signed out from all devices", {
+        description: "You'll need to sign in again on each device.",
+      });
+      await signOut();
+    } catch (e) {
+      toast.error("Could not sign out other devices");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader
         eyebrow="Security"
         title="Security settings"
-        description="Manage your password, two-factor authentication and active sessions."
+        description="Manage your password and active sessions."
       />
 
       {/* Password */}
@@ -35,16 +93,30 @@ export default function StudentSecurityPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="currentPw">Current password</Label>
-              <Input id="currentPw" type="password" placeholder="••••••••" />
+              <Input
+                id="currentPw"
+                type="password"
+                placeholder="••••••••"
+                value={currentPw}
+                onChange={(e) => setCurrentPw(e.target.value)}
+                autoComplete="current-password"
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="newPw">New password</Label>
-              <Input id="newPw" type="password" placeholder="••••••••" />
+              <Input
+                id="newPw"
+                type="password"
+                placeholder="••••••••"
+                value={newPw}
+                onChange={(e) => setNewPw(e.target.value)}
+                autoComplete="new-password"
+              />
+              <p className="text-xs text-muted-foreground">Minimum 8 characters</p>
             </div>
           </div>
-          <Button
-            onClick={() => toast.success("Password updated", { description: "Demo mode — no real backend." })}
-          >
+          <Button onClick={handlePasswordUpdate} disabled={submitting}>
+            {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Update password
           </Button>
         </CardContent>
@@ -64,7 +136,7 @@ export default function StudentSecurityPage() {
               <p className="text-sm font-medium">Authenticator app</p>
               <p className="text-xs text-muted-foreground">Use Google Authenticator or similar</p>
             </div>
-            <Badge variant="outline">Not enabled</Badge>
+            <Badge variant="outline">Not available</Badge>
           </div>
           <Separator />
           <div className="flex items-center justify-between">
@@ -72,11 +144,12 @@ export default function StudentSecurityPage() {
               <p className="text-sm font-medium">SMS verification</p>
               <p className="text-xs text-muted-foreground">Receive codes by SMS</p>
             </div>
-            <Badge variant="outline">Not enabled</Badge>
+            <Badge variant="outline">Not available</Badge>
           </div>
-          <Button variant="outline" onClick={() => toast.info("2FA setup", { description: "Demo mode — would launch a setup wizard." })}>
-            Enable 2FA
-          </Button>
+          <p className="text-xs text-muted-foreground">
+            Two-factor authentication is not yet available. We're working on adding TOTP-based 2FA
+            for enhanced account security.
+          </p>
         </CardContent>
       </Card>
 
@@ -91,48 +164,30 @@ export default function StudentSecurityPage() {
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <div>
-              <p className="text-sm font-medium">Current device</p>
-              <p className="text-xs text-muted-foreground">Chrome on macOS · Yaba, Lagos</p>
+              <p className="text-sm font-medium">This device</p>
+              <p className="text-xs text-muted-foreground">Signed in as {session?.email}</p>
             </div>
             <Badge className="bg-success/15 text-success">Active</Badge>
           </div>
-          <Button variant="outline" size="sm" onClick={() => toast.success("Signed out other devices")}>
+          <Button variant="outline" size="sm" onClick={handleSignOutAllDevices} disabled={submitting}>
+            {submitting ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : null}
             Sign out all other devices
           </Button>
-        </CardContent>
-      </Card>
-
-      {/* Danger zone */}
-      <Card className="border-destructive/30">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base text-destructive">
-            <AlertTriangle className="h-4 w-4" aria-hidden />
-            Danger zone
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Deleting your account is permanent. Your bookings will be cancelled and your data will be
-            removed after the retention period required by Nigerian financial regulations (6 years
-            for tax records).
+          <p className="text-xs text-muted-foreground">
+            This signs you out from all devices. You'll need to sign in again on each device.
           </p>
-          <Button
-            variant="outline"
-            className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-            onClick={() => toast.error("Account deletion", { description: "Demo mode — no real action taken." })}
-          >
-            Delete account
-          </Button>
         </CardContent>
       </Card>
 
+      {/* Security tips */}
       <Card className="border-dashed bg-muted/30">
         <CardContent className="flex items-start gap-2 p-3 text-xs text-muted-foreground">
           <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
           <span>
-            <strong className="text-foreground">Demo mode:</strong> Security actions are simulated.
-            In production, these flows use Supabase Auth's password update, MFA enrolment, and
-            session revocation endpoints.
+            <strong className="text-foreground">Security tips:</strong> Use a unique password
+            you don't use elsewhere. Never share your password with anyone — NetLodge staff will
+            never ask for it. If you suspect unauthorized access, change your password immediately
+            and sign out from all devices.
           </span>
         </CardContent>
       </Card>

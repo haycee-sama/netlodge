@@ -69,7 +69,7 @@ export default function LandlordDashboardPage() {
         <Card className="border-warning/30 bg-warning/5">
           <CardContent className="flex items-start gap-2 p-3 text-xs text-warning-foreground">
             <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-            <span>Demo mode — sign in with a real account to manage your properties.</span>
+            <span>Sign in with a landlord account to manage your properties.</span>
           </CardContent>
         </Card>
       )}

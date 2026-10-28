@@ -54,7 +54,7 @@ export default function StudentBookingsPage() {
       ) : !isSupabaseAuth ? (
         <EmptyState
           icon={<CalendarCheck className="h-5 w-5" aria-hidden />}
-          title="Demo mode — no real bookings"
+          title="No bookings yet"
           description="Sign in with a real account to view and create bookings."
           action={<Button asChild><Link href="/login">Sign in</Link></Button>}
         />

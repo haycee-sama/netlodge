@@ -145,7 +145,7 @@ export default function NewPropertyPage() {
       {!isSupabaseAuth && (
         <Card className="border-warning/30 bg-warning/5">
           <CardContent className="p-3 text-xs text-warning-foreground">
-            Demo mode — sign in with a real landlord account to create properties.
+            Sign in with a landlord account to create properties.
           </CardContent>
         </Card>
       )}

@@ -46,7 +46,7 @@ export default function LandlordPropertiesPage() {
       {!isSupabaseAuth && (
         <Card className="border-warning/30 bg-warning/5">
           <CardContent className="p-3 text-xs text-warning-foreground">
-            Demo mode — sign in with a real landlord account to manage properties.
+            Sign in with a landlord account to manage properties.
           </CardContent>
         </Card>
       )}

@@ -39,12 +39,26 @@ function ResetForm() {
     defaultValues: { token },
   });
 
-  async function onSubmit(_values: ResetPasswordInput) {
-    await new Promise((r) => setTimeout(r, 600));
-    setDone(true);
-    toast.success("Password updated", {
-      description: "You can now sign in with your new password.",
-    });
+  async function onSubmit(values: ResetPasswordInput) {
+    try {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({
+        password: values.password,
+      });
+      if (error) {
+        toast.error("Password update failed", { description: error.message });
+        return;
+      }
+      setDone(true);
+      toast.success("Password updated", {
+        description: "You can now sign in with your new password.",
+      });
+    } catch (e) {
+      toast.error("Could not update password", {
+        description: e instanceof Error ? e.message : "Please try again.",
+      });
+    }
   }
 
   if (!token) {
@@ -156,13 +170,6 @@ function ResetForm() {
           )}
         </Button>
       </form>
-
-      <Card className="border-dashed bg-muted/30">
-        <CardContent className="p-3 text-xs text-muted-foreground">
-          <strong className="text-foreground">Demo mode:</strong> Password reset is not connected to
-          a real authentication backend. The form simulates a successful update.
-        </CardContent>
-      </Card>
     </div>
   );
 }

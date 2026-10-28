@@ -87,7 +87,7 @@ export default function LandlordTransactionsPage() {
       ) : !isSupabaseAuth ? (
         <EmptyState
           icon={<Receipt className="h-5 w-5" aria-hidden />}
-          title="Demo mode — no real transactions"
+          title="No transactions yet"
           description="Sign in with a real landlord account to view your transactions."
         />
       ) : error ? (

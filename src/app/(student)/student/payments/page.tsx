@@ -83,7 +83,7 @@ export default function StudentPaymentsPage() {
       ) : !isSupabaseAuth ? (
         <EmptyState
           icon={<CreditCard className="h-5 w-5" aria-hidden />}
-          title="Demo mode — no real payments"
+          title="No payments yet"
           description="Sign in with a real account to view your payment history."
           action={<Button asChild><Link href="/login">Sign in</Link></Button>}
         />

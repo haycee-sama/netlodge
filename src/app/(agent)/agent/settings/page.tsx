@@ -56,7 +56,7 @@ export default function AgentSettingsPage() {
       <Card className="border-dashed bg-muted/30">
         <CardContent className="flex items-start gap-2 p-3 text-xs text-muted-foreground">
           <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span>Preferences are saved to local storage in demo mode.</span>
+          <span>Preferences are saved to your account.</span>
         </CardContent>
       </Card>
     </div>
