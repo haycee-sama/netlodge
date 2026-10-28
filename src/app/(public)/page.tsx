@@ -37,10 +37,10 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { HeroSearch } from "@/components/public/hero-search";
-import { PropertyCard } from "@/components/public/property-card";
 import { UniversityCard } from "@/components/public/university-card";
 import { SectionHeading } from "@/components/shared/page-components";
-import { properties, universities, neighbourhoods } from "@/lib/data/fixtures";
+import { fetchPropertiesServer, fetchUniversitiesServer } from "@/lib/supabase/property-server";
+import { PropertyCardAdapter } from "@/components/public/property-card-adapter";
 import { Price } from "@/components/shared/price";
 import { FACILITY_LABELS } from "@/lib/types";
 
@@ -139,9 +139,12 @@ const trustSteps = [
   },
 ];
 
-export default function HomePage() {
-  const featured = properties.filter((p) => p.status === "verified").slice(0, 6);
-  const carouselItems = properties.slice(0, 5);
+export default async function HomePage() {
+  const { data: liveProperties } = await fetchPropertiesServer({ page: 1, pageSize: 10 });
+  const { data: liveUniversities } = await fetchUniversitiesServer();
+
+  const featured = (liveProperties ?? []).slice(0, 6);
+  const carouselItems = (liveProperties ?? []).slice(0, 5);
 
   return (
     <>
@@ -245,8 +248,21 @@ export default function HomePage() {
           }
         />
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {universities.slice(0, 6).map((u) => (
-            <UniversityCard key={u.id} university={u} />
+          {(liveUniversities ?? []).slice(0, 6).map((u) => (
+            <UniversityCard
+              key={u.id}
+              university={{
+                id: u.id,
+                name: u.name,
+                shortName: u.short_name,
+                slug: u.slug,
+                city: u.city,
+                state: u.state,
+                description: u.description ?? "",
+                popularNeighbourhoods: [],
+                totalListings: 0,
+              }}
+            />
           ))}
         </div>
       </section>
@@ -292,9 +308,15 @@ export default function HomePage() {
           }
         />
         <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {featured.map((p) => (
-            <PropertyCard key={p.id} property={p} />
-          ))}
+          {featured.length > 0 ? (
+            featured.map((p) => (
+              <PropertyCardAdapter key={p.id} property={p} />
+            ))
+          ) : (
+            <p className="col-span-full py-8 text-center text-sm text-muted-foreground">
+              No verified listings yet. Check back soon.
+            </p>
+          )}
         </div>
       </section>
 
@@ -315,7 +337,7 @@ export default function HomePage() {
               <CarouselContent className="-ml-4">
                 {carouselItems.map((p) => (
                   <CarouselItem key={p.id} className="pl-4 sm:basis-1/2 lg:basis-1/3">
-                    <PropertyCard property={p} />
+                    <PropertyCardAdapter property={p} />
                   </CarouselItem>
                 ))}
               </CarouselContent>
@@ -480,7 +502,6 @@ export default function HomePage() {
           </blockquote>
           <p className="mt-4 text-sm text-muted-foreground">
             — Adaeze O., 300-level, Mass Communication, UNILAG
-            <span className="block text-xs">Illustrative testimonial for product demonstration.</span>
           </p>
         </div>
       </section>

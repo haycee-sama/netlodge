@@ -239,11 +239,9 @@ Full type definitions: `src/lib/types/index.ts`.
 
 ---
 
-## Demo data
+## Data
 
-All data in `src/lib/data/fixtures.ts` is **fictitious and clearly labelled**. No real properties, landlords, bookings, payments, verifications, reviews or partner relationships are represented. Properties, room identifiers, references and amounts are deterministic for repeatable UI testing.
-
-Switch to the production adapter by setting `NEXT_PUBLIC_REPOSITORY_ADAPTER=prod` and implementing `src/lib/repositories/prod-adapter.ts` per the contracts in `docs/integration-contracts.md`.
+All property listings, bookings, payments, and user records are stored in Supabase (PostgreSQL) with row-level security. The application reads from the live database in all environments — there is no demo mode or fixture fallback in production code paths. Test fixtures in `src/lib/data/` are used only by isolated integration test scripts and are never imported by production routes.
 
 ---
 
@@ -272,4 +270,4 @@ The frontend is feature-complete. Outstanding work for a production launch is do
 
 ## License
 
-© NetLodge Technologies Ltd. All rights reserved. Demo data is fictitious.
+© NetLodge Technologies Ltd. All rights reserved.

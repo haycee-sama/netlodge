@@ -1,17 +1,19 @@
 import * as React from "react";
 import Link from "next/link";
-import { GraduationCap, MapPin } from "lucide-react";
-import { universities } from "@/lib/data/fixtures";
+import { GraduationCap } from "lucide-react";
 import { UniversityCard } from "@/components/public/university-card";
 import { PageHeader, SectionHeading } from "@/components/shared/page-components";
 import { Badge } from "@/components/ui/badge";
+import { fetchUniversitiesServer } from "@/lib/supabase/property-server";
 
 export const metadata = {
   title: "Universities — browse accommodation by campus",
   alternates: { canonical: "/universities" },
 };
 
-export default function UniversitiesPage() {
+export default async function UniversitiesPage() {
+  const { data: universities, error } = await fetchUniversitiesServer();
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <PageHeader
@@ -19,11 +21,34 @@ export default function UniversitiesPage() {
         title="Universities on NetLodge"
         description="Find verified student accommodation around Nigeria's leading universities. Tap a campus to see neighbourhoods and listings."
       />
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {universities.map((u) => (
-          <UniversityCard key={u.id} university={u} />
-        ))}
-      </div>
+      {error ? (
+        <div className="mt-8 rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-center text-sm text-destructive">
+          Could not load universities. Please try again later.
+        </div>
+      ) : !universities || universities.length === 0 ? (
+        <div className="mt-8 rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          No universities are listed yet. Check back soon.
+        </div>
+      ) : (
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {universities.map((u) => (
+            <UniversityCard
+              key={u.id}
+              university={{
+                id: u.id,
+                name: u.name,
+                shortName: u.short_name,
+                slug: u.slug,
+                city: u.city,
+                state: u.state,
+                description: u.description ?? "",
+                popularNeighbourhoods: [],
+                totalListings: 0,
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       <div className="mt-16">
         <SectionHeading

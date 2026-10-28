@@ -102,10 +102,6 @@ export function SiteFooter() {
             All listings go through identity and ownership verification.
           </p>
         </div>
-        <p className="mt-3 text-xs text-muted-foreground/80">
-          Demo data on this site is fictitious and for illustration only — no
-          real properties, bookings, payments or endorsements are represented.
-        </p>
       </div>
     </footer>
   );

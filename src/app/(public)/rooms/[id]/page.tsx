@@ -85,8 +85,8 @@ export default function RoomDetailPage() {
       return;
     }
     if (!isSupabaseAuth) {
-      toast.error("Demo mode cannot create real bookings", {
-        description: "Please sign in with a real account to book a room.",
+      toast.error("Please sign in to book", {
+        description: "You need a NetLodge account to place a booking.",
       });
       return;
     }
@@ -289,7 +289,7 @@ export default function RoomDetailPage() {
 
               {isAuthenticated && !isSupabaseAuth && (
                 <p className="rounded-md bg-warning/10 p-2 text-xs text-warning-foreground">
-                  Demo mode cannot create real bookings. Sign in with a real account to book.
+                  Please sign in with a real account to book this room.
                 </p>
               )}
             </CardContent>
