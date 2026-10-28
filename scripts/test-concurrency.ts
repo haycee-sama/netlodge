@@ -38,8 +38,11 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
+import { assertTestDatabase } from "./_test-guard";
 
 try { config(); } catch {}
+
+assertTestDatabase("scripts/test-concurrency.ts");
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SECRET_KEY!;

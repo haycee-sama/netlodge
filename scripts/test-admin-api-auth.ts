@@ -17,8 +17,11 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
+import { assertTestDatabase } from "./_test-guard";
 
 try { config(); } catch {}
+
+assertTestDatabase("scripts/test-admin-api-auth.ts");
 
 const BASE_URL = process.env.TEST_BASE_URL ?? "http://localhost:3000";
 

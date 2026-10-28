@@ -16,8 +16,11 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
+import { assertTestDatabase } from "./_test-guard";
 
 try { config(); } catch {}
+
+assertTestDatabase("scripts/test-phase8-student-storage.ts");
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
