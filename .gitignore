@@ -53,3 +53,24 @@ prompt
 server.log
 # Skills directory
 /skills/
+
+# Platform infrastructure (not NetLodge code)
+/.zscripts/
+
+# Local SQLite database (app uses Supabase/Postgres)
+/db/
+
+# One-off upload artifacts (processed logos are in public/)
+/upload/
+
+# Tool output dumps
+/tool-results/
+
+# Duplicate migration file (supabase/migrations/ is authoritative)
+/supabase/combined_migration.sql
+
+# Caddy reverse proxy config (not used in Vercel deployment)
+/Caddyfile
+
+# Empty placeholder directory
+/mini-services/
