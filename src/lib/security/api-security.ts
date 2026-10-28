@@ -123,10 +123,10 @@ async function distributedRateLimit(key: string, options: RateLimitOptions): Pro
   // Use a 1-second window — the counter resets every second
   const windowKey = `${key}:${Math.floor(Date.now() / 1000)}`;
 
-  // Upstash REST API: INCR + EXPIRE in a single pipeline
+  // Upstash REST API pipeline: each command is an array [CMD, arg1, arg2, ...]
   const pipeline = [
-    { args: ["INCR", windowKey] },
-    { args: ["EXPIRE", windowKey, "2"] },
+    ["INCR", windowKey],
+    ["EXPIRE", windowKey, "2"],
   ];
 
   const res = await fetch(`${UPSTASH_URL}/pipeline`, {
