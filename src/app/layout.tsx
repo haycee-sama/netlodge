@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/shared/theme-provider";
 import { AuthProvider } from "@/lib/auth/auth-context";
 import { QueryProvider } from "@/components/shared/query-provider";
 import { ChatWidget } from "@/components/shared/chat-widget";
+import { GoogleAnalytics } from "@/components/shared/google-analytics";
 
 const sans = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -122,6 +123,7 @@ export default function RootLayout({
               <ChatWidget />
               <Toaster />
               <Sonner position="top-right" richColors closeButton />
+              <GoogleAnalytics />
             </AuthProvider>
           </QueryProvider>
         </ThemeProvider>

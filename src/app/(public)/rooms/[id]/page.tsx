@@ -76,7 +76,6 @@ export default function RoomDetailPage() {
   const isSupabaseAuth = session?.authenticated === true;
 
   async function handleBooking() {
-    console.log('[booking] handleBooking called, room:', !!room, 'session:', !!session, 'checkIn:', checkIn, 'isSupabaseAuth:', isSupabaseAuth);
     if (!room || !session) return;
     if (!checkIn) {
       toast.error("Choose a check-in date");
@@ -101,8 +100,6 @@ export default function RoomDetailPage() {
       const checkOut = new Date(checkIn);
       checkOut.setFullYear(checkOut.getFullYear() + 1);
 
-      console.log('[booking] calling createBooking with:', { unitId: room.id, checkIn, checkOut: checkOut.toISOString().slice(0, 10) });
-
       const result = await createBooking({
         studentId: session.userId,
         unitId: room.id,
@@ -115,8 +112,6 @@ export default function RoomDetailPage() {
         serviceFeeKobo: serviceFee,
         totalKobo: total,
       });
-
-      console.log('[booking] result:', result);
 
       if (result.error) {
         toast.error("Booking failed", { description: result.error });
@@ -266,10 +261,7 @@ export default function RoomDetailPage() {
                 </span>
               </label>
 
-              <AlertDialog open={confirmOpen} onOpenChange={(open) => {
-                console.log('[booking] onOpenChange:', open, 'submitting:', submitting);
-                if (!submitting) setConfirmOpen(open);
-              }}>
+              <AlertDialog open={confirmOpen} onOpenChange={(open) => { if (!submitting) setConfirmOpen(open); }}>
                 <AlertDialogTrigger asChild>
                   <Button className="w-full" disabled={!isAvailable || !accept || submitting} onClick={() => setConfirmOpen(true)}>
                     <Lock className="mr-2 h-4 w-4" aria-hidden />
