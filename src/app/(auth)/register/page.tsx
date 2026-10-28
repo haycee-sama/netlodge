@@ -74,14 +74,13 @@ export default function RegisterPage() {
         password: values.password,
         firstName: values.firstName,
         lastName: values.lastName,
+        role: values.role,
       });
 
       if (result.success) {
-        // The handle_new_user trigger auto-creates a profile with the 'student' role.
-        // For non-student roles, the user gets student role initially and must be
-        // upgraded by an admin after verification.
+        const roleLabel = values.role.charAt(0).toUpperCase() + values.role.slice(1);
         toast.success("Account created", {
-          description: "Welcome to NetLodge. Please check your email to verify your account.",
+          description: `Welcome to NetLodge as a ${roleLabel}. Please check your email to verify your account.`,
         });
         router.push("/login?registered=true");
         return;

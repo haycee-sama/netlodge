@@ -52,7 +52,15 @@ export async function signInWithEmail(
       .select("role")
       .eq("user_id", data.user.id);
 
-    const role: UserRole = (roles?.[0]?.role as UserRole) ?? "student";
+    // Prioritize non-student roles: if a user has both 'student' and
+    // 'landlord' (or manager/agent), use the non-student role so they
+    // land on the correct dashboard. Admin roles take priority over all.
+    const rolePriority = [
+      "super_admin", "finance_admin", "support_staff", "verification_officer",
+      "landlord", "manager", "agent", "student",
+    ];
+    const userRoles = (roles ?? []).map((r: any) => r.role as string);
+    const role: UserRole = (rolePriority.find((r) => userRoles.includes(r)) ?? "student") as UserRole;
 
     return {
       success: true,
@@ -89,6 +97,7 @@ export async function signUpWithEmail(input: {
         data: {
           first_name: input.firstName,
           last_name: input.lastName,
+          role: input.role ?? "student",
         },
       },
     });
