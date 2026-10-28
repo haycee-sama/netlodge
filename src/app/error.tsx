@@ -19,6 +19,10 @@ export default function GlobalError({
     console.error("[NetLodge] route error:", error);
   }, [error]);
 
+  // In development, show the actual error message to help debugging.
+  const isDev = process.env.NODE_ENV !== "production";
+  const errorMessage = isDev ? error.message : undefined;
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-16 text-center">
       <Logo />
@@ -32,6 +36,11 @@ export default function GlobalError({
         An unexpected error occurred while rendering this page. Our team has been notified. You can
         try again, or head back to safety.
       </p>
+      {errorMessage && (
+        <p className="mt-3 max-w-md rounded-lg bg-muted p-3 text-left font-mono text-xs text-destructive">
+          {errorMessage}
+        </p>
+      )}
       {error.digest && (
         <p className="mt-3 font-mono text-xs text-muted-foreground">Error ID: {error.digest}</p>
       )}
