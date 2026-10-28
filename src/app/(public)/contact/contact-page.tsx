@@ -36,14 +36,40 @@ export function ContactPage() {
 
   const category = watch("category");
 
-  async function onSubmit(_values: ContactInput) {
-    // In production this calls a server action that emails support.
-    await new Promise((r) => setTimeout(r, 600));
-    setSubmitted(true);
-    toast.success("Message sent", {
-      description: "Our team will respond within one business day.",
-    });
-    reset();
+  async function onSubmit(values: ContactInput) {
+    // Store the contact message in the database via the support_tickets table.
+    // This creates a real ticket that support staff can see in their dashboard.
+    try {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        // Authenticated user — create a support ticket
+        const { error } = await supabase.rpc("create_student_ticket", {
+          p_subject: values.subject,
+          p_category: values.category,
+          p_message: `${values.message}\n\n— From: ${values.name} (${values.email})`,
+          p_priority: "medium",
+        });
+        if (error) throw error;
+      } else {
+        // Anonymous user — we can't create a ticket without auth.
+        // In production, this should use a server action or edge function
+        // to send an email. For now, store the attempt honestly.
+        throw new Error("Please sign in to submit a support ticket, or email us directly at hello@netlodge.com");
+      }
+
+      setSubmitted(true);
+      toast.success("Message sent", {
+        description: "Our team will respond within one business day.",
+      });
+      reset();
+    } catch (e) {
+      toast.error("Could not send message", {
+        description: e instanceof Error ? e.message : "Please try again or email hello@netlodge.com",
+      });
+    }
   }
 
   return (
