@@ -31,10 +31,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { PropertyCard } from "@/components/public/property-card";
+import { PropertyCardAdapter } from "@/components/public/property-card-adapter";
 import { PageHeader, EmptyState } from "@/components/shared/page-components";
-import { fetchUniversities, fetchNeighbourhoods, fetchProperties } from "@/lib/supabase/property-service";
-import type { Property, SearchFilters, RentableUnitType, Facility } from "@/lib/types";
+import { fetchUniversities, fetchNeighbourhoods, fetchProperties, type PropertyWithRelations } from "@/lib/supabase/property-service";
+import type { SearchFilters, RentableUnitType, Facility } from "@/lib/types";
 import { FACILITY_LABELS, UNIT_TYPE_LABELS } from "@/lib/types";
 import { ngnToKobo } from "@/lib/utils/format";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,7 +52,7 @@ export function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = React.useState(true);
-  const [results, setResults] = React.useState<Property[]>([]);
+  const [results, setResults] = React.useState<PropertyWithRelations[]>([]);
   const [total, setTotal] = React.useState(0);
   const [facets, setFacets] = React.useState<{
     unitTypes: { value: RentableUnitType; count: number }[];
@@ -145,8 +145,8 @@ export function SearchPageContent() {
           setResults([]);
           setTotal(0);
         } else if (res.data) {
-          setResults(res.data as any);
-          setTotal(res.data.total ?? res.data.items?.length ?? 0);
+          setResults(res.data.items);
+          setTotal(res.data.total ?? 0);
         }
         setFacets(null); // facets not available from live API yet
         setLoading(false);
@@ -431,7 +431,7 @@ export function SearchPageContent() {
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {results.map((p) => (
-                <PropertyCard key={p.id} property={p} />
+                <PropertyCardAdapter key={p.id} property={p} />
               ))}
             </div>
           )}
