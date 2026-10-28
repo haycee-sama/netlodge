@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Script from "next/script";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 /**
  * Google Analytics 4 integration.
@@ -41,17 +41,14 @@ function shouldTrack(pathname: string): boolean {
 
 export function GoogleAnalytics() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   // Track page views on route changes
   React.useEffect(() => {
     if (!GA_MEASUREMENT_ID || !shouldTrack(pathname)) return;
     if (typeof window.gtag === "function") {
-      const search = searchParams.toString();
-      const url = pathname + (search ? `?${search}` : "");
-      window.gtag("config", GA_MEASUREMENT_ID, { page_path: url });
+      window.gtag("config", GA_MEASUREMENT_ID, { page_path: pathname });
     }
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   if (!GA_MEASUREMENT_ID) return null;
 

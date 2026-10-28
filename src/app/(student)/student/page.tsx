@@ -3,15 +3,8 @@
 import * as React from "react";
 import Link from "next/link";
 import {
-  Search,
-  Heart,
-  CalendarCheck,
-  CreditCard,
-  Bell,
-  LifeBuoy,
-  ArrowRight,
-  Building2,
-  Sparkles,
+  Search, Heart, CalendarCheck, CreditCard, Bell, LifeBuoy,
+  ArrowRight, Building2, Sparkles, Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,223 +13,178 @@ import { PageHeader, StatCard, EmptyState, SectionHeading } from "@/components/s
 import { BookingStatusBadge } from "@/components/shared/status-badges";
 import { Price } from "@/components/shared/price";
 import { useAuth } from "@/lib/auth/auth-context";
-import { getRepositories } from "@/lib/repositories";
-import { bookings as allBookings, notifications as allNotifications, properties as allProperties } from "@/lib/data/fixtures";
+import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime, formatNgn } from "@/lib/utils/format";
-import type { Booking, AppNotification, Property } from "@/lib/types";
+
+interface StudentBooking {
+  id: string;
+  reference: string;
+  status: string;
+  total_kobo: number;
+  outstanding_kobo: number;
+  check_in: string;
+  check_out: string;
+  created_at: string;
+  rentable_units?: { identifier: string };
+  properties?: { name: string; slug: string };
+}
+
+interface StudentNotification {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  read: boolean;
+  created_at: string;
+  href: string | null;
+}
+
+interface SavedProperty {
+  id: string;
+  property_id: string;
+  properties?: { id: string; name: string; slug: string; city: string; state: string; price_from_kobo: number };
+}
 
 export default function StudentDashboardPage() {
   const { session } = useAuth();
-  const [bookings, setBookings] = React.useState<Booking[]>([]);
-  const [notifications, setNotifications] = React.useState<AppNotification[]>([]);
-  const [saved, setSaved] = React.useState<Property[]>([]);
+  const [bookings, setBookings] = React.useState<StudentBooking[]>([]);
+  const [notifications, setNotifications] = React.useState<StudentNotification[]>([]);
+  const [savedCount, setSavedCount] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
+  const isSupabaseAuth = session?.authenticated === true;
 
   React.useEffect(() => {
-    if (!session) return;
-    const userId = session.userId;
-    // For demo, the dev fixtures are tagged to dev_student_1.
-    const effectiveUserId = userId || "dev_student_1";
+    if (!isSupabaseAuth) { setLoading(false); return; }
+    const supabase = createClient();
     Promise.all([
-      getRepositories().bookings.listByStudent(effectiveUserId),
-      getRepositories().notifications.listByUser(effectiveUserId),
-      getRepositories().savedProperties.listByUser(effectiveUserId),
-    ]).then(([b, n, s]) => {
-      setBookings(b);
-      setNotifications(n);
-      const savedProps = allProperties.filter((p) => s.some((sp) => sp.propertyId === p.id));
-      setSaved(savedProps);
+      supabase.from("bookings")
+        .select(`*, rentable_units(identifier), properties(name, slug)`)
+        .eq("student_id", session!.userId)
+        .order("created_at", { ascending: false })
+        .limit(5),
+      supabase.from("notifications")
+        .select("*")
+        .eq("user_id", session!.userId)
+        .order("created_at", { ascending: false })
+        .limit(5),
+      supabase.from("saved_properties")
+        .select("id, property_id, properties(id, name, slug, city, state, price_from_kobo)")
+        .eq("user_id", session!.userId)
+        .order("created_at", { ascending: false })
+        .limit(5),
+    ]).then(([bRes, nRes, sRes]) => {
+      setBookings((bRes.data as StudentBooking[]) ?? []);
+      setNotifications((nRes.data as StudentNotification[]) ?? []);
+      setSavedCount(sRes.data?.length ?? 0);
       setLoading(false);
     });
-  }, [session]);
+  }, [session, isSupabaseAuth]);
 
-  const activeBookings = bookings.filter((b) =>
-    ["pending_payment", "payment_initiated", "confirmed", "active"].includes(b.status),
-  );
-  const unreadNotifications = notifications.filter((n) => !n.read).length;
+  if (!isSupabaseAuth) {
+    return (
+      <div className="mx-auto max-w-7xl space-y-6">
+        <PageHeader eyebrow="Dashboard" title="Student dashboard" />
+        <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">
+          Sign in with a real account to view your dashboard.
+        </CardContent></Card>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  }
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader
-        eyebrow={`Welcome${session ? `, ${session.firstName}` : ""}`}
-        title="Student dashboard"
-        description="Manage your bookings, payments, saved properties and notifications in one place."
-        actions={
-          <Button asChild>
-            <Link href="/student/search">
-              <Search className="mr-2 h-4 w-4" aria-hidden />
-              Find accommodation
-            </Link>
-          </Button>
-        }
+        eyebrow="Dashboard"
+        title={`Welcome, ${session?.firstName}`}
+        description="Manage your bookings, payments, saved properties, and support tickets."
       />
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Active bookings"
-          value={activeBookings.length}
-          hint="Holds, confirmed & active"
-          icon={<CalendarCheck className="h-4 w-4" aria-hidden />}
-        />
-        <StatCard
-          label="Saved properties"
-          value={saved.length}
-          hint="Tap heart on any listing"
-          icon={<Heart className="h-4 w-4" aria-hidden />}
-        />
-        <StatCard
-          label="Unread notifications"
-          value={unreadNotifications}
-          hint="Updated just now"
-          icon={<Bell className="h-4 w-4" aria-hidden />}
-        />
-        <StatCard
-          label="Total spent"
-          value={formatNgn(bookings.reduce((s, b) => s + b.paidKobo, 0))}
-          hint="Lifetime on NetLodge"
-          icon={<CreditCard className="h-4 w-4" aria-hidden />}
-        />
+        <StatCard label="Active bookings" value={bookings.filter((b) => ["confirmed", "active", "pending_payment"].includes(b.status)).length} icon={<CalendarCheck className="h-4 w-4" aria-hidden />} />
+        <StatCard label="Saved properties" value={savedCount} icon={<Heart className="h-4 w-4" aria-hidden />} />
+        <StatCard label="Unread notifications" value={unreadCount} icon={<Bell className="h-4 w-4" aria-hidden />} />
+        <StatCard label="Open support" value={0} icon={<LifeBuoy className="h-4 w-4" aria-hidden />} />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Bookings */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Recent bookings</CardTitle>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/student/bookings">View all</Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">Loading bookings…</p>
-            ) : bookings.length === 0 ? (
-              <EmptyState
-                icon={<CalendarCheck className="h-5 w-5" aria-hidden />}
-                title="No bookings yet"
-                description="Find a verified room and place a hold to get started."
-                action={
-                  <Button asChild size="sm">
-                    <Link href="/student/search">Browse rooms</Link>
-                  </Button>
-                }
-              />
-            ) : (
+      {/* Recent bookings */}
+      <section>
+        <SectionHeading
+          title="Recent bookings"
+          action={<Button asChild variant="ghost" size="sm"><Link href="/student/bookings">View all</Link></Button>}
+        />
+        {bookings.length === 0 ? (
+          <EmptyState className="mt-4" icon={<CalendarCheck className="h-5 w-5" aria-hidden />} title="No bookings yet" description="Browse properties and place a hold to start your first booking." action={<Button asChild><Link href="/properties">Browse properties</Link></Button>} />
+        ) : (
+          <Card className="mt-4">
+            <CardContent className="p-0">
               <ul className="divide-y divide-border">
-                {bookings.slice(0, 4).map((b) => {
-                  const property = allProperties.find((p) => p.id === b.propertyId);
-                  return (
-                    <li key={b.id}>
-                      <Link
-                        href={`/student/bookings/${b.id}`}
-                        className="flex items-center justify-between gap-3 py-3 hover:bg-muted/40"
-                      >
-                        <div className="min-w-0 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <p className="truncate font-medium">{property?.name ?? "Property"}</p>
-                            <BookingStatusBadge status={b.status} />
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            {b.reference} · {formatRelativeTime(b.createdAt)}
-                          </p>
-                        </div>
-                        <Price kobo={b.totalKobo} compact />
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Notifications */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Notifications</CardTitle>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/student/notifications">All</Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {notifications.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">No notifications</p>
-            ) : (
-              <ul className="space-y-3">
-                {notifications.slice(0, 4).map((n) => (
-                  <li key={n.id} className="space-y-0.5">
-                    <div className="flex items-start gap-2">
-                      <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${n.read ? "bg-muted-foreground/40" : "bg-primary"}`} aria-hidden />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium leading-tight">{n.title}</p>
-                        <p className="text-xs text-muted-foreground line-clamp-2">{n.body}</p>
-                        <p className="text-xs text-muted-foreground/70">{formatRelativeTime(n.createdAt)}</p>
+                {bookings.map((b) => (
+                  <li key={b.id}>
+                    <Link href={`/student/bookings/${b.id}`} className="flex items-center justify-between gap-3 p-4 hover:bg-muted/40">
+                      <div className="min-w-0 space-y-1">
+                        <p className="font-medium">{b.properties?.name ?? "Property"}</p>
+                        <p className="text-xs text-muted-foreground">{b.reference} · {formatRelativeTime(b.created_at)}</p>
                       </div>
-                    </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <Price kobo={b.total_kobo} />
+                          <p className="text-xs text-muted-foreground">{b.outstanding_kobo > 0 ? "Outstanding" : "Paid"}</p>
+                        </div>
+                        <BookingStatusBadge status={b.status as any} />
+                      </div>
+                    </Link>
                   </li>
                 ))}
               </ul>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Saved properties */}
-      <section>
-        <SectionHeading
-          title="Saved properties"
-          action={
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/student/saved">View all</Link>
-            </Button>
-          }
-        />
-        {saved.length === 0 ? (
-          <EmptyState
-            className="mt-4"
-            icon={<Heart className="h-5 w-5" aria-hidden />}
-            title="No saved properties"
-            description="Tap the heart icon on any listing to save it for later."
-            action={
-              <Button asChild size="sm">
-                <Link href="/student/search">Browse listings</Link>
-              </Button>
-            }
-          />
-        ) : (
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {saved.slice(0, 4).map((p) => (
-              <Card key={p.id}>
-                <CardContent className="p-4">
-                  <Link href={`/properties/${p.slug}`} className="space-y-1">
-                    <p className="font-medium leading-tight hover:text-primary">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">{p.publicAddressLine}</p>
-                    <Price kobo={p.priceFromKobo} fromLabel period="/yr" />
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+            </CardContent>
+          </Card>
         )}
       </section>
+
+      {/* Recent notifications */}
+      {notifications.length > 0 && (
+        <section>
+          <SectionHeading title="Recent notifications" action={<Button asChild variant="ghost" size="sm"><Link href="/student/notifications">View all</Link></Button>} />
+          <Card className="mt-4">
+            <CardContent className="p-0">
+              <ul className="divide-y divide-border">
+                {notifications.map((n) => (
+                  <li key={n.id} className={`flex items-start gap-3 p-4 ${!n.read ? "bg-primary/5" : ""}`}>
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <p className={`text-sm ${!n.read ? "font-semibold" : "font-medium"}`}>{n.title}</p>
+                      <p className="text-xs text-muted-foreground">{n.body}</p>
+                      <p className="text-xs text-muted-foreground">{formatRelativeTime(n.created_at)}</p>
+                    </div>
+                    {!n.read && <Badge variant="outline" className="text-xs text-primary">New</Badge>}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       {/* Quick links */}
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { href: "/student/search", icon: Search, label: "Find accommodation" },
+          { href: "/student/search", icon: Search, label: "Search accommodation" },
+          { href: "/student/saved", icon: Heart, label: "Saved properties" },
           { href: "/student/payments", icon: CreditCard, label: "Payment history" },
-          { href: "/student/support", icon: LifeBuoy, label: "Open a ticket" },
-          { href: "/student/profile", icon: Sparkles, label: "Complete profile" },
+          { href: "/student/support", icon: LifeBuoy, label: "Get support" },
         ].map((q) => (
           <Link key={q.href} href={q.href}>
             <Card className="h-full transition-all hover:shadow-md hover:-translate-y-0.5">
               <CardContent className="flex items-center gap-3 p-4">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <q.icon className="h-4 w-4" aria-hidden />
-                </div>
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary"><q.icon className="h-4 w-4" aria-hidden /></div>
                 <p className="flex-1 text-sm font-medium">{q.label}</p>
-                <ArrowRight className="h-4 w-4 text-muted-foreground" aria-hidden />
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
               </CardContent>
             </Card>
           </Link>

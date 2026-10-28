@@ -12,7 +12,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * If Supabase is unreachable, protected routes redirect to /login (fail
  * closed — never grant access on auth failure).
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   if (
     pathname.startsWith("/_next/") ||
