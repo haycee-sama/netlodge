@@ -3,11 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, BedDouble, DoorOpen, Heart } from "lucide-react";
+import { MapPin, BedDouble, DoorOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Price } from "@/components/shared/price";
 import { VerificationBadge } from "@/components/shared/status-badges";
 import type { Property } from "@/lib/types";
@@ -55,19 +54,8 @@ export function PropertyCard({ property, className, variant = "default" }: Prope
               </Badge>
             )}
           </div>
-          <Button
-            type="button"
-            variant="secondary"
-            size="icon"
-            className="absolute right-3 top-3 h-8 w-8 rounded-full bg-background/90 shadow-sm backdrop-blur-sm hover:bg-background"
-            aria-label="Save property"
-            onClick={(e) => {
-              e.preventDefault();
-              // Saved-property toggle handled client-side by SavedButton in student app.
-            }}
-          >
-            <Heart className="h-4 w-4" aria-hidden />
-          </Button>
+          {/* Save-property toggle — only rendered for authenticated students.
+              The shared SavedButton component handles the actual toggle. */}
         </div>
       </Link>
       <CardContent className={cn("space-y-2", variant === "compact" ? "p-3" : "p-4")}>

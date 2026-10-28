@@ -76,7 +76,7 @@ function LoginForm() {
       </div>
 
       {authError && (
-        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+        <div role="alert" className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <span>{authError}</span>
         </div>
@@ -96,7 +96,7 @@ function LoginForm() {
               {...register("email")}
             />
           </div>
-          {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+          {errors.email && <p role="alert" className="text-xs text-destructive">{errors.email.message}</p>}
         </div>
 
         <div className="space-y-1.5">
@@ -125,7 +125,7 @@ function LoginForm() {
               {showPw ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
             </button>
           </div>
-          {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+          {errors.password && <p role="alert" className="text-xs text-destructive">{errors.password.message}</p>}
         </div>
 
         <label className="flex items-center gap-2 text-sm text-muted-foreground" htmlFor="remember">

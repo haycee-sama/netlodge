@@ -122,3 +122,30 @@ export async function fetchPropertiesServer(params: {
     };
   }
 }
+
+/**
+ * Fetch a single verified property by slug for server-side rendering
+ * (used by generateMetadata on /properties/[slug]).
+ * Returns only public fields — no landlord PII.
+ */
+export async function fetchPropertyBySlugServer(
+  slug: string,
+): Promise<{ data: { name: string; slug: string; city: string; state: string; public_address_line: string; description: string | null; type: string | null } | null; error: string | null }> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("properties")
+      .select("name, slug, city, state, public_address_line, description, type")
+      .eq("slug", slug)
+      .eq("status", "verified")
+      .eq("verification_status", "approved")
+      .single();
+    if (error) return { data: null, error: error.message };
+    return { data: data as any, error: null };
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : "Failed to fetch property",
+    };
+  }
+}

@@ -109,7 +109,7 @@ export default function RegisterPage() {
       </div>
 
       {authError && (
-        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+        <div role="alert" className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <span>{authError}</span>
         </div>
@@ -152,12 +152,12 @@ export default function RegisterPage() {
               <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
               <Input id="firstName" className="pl-9" placeholder="Adaeze" {...register("firstName")} />
             </div>
-            {errors.firstName && <p className="text-xs text-destructive">{errors.firstName.message}</p>}
+            {errors.firstName && <p role="alert" className="text-xs text-destructive">{errors.firstName.message}</p>}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="lastName">Last name</Label>
             <Input id="lastName" placeholder="Okonkwo" {...register("lastName")} />
-            {errors.lastName && <p className="text-xs text-destructive">{errors.lastName.message}</p>}
+            {errors.lastName && <p role="alert" className="text-xs text-destructive">{errors.lastName.message}</p>}
           </div>
         </div>
 
@@ -167,7 +167,7 @@ export default function RegisterPage() {
             <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
             <Input id="email" type="email" autoComplete="email" className="pl-9" placeholder="you@example.com" {...register("email")} />
           </div>
-          {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+          {errors.email && <p role="alert" className="text-xs text-destructive">{errors.email.message}</p>}
         </div>
 
         <div className="space-y-1.5">
@@ -176,7 +176,7 @@ export default function RegisterPage() {
             <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
             <Input id="phone" type="tel" autoComplete="tel" className="pl-9" placeholder="+234 800 000 0000" {...register("phone")} />
           </div>
-          {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
+          {errors.phone && <p role="alert" className="text-xs text-destructive">{errors.phone.message}</p>}
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -196,7 +196,7 @@ export default function RegisterPage() {
                 {showPw ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
               </button>
             </div>
-            {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+            {errors.password && <p role="alert" className="text-xs text-destructive">{errors.password.message}</p>}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="confirmPassword">Confirm password</Label>
@@ -214,7 +214,7 @@ export default function RegisterPage() {
                 {showConfirm ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
               </button>
             </div>
-            {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>}
+            {errors.confirmPassword && <p role="alert" className="text-xs text-destructive">{errors.confirmPassword.message}</p>}
           </div>
         </div>
 
@@ -230,7 +230,7 @@ export default function RegisterPage() {
             <Link href="/cookies" className="text-primary hover:underline">Cookie Policy</Link>.
           </span>
         </label>
-        {errors.acceptTerms && <p className="-mt-3 text-xs text-destructive">{errors.acceptTerms.message}</p>}
+        {errors.acceptTerms && <p role="alert" className="-mt-3 text-xs text-destructive">{errors.acceptTerms.message}</p>}
 
         <Button type="submit" className="w-full" size="lg" disabled={submitting}>
           {submitting ? (

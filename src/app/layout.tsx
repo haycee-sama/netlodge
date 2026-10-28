@@ -29,7 +29,7 @@ const display = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://netlodge.example";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://netlodge.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -64,12 +64,21 @@ export const metadata: Metadata = {
     title: "NetLodge — Verified student accommodation in Nigeria",
     description:
       "Discover, compare and book verified student accommodation around Nigerian universities.",
+    images: [
+      {
+        url: "/netlodge-mark.svg",
+        width: 1200,
+        height: 630,
+        alt: "NetLodge — Student Accommodation, Simplified.",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "NetLodge — Verified student accommodation in Nigeria",
     description:
       "Discover, compare and book verified student accommodation around Nigerian universities.",
+    images: ["/netlodge-mark.svg"],
   },
   robots: {
     index: true,

@@ -17,7 +17,6 @@ import {
   Star,
   Lock,
   ChevronRight,
-  Quote,
   ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -182,12 +181,12 @@ export default async function HomePage() {
               </div>
               <dl className="grid grid-cols-3 gap-4 pt-4 text-sm">
                 <div className="space-y-0.5">
-                  <dt className="text-muted-foreground">Verified listings</dt>
-                  <dd className="font-display text-2xl font-bold">100%</dd>
+                  <dt className="text-muted-foreground">Listings</dt>
+                  <dd className="font-display text-2xl font-bold">Verified</dd>
                 </div>
                 <div className="space-y-0.5">
-                  <dt className="text-muted-foreground">Rooms listed</dt>
-                  <dd className="font-display text-2xl font-bold">1,200+</dd>
+                  <dt className="text-muted-foreground">Bookable</dt>
+                  <dd className="font-display text-2xl font-bold">Per room</dd>
                 </div>
                 <div className="space-y-0.5">
                   <dt className="text-muted-foreground">Universities</dt>
@@ -492,17 +491,27 @@ export default async function HomePage() {
         </Card>
       </section>
 
-      {/* ------------------------------------------------------- Testimonial */}
+      {/* ------------------------------------------------------- How it works CTA */}
       <section className="border-y border-border bg-card/30">
         <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
-          <Quote className="mx-auto h-10 w-10 text-primary/40" aria-hidden />
-          <blockquote className="mt-4 font-display text-xl font-medium leading-relaxed text-balance sm:text-2xl">
-            “I used to inspect five hostels in person before trusting one. With NetLodge I could see
-            the actual room, the actual price, and the verified landlord before I ever left my room.”
-          </blockquote>
-          <p className="mt-4 text-sm text-muted-foreground">
-            — Adaeze O., 300-level, Mass Communication, UNILAG
+          <h2 className="font-display text-2xl font-bold tracking-tight text-balance sm:text-3xl">
+            Ready to find your student home?
+          </h2>
+          <p className="mt-3 text-base text-muted-foreground text-pretty">
+            Browse verified rooms around your campus, inspect facilities online,
+            and book the actual unit you'll live in — not just the building.
           </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Button asChild size="lg">
+              <Link href="/search">
+                <Search className="mr-2 h-4 w-4" aria-hidden />
+                Browse accommodation
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link href="/how-it-works">How it works</Link>
+            </Button>
+          </div>
         </div>
       </section>
 

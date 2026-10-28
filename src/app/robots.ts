@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://netlodge.example";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://netlodge.vercel.app";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -13,6 +13,7 @@ export default function robots(): MetadataRoute.Robots {
           "/landlord",
           "/manager",
           "/agent",
+          "/admin",
           "/auth",
           "/api",
         ],

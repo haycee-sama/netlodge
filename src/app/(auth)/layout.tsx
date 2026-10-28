@@ -1,8 +1,13 @@
 import * as React from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Logo } from "@/components/shared/logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { ShieldCheck, DoorOpen, BadgeCheck, Users } from "lucide-react";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
