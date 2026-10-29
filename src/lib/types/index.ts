@@ -448,13 +448,14 @@ export type RentableUnitStatus =
   | "maintenance"
   | "off_market";
 
-export type RentalPeriod = "annual" | "biannual" | "quarterly" | "monthly";
+export type RentalPeriod = "annual" | "biannual" | "quarterly" | "monthly" | "semester";
 
 export const RENTAL_PERIOD_LABELS: Record<RentalPeriod, string> = {
   annual: "Annual",
   biannual: "Biannual (2 payments/yr)",
-  quarterly: "Quarterly (4 payments/yr)",
+  quarterly: "Quarterly",
   monthly: "Monthly",
+  semester: "Per semester",
 };
 
 export interface RentableUnit {

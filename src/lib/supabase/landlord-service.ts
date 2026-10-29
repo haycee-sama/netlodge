@@ -373,7 +373,21 @@ export async function fetchRooms(propertyId: string, floorId?: string): Promise<
 }
 
 /**
+ * Supported rental periods for landlord configuration.
+ * 'biannual' and 'monthly' exist in the DB enum for backward compatibility
+ * but are NOT offered to landlords (not in the product requirement).
+ */
+export const SUPPORTED_RENTAL_PERIODS = ["annual", "quarterly", "semester"] as const;
+export type SupportedRentalPeriod = typeof SUPPORTED_RENTAL_PERIODS[number];
+
+/**
  * Create a new rentable unit.
+ *
+ * The landlord configures the rental period (annual/quarterly/semester) and
+ * the period rent (periodRentKobo). For 'annual' units, periodRentKobo equals
+ * annualRentKobo. For 'quarterly'/'semester' units, periodRentKobo is the
+ * per-period rent. annualRentKobo is preserved for backward compatibility
+ * and the price-from display.
  */
 export async function createRoom(input: {
   propertyId: string;
@@ -387,6 +401,7 @@ export async function createRoom(input: {
   hasWindow: boolean;
   furnishing: string;
   annualRentKobo: number;
+  periodRentKobo?: number;
   rentalPeriod: string;
   cautionDepositKobo?: number;
   bookingTerms?: string;
@@ -399,6 +414,15 @@ export async function createRoom(input: {
     if (input.capacity < 1) return { data: null, error: "Capacity must be at least 1" };
     if (input.cautionDepositKobo !== undefined && input.cautionDepositKobo < 0) {
       return { data: null, error: "Caution deposit cannot be negative" };
+    }
+    // Validate rental period is one of the supported options
+    if (!SUPPORTED_RENTAL_PERIODS.includes(input.rentalPeriod as SupportedRentalPeriod)) {
+      return { data: null, error: `Rental period must be one of: ${SUPPORTED_RENTAL_PERIODS.join(", ")}` };
+    }
+    // periodRentKobo defaults to annualRentKobo for 'annual' units
+    const periodRent = input.periodRentKobo ?? input.annualRentKobo;
+    if (periodRent <= 0) {
+      return { data: null, error: "Period rent must be positive" };
     }
 
     const supabase = createClient();
@@ -432,6 +456,7 @@ export async function createRoom(input: {
         has_window: input.hasWindow,
         furnishing: input.furnishing,
         annual_rent_kobo: input.annualRentKobo,
+        period_rent_kobo: periodRent,
         rental_period: input.rentalPeriod,
         caution_deposit_kobo: input.cautionDepositKobo || null,
         booking_terms: input.bookingTerms || null,
@@ -459,6 +484,11 @@ export async function createRoom(input: {
 
 /**
  * Update a rentable unit.
+ *
+ * If rentalPeriod is changed, periodRentKobo should also be provided (the
+ * rent for one period of the new type). If rentalPeriod is changed without
+ * periodRentKobo, the existing period_rent_kobo is preserved (the landlord
+ * should update it separately).
  */
 export async function updateRoom(roomId: string, patch: {
   identifier?: string;
@@ -470,12 +500,21 @@ export async function updateRoom(roomId: string, patch: {
   hasWindow?: boolean;
   furnishing?: string;
   annualRentKobo?: number;
+  periodRentKobo?: number;
   rentalPeriod?: string;
   cautionDepositKobo?: number;
   bookingTerms?: string;
   status?: string;
 }): Promise<ServiceResult<null>> {
   try {
+    // Validate rental period if provided
+    if (patch.rentalPeriod !== undefined && !SUPPORTED_RENTAL_PERIODS.includes(patch.rentalPeriod as SupportedRentalPeriod)) {
+      return { data: null, error: `Rental period must be one of: ${SUPPORTED_RENTAL_PERIODS.join(", ")}` };
+    }
+    if (patch.periodRentKobo !== undefined && patch.periodRentKobo <= 0) {
+      return { data: null, error: "Period rent must be positive" };
+    }
+
     const supabase = createClient();
 
     // If trying to change status, check for active bookings
@@ -508,6 +547,7 @@ export async function updateRoom(roomId: string, patch: {
     if (patch.hasWindow !== undefined) updateData.has_window = patch.hasWindow;
     if (patch.furnishing !== undefined) updateData.furnishing = patch.furnishing;
     if (patch.annualRentKobo !== undefined) updateData.annual_rent_kobo = patch.annualRentKobo;
+    if (patch.periodRentKobo !== undefined) updateData.period_rent_kobo = patch.periodRentKobo;
     if (patch.rentalPeriod !== undefined) updateData.rental_period = patch.rentalPeriod;
     if (patch.cautionDepositKobo !== undefined) updateData.caution_deposit_kobo = patch.cautionDepositKobo;
     if (patch.bookingTerms !== undefined) updateData.booking_terms = patch.bookingTerms;
@@ -600,6 +640,7 @@ export async function bulkCreateRooms(input: {
         has_window: true,
         furnishing: input.furnishing,
         annual_rent_kobo: priceKobo,
+        period_rent_kobo: priceKobo,
         rental_period: input.rentalPeriod,
         available_from: new Date().toISOString().slice(0, 10),
       });

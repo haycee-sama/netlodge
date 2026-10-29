@@ -489,7 +489,29 @@ export interface Database {
       has_role: { Args: { p_user_id: string; p_role: string }; Returns: boolean };
       is_admin: { Args: { p_user_id: string }; Returns: boolean };
       can_access_property: { Args: { p_user_id: string; p_property_id: string }; Returns: boolean };
-      create_booking: { Args: Record<string, unknown>; Returns: string };
+      create_booking: {
+        Args: {
+          p_student_id: string;
+          p_unit_id: string;
+          p_check_in: string;
+          p_check_out: string;
+          p_rental_period: string;
+        };
+        Returns: string;
+      };
+      get_booking_pricing: {
+        Args: { p_unit_id: string };
+        Returns: {
+          base_rent_kobo: number;
+          additional_charges_kobo: number;
+          caution_deposit_kobo: number;
+          service_fee_rate_pct: number;
+          service_fee_kobo: number;
+          total_kobo: number;
+          period_days: number;
+          rental_period: string;
+        }[];
+      };
       confirm_booking: { Args: { p_booking_id: string }; Returns: void };
       cancel_booking: { Args: { p_booking_id: string; p_reason: string }; Returns: void };
       record_audit: { Args: Record<string, unknown>; Returns: string };

@@ -16,13 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Card,
   CardContent,
   CardHeader,
@@ -62,7 +55,9 @@ export function RoomBookingCard({ room, property }: RoomBookingCardProps) {
   const router = useRouter();
   const { session } = useAuth();
   const [checkIn, setCheckIn] = React.useState("");
-  const [rentalPeriod, setRentalPeriod] = React.useState<RentalPeriod>(room.rentalPeriod);
+  // The rental period is the landlord's configured period — students cannot
+  // change it. The booking duration is derived from the period type.
+  const rentalPeriod = room.rentalPeriod;
   const [accept, setAccept] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
 
@@ -91,20 +86,25 @@ export function RoomBookingCard({ room, property }: RoomBookingCardProps) {
     }
     setSubmitting(true);
     try {
+      // Compute checkOut from the landlord-configured period duration.
+      // The server validates this matches the period type (±2 day tolerance).
+      const periodDays =
+        rentalPeriod === "annual" ? 365 :
+        rentalPeriod === "quarterly" ? 91 :
+        rentalPeriod === "semester" ? 152 :
+        rentalPeriod === "biannual" ? 183 : 30; // legacy fallback
       const checkOut = new Date(checkIn);
-      checkOut.setFullYear(checkOut.getFullYear() + 1);
+      checkOut.setDate(checkOut.getDate() + periodDays);
 
+      // Only legitimate user inputs are sent. The server computes the
+      // authoritative pricing inside create_booking() — the client cannot
+      // influence base rent, deposit, service fee, or total.
       const result = await createBooking({
         studentId: session!.userId,
         unitId: room.id,
         checkIn,
         checkOut: checkOut.toISOString().slice(0, 10),
         rentalPeriod: room.rentalPeriod ?? "annual",
-        baseRentKobo: room.annualRentKobo,
-        additionalChargesKobo: 0,
-        cautionDepositKobo: room.cautionDepositKobo ?? 0,
-        serviceFeeKobo: Math.round((room.annualRentKobo ?? 0) * 0.05),
-        totalKobo: (room.annualRentKobo ?? 0) + Math.round((room.annualRentKobo ?? 0) * 0.05) + (room.cautionDepositKobo ?? 0),
       });
 
       if (result.error) {
@@ -152,19 +152,16 @@ export function RoomBookingCard({ room, property }: RoomBookingCardProps) {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="rental-period">Rental period</Label>
-          <Select value={rentalPeriod} onValueChange={(v) => setRentalPeriod(v as RentalPeriod)}>
-            <SelectTrigger id="rental-period">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {(Object.keys(RENTAL_PERIOD_LABELS) as RentalPeriod[]).map((p) => (
-                <SelectItem key={p} value={p}>
-                  {RENTAL_PERIOD_LABELS[p]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label>Rental period</Label>
+          <div className="rounded-md border border-input bg-muted/30 px-3 py-2 text-sm">
+            {RENTAL_PERIOD_LABELS[rentalPeriod] ?? rentalPeriod}
+            <span className="ml-2 text-xs text-muted-foreground">
+              ({rentalPeriod === "annual" ? "365 days" : rentalPeriod === "quarterly" ? "91 days" : rentalPeriod === "semester" ? "152 days" : "—"})
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Set by the landlord. You book one period at a time.
+          </p>
         </div>
 
         <label className="flex items-start gap-2 pt-1 text-xs" htmlFor="accept-terms">

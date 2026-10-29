@@ -20,7 +20,7 @@ import {
 import { RoomStatusBadge, VerificationBadge } from "@/components/shared/status-badges";
 import { Price } from "@/components/shared/price";
 import { useAuth } from "@/lib/auth/auth-context";
-import { fetchRentableUnitById, createBooking, type RentableUnitWithRelations } from "@/lib/supabase/property-service";
+import { fetchRentableUnitById, createBooking, getBookingPricing, type RentableUnitWithRelations } from "@/lib/supabase/property-service";
 import { UNIT_TYPE_LABELS, RENTAL_PERIOD_LABELS } from "@/lib/types";
 import { formatNgn } from "@/lib/utils/format";
 import { toast } from "sonner";
@@ -48,32 +48,58 @@ export function RoomDetailPage() {
   const [accept, setAccept] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
+  // Authoritative pricing fetched from the server (get_booking_pricing RPC).
+  // The same function is called inside create_booking() to compute the stored
+  // amounts, so the displayed summary and the stored total can never diverge.
+  // pricingError is set if the RPC fails — the booking UI must not display a
+  // misleading total that omits fees, and booking is blocked until pricing
+  // loads successfully.
+  const [pricing, setPricing] = React.useState<{
+    baseRentKobo: number;
+    additionalChargesKobo: number;
+    cautionDepositKobo: number;
+    serviceFeeRatePct: number;
+    serviceFeeKobo: number;
+    totalKobo: number;
+    periodDays: number;
+    rentalPeriod: string;
+  } | null>(null);
+  const [pricingError, setPricingError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!params.id) return;
-    fetchRentableUnitById(params.id).then((res) => {
+    fetchRentableUnitById(params.id).then(async (res) => {
       if (res.error || !res.data) {
         setError(res.error ?? "Room not found");
+        setLoading(false);
+        return;
+      }
+      setRoom(res.data);
+      // Fetch the authoritative pricing breakdown from the server. This is
+      // the same computation create_booking() will use, so the displayed
+      // total matches the stored booking amount exactly.
+      const priceRes = await getBookingPricing({ unitId: res.data.id });
+      if (priceRes.data) {
+        setPricing(priceRes.data);
+        setPricingError(null);
       } else {
-        setRoom(res.data);
+        setPricingError(priceRes.error ?? "Pricing unavailable");
       }
       setLoading(false);
     });
   }, [params.id]);
 
-  // Calculate pricing
-  // Service fee rate is configured in platform_settings (booking.service_fee_rate)
-  // Default to 5% if not set. The payment initiation endpoint re-derives the
-  // amount from booking.outstanding_kobo, so even if the client calculates
-  // the fee incorrectly, the actual charge is always the booking total.
-  const baseRent = room?.annual_rent_kobo ?? 0;
-  const additionalCharges = (room?.additional_charges ?? [])
-    .filter((c) => c.frequency !== "one_time")
-    .reduce((s, c) => s + c.amount_kobo, 0);
-  const cautionDeposit = room?.caution_deposit_kobo ?? 0;
-  const SERVICE_FEE_RATE = 0.05; // 5% — matches platform_settings default
-  const serviceFee = Math.round(baseRent * SERVICE_FEE_RATE);
-  const total = baseRent + additionalCharges + cautionDeposit + serviceFee;
+  // Display values derived from the authoritative server-side pricing.
+  // If pricing is unavailable, display values are NOT shown — the UI shows a
+  // pricing-unavailable state and blocks booking instead of a misleading
+  // total that omits fees.
+  const pricingReady = !!pricing && !pricingError;
+  const baseRent = pricing?.baseRentKobo ?? 0;
+  const additionalCharges = pricing?.additionalChargesKobo ?? 0;
+  const cautionDeposit = pricing?.cautionDepositKobo ?? 0;
+  const serviceFeeRatePct = pricing?.serviceFeeRatePct ?? 0;
+  const serviceFee = pricing?.serviceFeeKobo ?? 0;
+  const total = pricing?.totalKobo ?? 0;
 
   const isAvailable = room?.status === "available";
   const isStudent = session?.role === "student";
@@ -104,23 +130,33 @@ export function RoomDetailPage() {
       setConfirmOpen(false);
       return;
     }
+    if (!pricingReady) {
+      toast.error("Pricing is not available", {
+        description: "Please refresh the page. Booking is blocked until pricing loads.",
+      });
+      setConfirmOpen(false);
+      return;
+    }
 
     setSubmitting(true);
     try {
+      // Compute checkOut from the landlord-configured period duration.
+      // The server validates this matches the period type (±2 day tolerance).
+      const rp = room.rental_period ?? "annual";
+      const periodDays =
+        rp === "annual" ? 365 :
+        rp === "quarterly" ? 91 :
+        rp === "semester" ? 152 :
+        rp === "biannual" ? 183 : 30;
       const checkOut = new Date(checkIn);
-      checkOut.setFullYear(checkOut.getFullYear() + 1);
+      checkOut.setDate(checkOut.getDate() + periodDays);
 
       const result = await createBooking({
         studentId: session.userId,
         unitId: room.id,
         checkIn,
         checkOut: checkOut.toISOString().slice(0, 10),
-        rentalPeriod: room.rental_period,
-        baseRentKobo: baseRent,
-        additionalChargesKobo: additionalCharges,
-        cautionDepositKobo: cautionDeposit,
-        serviceFeeKobo: serviceFee,
-        totalKobo: total,
+        rentalPeriod: rp,
       });
 
       if (result.error) {
@@ -287,7 +323,7 @@ export function RoomDetailPage() {
 
               <AlertDialog open={confirmOpen} onOpenChange={(open) => { if (!submitting) setConfirmOpen(open); }}>
                 <AlertDialogTrigger asChild>
-                  <Button className="w-full" disabled={!isAvailable || !isStudent || !accept || submitting} onClick={() => setConfirmOpen(true)}>
+                  <Button className="w-full" disabled={!isAvailable || !isStudent || !accept || submitting || !pricingReady} onClick={() => setConfirmOpen(true)}>
                     <Lock className="mr-2 h-4 w-4" aria-hidden />
                     Place hold & continue
                   </Button>
@@ -333,25 +369,42 @@ export function RoomDetailPage() {
           <Card>
             <CardHeader><CardTitle className="text-base">Pricing breakdown</CardTitle></CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Annual rent</span><span>{formatNgn(baseRent)}</span></div>
-              {(room.additional_charges ?? []).map((c) => (
-                <div key={c.id} className="flex justify-between text-muted-foreground">
-                  <span>{c.label} <span className="text-xs">({c.frequency})</span></span>
-                  <span>{formatNgn(c.amount_kobo)}</span>
+              {pricingError ? (
+                <div className="flex items-start gap-2 rounded-md bg-muted p-3 text-xs text-muted-foreground">
+                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <span>
+                    Pricing is currently unavailable. Booking is blocked until
+                    pricing loads. Please refresh the page to try again.
+                  </span>
                 </div>
-              ))}
-              {cautionDeposit > 0 && (
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Caution deposit (refundable)</span><span>{formatNgn(cautionDeposit)}</span>
+              ) : !pricingReady ? (
+                <div className="flex items-start gap-2 rounded-md bg-muted p-3 text-xs text-muted-foreground">
+                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <span>Loading pricing…</span>
                 </div>
+              ) : (
+                <>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Annual rent</span><span>{formatNgn(baseRent)}</span></div>
+                  {(room.additional_charges ?? []).map((c) => (
+                    <div key={c.id} className="flex justify-between text-muted-foreground">
+                      <span>{c.label} <span className="text-xs">({c.frequency})</span></span>
+                      <span>{formatNgn(c.amount_kobo)}</span>
+                    </div>
+                  ))}
+                  {cautionDeposit > 0 && (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Caution deposit (refundable)</span><span>{formatNgn(cautionDeposit)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Service fee ({serviceFeeRatePct}%)</span><span>{formatNgn(serviceFee)}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between font-semibold">
+                    <span>Estimated total</span><span>{formatNgn(total)}</span>
+                  </div>
+                </>
               )}
-              <div className="flex justify-between text-muted-foreground">
-                <span>Service fee (5%)</span><span>{formatNgn(serviceFee)}</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between font-semibold">
-                <span>Estimated total</span><span>{formatNgn(total)}</span>
-              </div>
             </CardContent>
           </Card>
         </aside>

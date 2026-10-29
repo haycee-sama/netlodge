@@ -333,18 +333,86 @@ export async function fetchNeighbourhoods(universityId?: string): Promise<Servic
 }
 
 /**
+ * Booking pricing preview — the authoritative server-side cost breakdown.
+ *
+ * This calls the get_booking_pricing() SECURITY DEFINER function which reads
+ * the unit's annual rent, caution deposit, sums additional charges, and reads
+ * the service-fee rate from platform_settings. The booking UI uses this to
+ * display the cost summary. The same function is called inside create_booking()
+ * to compute the stored amounts, so the displayed summary and the stored
+ * booking total can never diverge.
+ *
+ * The function takes only the unit id. The rental period is read from the
+ * unit's configured rental_period column. create_booking() validates that
+ * the requested period matches the unit's configured period and supports
+ * annual, quarterly, and semester periods.
+ *
+ * Returns integer kobo amounts (service_fee_rate_pct is a numeric percentage).
+ */
+export async function getBookingPricing(params: {
+  unitId: string;
+}): Promise<ServiceResult<{
+  baseRentKobo: number;
+  additionalChargesKobo: number;
+  cautionDepositKobo: number;
+  serviceFeeRatePct: number;
+  serviceFeeKobo: number;
+  totalKobo: number;
+  periodDays: number;
+  rentalPeriod: string;
+}>> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc("get_booking_pricing", {
+      p_unit_id: params.unitId,
+    });
+
+    if (error) {
+      return { data: null, error: error.message };
+    }
+
+    // RPC returns an array of rows (one row expected)
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      return { data: null, error: "Pricing computation returned no result" };
+    }
+
+    return {
+      data: {
+        baseRentKobo: Number(row.base_rent_kobo),
+        additionalChargesKobo: Number(row.additional_charges_kobo),
+        cautionDepositKobo: Number(row.caution_deposit_kobo),
+        serviceFeeRatePct: Number(row.service_fee_rate_pct),
+        serviceFeeKobo: Number(row.service_fee_kobo),
+        totalKobo: Number(row.total_kobo),
+        periodDays: Number(row.period_days),
+        rentalPeriod: String(row.rental_period),
+      },
+      error: null,
+    };
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : "Failed to fetch booking pricing" };
+  }
+}
+
+/**
  * Create a booking using the authoritative create_booking() database function.
  *
  * This calls the SECURITY DEFINER function which:
+ * - Verifies auth.uid() = student_id and the caller holds the 'student' role
+ *   (CA-012 — enforced at the DB level, cannot be bypassed by direct RPC)
  * - Locks the room row (FOR UPDATE) to prevent concurrent bookings
- * - Checks room availability
- * - Checks for overlapping bookings
- * - Creates the booking with 'pending_payment' status
- * - Marks the room as 'held'
- * - Records status history
+ * - Checks room availability and overlapping bookings
+ * - Computes the authoritative pricing inside the DB via get_booking_pricing()
+ *   (CA-010/011 — the client cannot influence base rent, deposit, service
+ *   fee, or total; all are derived from rentable_units + platform_settings)
+ * - Creates the booking with 'pending_payment' status and a consistent cost
+ *   snapshot that subsequent payment processing uses
+ * - Marks the room as 'held' and records status history
  *
- * The student_id is passed from the authenticated session — the caller
- * must derive it from the session, not from user input.
+ * The student_id is passed from the authenticated session — the caller must
+ * derive it from the session, not from user input. Pricing parameters are NOT
+ * accepted; the server is the sole source of truth for amounts.
  */
 export async function createBooking(params: {
   studentId: string;
@@ -352,16 +420,13 @@ export async function createBooking(params: {
   checkIn: string;
   checkOut: string;
   rentalPeriod: string;
-  baseRentKobo: number;
-  additionalChargesKobo: number;
-  cautionDepositKobo: number;
-  serviceFeeKobo: number;
-  totalKobo: number;
 }): Promise<ServiceResult<{ bookingId: string }>> {
   try {
     const supabase = createClient();
 
-    // Verify the caller is authenticated and has the student role
+    // Defense-in-depth: the DB function enforces the same checks, but
+    // performing them here gives the user a friendly error before the round
+    // trip and protects against any future caller that forgets.
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return { data: null, error: "Not authenticated" };
@@ -378,18 +443,14 @@ export async function createBooking(params: {
       return { data: null, error: "Only students can book accommodation" };
     }
 
-    // Call the database function via RPC
+    // Call the database function via RPC. Only legitimate user inputs are
+    // sent — no pricing. The DB computes and stores the authoritative total.
     const { data, error } = await supabase.rpc("create_booking", {
       p_student_id: params.studentId,
       p_unit_id: params.unitId,
       p_check_in: params.checkIn,
       p_check_out: params.checkOut,
       p_rental_period: params.rentalPeriod,
-      p_base_rent_kobo: params.baseRentKobo,
-      p_additional_charges_kobo: params.additionalChargesKobo,
-      p_caution_deposit_kobo: params.cautionDepositKobo,
-      p_service_fee_kobo: params.serviceFeeKobo,
-      p_total_kobo: params.totalKobo,
     });
 
     if (error) {

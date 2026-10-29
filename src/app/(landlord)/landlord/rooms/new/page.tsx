@@ -48,6 +48,7 @@ export default function NewRoomPage() {
   const [bathrooms, setBathrooms] = React.useState("1");
   const [furnishing, setFurnishing] = React.useState("unfurnished");
   const [annualRent, setAnnualRent] = React.useState("");
+  const [periodRent, setPeriodRent] = React.useState("");
   const [rentalPeriod, setRentalPeriod] = React.useState("annual");
   const [cautionDeposit, setCautionDeposit] = React.useState("");
   const [floorId, setFloorId] = React.useState("");
@@ -68,6 +69,13 @@ export default function NewRoomPage() {
     if (!identifier.trim()) { toast.error("Unit identifier is required"); return; }
     const rent = Number(annualRent);
     if (!rent || rent <= 0) { toast.error("Valid annual rent is required"); return; }
+    // For non-annual periods, the period rent is required. For annual, it
+    // defaults to the annual rent.
+    const pRent = periodRent ? Number(periodRent) : rent;
+    if (rentalPeriod !== "annual" && (!pRent || pRent <= 0)) {
+      toast.error(`Valid ${rentalPeriod} rent is required`);
+      return;
+    }
 
     setSaving(true);
     const result = await createRoom({
@@ -80,6 +88,7 @@ export default function NewRoomPage() {
       bathrooms: Number(bathrooms) || 0,
       furnishing,
       annualRentKobo: rent,
+      periodRentKobo: pRent,
       rentalPeriod,
       cautionDepositKobo: cautionDeposit ? Number(cautionDeposit) : undefined,
       hasWindow,
@@ -121,11 +130,15 @@ export default function NewRoomPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1"><Label htmlFor="furnishing">Furnishing</Label><Select value={furnishing} onValueChange={setFurnishing}><SelectTrigger id="furnishing"><SelectValue /></SelectTrigger><SelectContent>{FURNISHING_LEVELS.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent></Select></div>
-            <div className="space-y-1"><Label htmlFor="rentalPeriod">Rental period</Label><Select value={rentalPeriod} onValueChange={setRentalPeriod}><SelectTrigger id="rentalPeriod"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="annual">Annual</SelectItem><SelectItem value="biannual">Biannual</SelectItem><SelectItem value="quarterly">Quarterly</SelectItem><SelectItem value="monthly">Monthly</SelectItem></SelectContent></Select></div>
+            <div className="space-y-1"><Label htmlFor="rentalPeriod">Rental period</Label><Select value={rentalPeriod} onValueChange={setRentalPeriod}><SelectTrigger id="rentalPeriod"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="annual">Annual (365 days)</SelectItem><SelectItem value="quarterly">Quarterly (91 days)</SelectItem><SelectItem value="semester">Per semester (152 days)</SelectItem></SelectContent></Select></div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1"><Label htmlFor="annualRent">Annual rent (kobo) *</Label><Input id="annualRent" type="number" min={0} value={annualRent} onChange={(e) => setAnnualRent(e.target.value)} placeholder="e.g. 45000000" /></div>
+            <div className="space-y-1"><Label htmlFor="periodRent">{rentalPeriod === "annual" ? "Period rent (kobo)" : `${rentalPeriod.charAt(0).toUpperCase() + rentalPeriod.slice(1)} rent (kobo) *`}</Label><Input id="periodRent" type="number" min={0} value={periodRent} onChange={(e) => setPeriodRent(e.target.value)} placeholder={rentalPeriod === "annual" ? "Defaults to annual rent" : `e.g. ${rentalPeriod === "quarterly" ? "12500000" : "20000000"}`} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1"><Label htmlFor="cautionDeposit">Caution deposit (kobo)</Label><Input id="cautionDeposit" type="number" min={0} value={cautionDeposit} onChange={(e) => setCautionDeposit(e.target.value)} placeholder="Optional" /></div>
+            <div className="flex items-end text-xs text-muted-foreground pb-2">Students book one {rentalPeriod} period at a time. Duration: {rentalPeriod === "annual" ? "365 days" : rentalPeriod === "quarterly" ? "91 days (~3 months)" : "152 days (~5 months)"}.</div>
           </div>
           <div className="flex gap-6">
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={hasWindow} onChange={(e) => setHasWindow(e.target.checked)} /> Has window</label>

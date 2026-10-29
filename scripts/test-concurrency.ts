@@ -125,7 +125,7 @@ async function main() {
 
   const { data: unit } = await admin.from("rentable_units").insert({
     property_id: property.id, identifier: `C-${ts}`, unit_type: "single_room", status: "available",
-    annual_rent_kobo: 500_000, rental_period: "annual", furnishing: "fully_furnished",
+    annual_rent_kobo: 500_000, period_rent_kobo: 500_000, caution_deposit_kobo: 50_000, rental_period: "annual", furnishing: "fully_furnished",
     capacity: 1, bedrooms: 0, bathrooms: 1, has_window: true,
   }).select().single();
   assert(!!unit, "test unit created");
@@ -159,11 +159,6 @@ async function main() {
     p_check_in: checkIn,
     p_check_out: checkOut,
     p_rental_period: "annual",
-    p_base_rent_kobo: 500_000,
-    p_additional_charges_kobo: 0,
-    p_caution_deposit_kobo: 50_000,
-    p_service_fee_kobo: 25_000,
-    p_total_kobo: 575_000,
   };
 
   // Fire both booking attempts in parallel (genuinely concurrent)
@@ -206,7 +201,7 @@ async function main() {
   // ---- Test 2: Non-overlapping sequential bookings ----
   console.log("\n[3] Test 2: Non-overlapping sequential bookings...");
   const { data: b3 } = await s1Client.rpc("create_booking", {
-    ...bookingParams, p_check_in: "2026-01-01", p_check_out: "2026-06-30",
+    ...bookingParams, p_check_in: "2026-01-01", p_check_out: "2026-12-31",
   });
   assert(!!b3, "first sequential booking succeeds");
   cleanupTasks.push(async () => {
@@ -219,7 +214,7 @@ async function main() {
   await admin.from("rentable_units").update({ status: "available", active_hold_id: null }).eq("id", unit.id);
 
   const { data: b4 } = await s1Client.rpc("create_booking", {
-    ...bookingParams, p_check_in: "2026-07-01", p_check_out: "2026-12-31",
+    ...bookingParams, p_check_in: "2027-01-01", p_check_out: "2027-12-31",
   });
   assert(!!b4, "second sequential booking (non-overlapping) succeeds");
   cleanupTasks.push(async () => {
