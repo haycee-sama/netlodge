@@ -82,7 +82,12 @@ export default function RegisterPage() {
         toast.success("Account created", {
           description: `Welcome to NetLodge as a ${roleLabel}. Please check your email to verify your account.`,
         });
-        router.push("/login?registered=true");
+        // Students go to onboarding after email verification; others go to login
+        if (values.role === "student") {
+          router.push("/login?registered=true&redirect=/student/onboarding");
+        } else {
+          router.push("/login?registered=true");
+        }
         return;
       }
 

@@ -444,6 +444,18 @@ export async function createBooking(params: {
       return { data: null, error: "Only students can book accommodation" };
     }
 
+    // Onboarding gate: students must complete their profile before booking.
+    // This is a client-side check; the DB-level enforcement is via
+    // profile_completed on the profiles table.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("profile_completed")
+      .eq("id", user.id)
+      .single();
+    if (!profile?.profile_completed) {
+      return { data: null, error: "Please complete your student profile before booking" };
+    }
+
     // Call the database function via RPC. Only legitimate user inputs are
     // sent — no pricing. The DB computes and stores the authoritative total.
     const { data, error } = await supabase.rpc("create_booking", {

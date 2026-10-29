@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Logo } from "@/components/shared/logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { useAuth } from "@/lib/auth/auth-context";
 import { homeRouteForRole } from "@/lib/auth/permissions";
 
@@ -194,6 +195,7 @@ export function SiteHeader() {
               Search
             </Link>
           </Button>
+          <LanguageSwitcher compact />
           <ThemeToggle compact />
           {session ? (
             <DropdownMenu>

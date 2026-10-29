@@ -9,6 +9,7 @@ import { AuthProvider } from "@/lib/auth/auth-context";
 import { QueryProvider } from "@/components/shared/query-provider";
 import { ChatWidget } from "@/components/shared/chat-widget";
 import { GoogleAnalytics } from "@/components/shared/google-analytics";
+import { I18nProvider } from "@/lib/i18n/context";
 
 const sans = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -127,13 +128,15 @@ export default function RootLayout({
           storageKey="netlodge-theme"
         >
           <QueryProvider>
-            <AuthProvider>
+            <I18nProvider>
+              <AuthProvider>
               <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
               <ChatWidget />
               <Toaster />
               <Sonner position="top-right" richColors closeButton />
               <GoogleAnalytics />
-            </AuthProvider>
+              </AuthProvider>
+            </I18nProvider>
           </QueryProvider>
         </ThemeProvider>
       </body>

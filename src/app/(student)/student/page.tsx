@@ -14,6 +14,7 @@ import { PageHeader, StatCard, EmptyState, SectionHeading } from "@/components/s
 import { BookingStatusBadge } from "@/components/shared/status-badges";
 import { Price } from "@/components/shared/price";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useOnboardingGate } from "@/lib/hooks/use-onboarding-gate";
 import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime, formatNgn } from "@/lib/utils/format";
 
@@ -52,6 +53,7 @@ interface StudentPayment {
 
 export default function StudentDashboardPage() {
   const { session } = useAuth();
+  const { completed: onboardingCompleted } = useOnboardingGate();
   const [bookings, setBookings] = React.useState<StudentBooking[]>([]);
   const [notifications, setNotifications] = React.useState<StudentNotification[]>([]);
   const [payments, setPayments] = React.useState<StudentPayment[]>([]);
@@ -144,6 +146,31 @@ export default function StudentDashboardPage() {
         title={`Welcome, ${session?.firstName}`}
         description="Manage your bookings, payments, saved properties, and support tickets."
       />
+
+      {/* Onboarding gate banner */}
+      {onboardingCompleted === false && (
+        <Card className="border-warning/30 bg-warning/5">
+          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-warning/15 text-warning">
+                <AlertCircle className="h-5 w-5" aria-hidden />
+              </div>
+              <div>
+                <p className="font-medium">Complete your student profile to start booking</p>
+                <p className="text-sm text-muted-foreground">
+                  Add your university, matric number, and emergency contact. This takes 2 minutes.
+                </p>
+              </div>
+            </div>
+            <Button asChild size="sm" className="shrink-0">
+              <Link href="/student/onboarding">
+                Complete profile
+                <ArrowRight className="ml-2 h-3.5 w-3.5" aria-hidden />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {error && (
         <Card className="border-warning/30 bg-warning/5">

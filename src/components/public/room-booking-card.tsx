@@ -67,7 +67,9 @@ export function RoomBookingCard({ room, property }: RoomBookingCardProps) {
 
   async function onInitiate() {
     if (!isAuthenticated) {
-      router.push(`/login?redirect=/rooms/${room.id}`);
+      // Redirect to register (not login) so unauthenticated users create
+      // an account — booking requires a student account.
+      router.push(`/register?redirect=/rooms/${room.id}`);
       return;
     }
     if (!isStudent) {

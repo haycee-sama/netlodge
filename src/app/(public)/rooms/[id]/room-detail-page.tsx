@@ -124,10 +124,10 @@ export function RoomDetailPage() {
       return;
     }
     if (!isSupabaseAuth) {
-      toast.error("Please sign in to book", {
-        description: "You need a NetLodge account to place a booking.",
-      });
+      // Redirect to register with a return redirect to this room page.
+      // Students need an account to place a booking.
       setConfirmOpen(false);
+      router.push(`/register?redirect=/rooms/${room.id}`);
       return;
     }
     if (!pricingReady) {

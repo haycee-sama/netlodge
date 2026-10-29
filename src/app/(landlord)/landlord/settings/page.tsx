@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTheme } from "next-themes";
 import { PageHeader } from "@/components/shared/page-components";
+import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { useNotificationPrefs } from "@/lib/hooks/use-notification-prefs";
 
 export default function LandlordSettingsPage() {
@@ -99,12 +100,7 @@ export default function LandlordSettingsPage() {
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label>Language</Label>
-            <Select defaultValue="en">
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="en">English (Nigeria)</SelectItem>
-              </SelectContent>
-            </Select>
+            <LanguageSwitcher />
           </div>
           <div className="space-y-1.5">
             <Label>Currency</Label>
