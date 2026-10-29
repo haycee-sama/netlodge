@@ -68,10 +68,10 @@ async function main() {
   console.log("\n[3] Verifying role allowlist (code inspection)...");
   const routeSrc = readFileSync("src/app/api/admin/cache-invalidate/route.ts", "utf8");
 
-  // The allowlist must include landlord, property_manager, super_admin,
+  // The allowlist must include landlord, manager, super_admin,
   // verification_officer. It must NOT include finance_admin or support_staff.
-  const allowedMatch = routeSrc.match(/\["landlord",\s*"property_manager",\s*"super_admin",\s*"verification_officer"\]/);
-  assert(!!allowedMatch, "role allowlist contains landlord, property_manager, super_admin, verification_officer");
+  const allowedMatch = routeSrc.match(/\["landlord",\s*"manager",\s*"super_admin",\s*"verification_officer"\]/);
+  assert(!!allowedMatch, "role allowlist contains landlord, manager, super_admin, verification_officer");
 
   assert(
     !routeSrc.includes("'finance_admin'") && !/\bfinance_admin\b/.test(routeSrc.split("allowed")[1] ?? ""),
