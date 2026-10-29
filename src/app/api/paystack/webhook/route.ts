@@ -133,6 +133,7 @@ export async function POST(request: NextRequest) {
 
       // Send a notification to the student (deduped via create_notification RPC)
       if (result === "confirmed") {
+        const { sendEmailNotification } = await import("@/lib/notifications/email");
         await adminClient.rpc("create_notification", {
           p_user_id: payment.student_id,
           p_type: "payment_update",
@@ -140,13 +141,30 @@ export async function POST(request: NextRequest) {
           p_body: `Your payment ${payment.reference} has been confirmed. Your booking is now active.`,
           p_href: `/student/bookings/${payment.booking_id}`,
         });
+        // Fire-and-forget email
+        sendEmailNotification({
+          userId: payment.student_id,
+          type: "payment_update",
+          title: "Payment confirmed",
+          body: `Your payment ${payment.reference} has been confirmed. Your booking is now active.`,
+          href: `/student/bookings/${payment.booking_id}`,
+        });
       } else if (result === "needs_reconciliation") {
+        const { sendEmailNotification } = await import("@/lib/notifications/email");
         await adminClient.rpc("create_notification", {
           p_user_id: payment.student_id,
           p_type: "payment_update",
           p_title: "Payment received — under review",
           p_body: `Your payment ${payment.reference} was received but your booking needs manual review. Our team will contact you.`,
           p_href: `/student/bookings/${payment.booking_id}`,
+        });
+        // Fire-and-forget email
+        sendEmailNotification({
+          userId: payment.student_id,
+          type: "payment_update",
+          title: "Payment received — under review",
+          body: `Your payment ${payment.reference} was received but your booking needs manual review. Our team will contact you.`,
+          href: `/student/bookings/${payment.booking_id}`,
         });
       }
 

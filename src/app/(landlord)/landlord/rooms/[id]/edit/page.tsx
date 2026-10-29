@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/components/shared/page-components";
+import { ImageUploadField, type UploadedFile } from "@/components/shared/image-upload-field";
 import { useAuth } from "@/lib/auth/auth-context";
 import { updateRoom } from "@/lib/supabase/landlord-service";
 import { createClient } from "@/lib/supabase/client";
@@ -62,11 +63,12 @@ export default function EditRoomPage() {
   const [hasWindow, setHasWindow] = React.useState(true);
   const [hasBalcony, setHasBalcony] = React.useState(false);
   const [bookingTerms, setBookingTerms] = React.useState("");
+  const [roomImages, setRoomImages] = React.useState<UploadedFile[]>([]);
 
   React.useEffect(() => {
     if (!isSupabaseAuth || !params.id) { setLoading(false); return; }
     const supabase = createClient();
-    supabase.from("rentable_units").select("*").eq("id", params.id).single().then(({ data, error }) => {
+    supabase.from("rentable_units").select("*").eq("id", params.id).single().then(async ({ data, error }) => {
       if (error) setError(error.message);
       else {
         setRoom(data);
@@ -83,6 +85,20 @@ export default function EditRoomPage() {
         setHasWindow(data.has_window ?? true);
         setHasBalcony(data.has_balcony ?? false);
         setBookingTerms(data.booking_terms ?? "");
+
+        // Load existing room images
+        const { data: images } = await supabase
+          .from("unit_images")
+          .select("id, storage_path, public_url, alt_text, position")
+          .eq("unit_id", params.id)
+          .order("position", { ascending: true });
+        if (images && images.length > 0) {
+          setRoomImages(images.map((img) => ({
+            path: img.storage_path,
+            publicUrl: img.public_url ?? undefined,
+            alt_text: img.alt_text ?? undefined,
+          })));
+        }
       }
       setLoading(false);
     });
@@ -119,6 +135,20 @@ export default function EditRoomPage() {
     if (result.error) {
       toast.error("Failed to save", { description: result.error });
     } else {
+      // Persist room images to unit_images table.
+      // First delete existing images, then insert the current set.
+      const supabase = createClient();
+      await supabase.from("unit_images").delete().eq("unit_id", room.id);
+      if (roomImages.length > 0) {
+        const imageRows = roomImages.map((img, i) => ({
+          unit_id: room.id,
+          storage_path: img.path,
+          public_url: img.publicUrl ?? null,
+          alt_text: img.alt_text ?? `Room photo ${i + 1}`,
+          position: i,
+        }));
+        await supabase.from("unit_images").insert(imageRows);
+      }
       toast.success("Room updated");
       await invalidateCache([CACHE_TAGS.PROPERTIES, CACHE_TAGS.UNITS]);
       router.push(`/landlord/rooms/${room.id}`);
@@ -164,6 +194,23 @@ export default function EditRoomPage() {
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={hasBalcony} onChange={(e) => setHasBalcony(e.target.checked)} /> Has balcony</label>
           </div>
           <div className="space-y-1"><Label htmlFor="bookingTerms">Booking terms</Label><Textarea id="bookingTerms" value={bookingTerms} onChange={(e) => setBookingTerms(e.target.value)} rows={2} placeholder="Optional booking terms..." /></div>
+
+          {/* Room photos — uploads to room-photos bucket + creates unit_images rows */}
+          <div className="space-y-2">
+            <Label>Room photos</Label>
+            <p className="text-xs text-muted-foreground">
+              Upload photos of this specific room. Students see these in the image carousel
+              when deciding to book. Show the actual room — color, space, layout, furnishing.
+            </p>
+            <ImageUploadField
+              endpoint="/api/uploads/room-photo"
+              contextField="roomId"
+              contextId={params.id}
+              value={roomImages}
+              onChange={setRoomImages}
+              maxFiles={10}
+            />
+          </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" asChild><Link href={`/landlord/rooms/${room.id}`}>Cancel</Link></Button>
             <Button onClick={handleSave} disabled={saving}>{saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving…</> : <><Save className="mr-2 h-4 w-4" /> Save</>}</Button>
