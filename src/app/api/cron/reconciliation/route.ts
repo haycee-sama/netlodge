@@ -53,6 +53,16 @@ export async function GET(request: NextRequest) {
       // Non-fatal — continue with reconciliation
     }
 
+    // Step 0b: Process expired bookings (check_out passed, no renewal)
+    // Completes bookings whose period has ended and releases rooms.
+    try {
+      const { data: expiredCount } = await adminClient.rpc("process_expired_bookings");
+      console.log(`[cron/reconciliation] Processed ${expiredCount ?? 0} expired bookings`);
+    } catch (err) {
+      console.error("[cron/reconciliation] Failed to process expired bookings:", err instanceof Error ? err.message : String(err));
+      // Non-fatal — continue with reconciliation
+    }
+
     // Date range: last 24 hours
     const to = new Date();
     const from = new Date(to.getTime() - 24 * 60 * 60 * 1000);
