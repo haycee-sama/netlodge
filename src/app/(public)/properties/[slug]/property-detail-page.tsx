@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -252,6 +252,7 @@ export function PropertyDetailPage() {
 
 function SaveButton({ propertyId }: { propertyId: string }) {
   const { session } = useAuth();
+  const router = useRouter();
   const [saved, setSaved] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const isSupabaseAuth = session?.authenticated === true;
@@ -273,7 +274,9 @@ function SaveButton({ propertyId }: { propertyId: string }) {
 
   async function toggle() {
     if (!isSupabaseAuth) {
-      toast.info("Sign in to save properties", { description: "Create a free account to bookmark listings." });
+      // Redirect to register so unauthenticated users can create an account.
+      // Use window.location.pathname to get the current property slug.
+      router.push(`/register?redirect=${window.location.pathname}`);
       return;
     }
     setLoading(true);

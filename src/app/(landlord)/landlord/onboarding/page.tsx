@@ -117,13 +117,6 @@ export default function LandlordOnboardingPage() {
           </li>
         ))}
       </ol>
-
-      <Card className="border-dashed bg-muted/30">
-        <CardContent className="p-3 text-xs text-muted-foreground">
-          <strong className="text-foreground">Tip:</strong> You can preview any role's dashboard by
-          clicking your avatar → Switch role (demo).
-        </CardContent>
-      </Card>
     </div>
   );
 }
