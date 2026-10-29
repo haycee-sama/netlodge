@@ -2,17 +2,20 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Building2, DoorOpen, CalendarCheck, Banknote, AlertCircle, Plus, Loader2, CheckCircle2 } from "lucide-react";
+import {
+  Building2, DoorOpen, CalendarCheck, Banknote, AlertCircle, Plus,
+  Loader2, CheckCircle2, TrendingUp, Wallet, Clock, ChevronRight,
+  ArrowRight, Percent,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, StatCard, EmptyState, SectionHeading } from "@/components/shared/page-components";
-import { PropertyStatusBadge, VerificationBadge } from "@/components/shared/status-badges";
+import { PropertyStatusBadge, VerificationBadge, BookingStatusBadge } from "@/components/shared/status-badges";
 import { Price } from "@/components/shared/price";
 import { useAuth } from "@/lib/auth/auth-context";
 import { fetchLandlordProperties, fetchLandlordBookings, fetchLandlordVerificationCases } from "@/lib/supabase/landlord-service";
 import { formatNgn, formatRelativeTime } from "@/lib/utils/format";
-import { BookingStatusBadge } from "@/components/shared/status-badges";
 
 export default function LandlordDashboardPage() {
   const { session } = useAuth();
@@ -28,15 +31,34 @@ export default function LandlordDashboardPage() {
       setLoading(false);
       return;
     }
-    Promise.all([
+    Promise.allSettled([
       fetchLandlordProperties(),
       fetchLandlordBookings(),
       fetchLandlordVerificationCases(),
     ]).then(([propsRes, bookingsRes, verifRes]) => {
-      if (propsRes.data) setProperties(propsRes.data);
-      if (bookingsRes.data) setBookings(bookingsRes.data);
-      if (verifRes.data) setVerification(verifRes.data);
-      if (propsRes.error) setError(propsRes.error);
+      const errors: string[] = [];
+
+      if (propsRes.status === "fulfilled" && propsRes.value.data) {
+        setProperties(propsRes.value.data);
+      } else if (propsRes.status === "rejected" || (propsRes.status === "fulfilled" && propsRes.value.error)) {
+        errors.push("properties");
+      }
+
+      if (bookingsRes.status === "fulfilled" && bookingsRes.value.data) {
+        setBookings(bookingsRes.value.data);
+      } else if (bookingsRes.status === "rejected" || (bookingsRes.status === "fulfilled" && bookingsRes.value.error)) {
+        errors.push("bookings");
+      }
+
+      if (verifRes.status === "fulfilled" && verifRes.value.data) {
+        setVerification(verifRes.value.data);
+      } else if (verifRes.status === "rejected" || (verifRes.status === "fulfilled" && verifRes.value.error)) {
+        errors.push("verification");
+      }
+
+      if (errors.length > 0) {
+        setError(`Could not load: ${errors.join(", ")}. Please refresh.`);
+      }
       setLoading(false);
     });
   }, [session, isSupabaseAuth]);
@@ -45,9 +67,16 @@ export default function LandlordDashboardPage() {
   const availableUnits = properties.reduce((s, p) => s + (p.available_units || 0), 0);
   const occupiedUnits = properties.reduce((s, p) => s + (p.occupied_units || 0), 0);
   const heldUnits = properties.reduce((s, p) => s + (p.held_units || 0), 0);
+  const occupancyRate = totalUnits > 0 ? Math.round(((occupiedUnits + heldUnits) / totalUnits) * 100) : 0;
+
   const pendingBookings = bookings.filter((b) => ["pending_payment", "payment_initiated"].includes(b.status));
   const confirmedBookings = bookings.filter((b) => ["confirmed", "active"].includes(b.status));
   const pendingVerification = verification.filter((v) => v.verification_status === "pending" || v.verification_status === "under_review");
+
+  // Revenue: sum of paid_kobo from confirmed/active bookings
+  const totalRevenue = confirmedBookings.reduce((s, b) => s + (b.paid_kobo ?? 0), 0);
+  // Pending revenue: outstanding from pending bookings
+  const pendingRevenue = pendingBookings.reduce((s, b) => s + (b.outstanding_kobo ?? 0), 0);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -74,25 +103,85 @@ export default function LandlordDashboardPage() {
         </Card>
       )}
 
+      {error && (
+        <Card className="border-warning/30 bg-warning/5">
+          <CardContent className="flex items-start gap-2 p-3 text-xs text-warning-foreground">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span>{error}</span>
+          </CardContent>
+        </Card>
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden />
         </div>
-      ) : error ? (
-        <EmptyState
-          icon={<AlertCircle className="h-5 w-5" aria-hidden />}
-          title="Could not load dashboard"
-          description={error}
-          action={<Button variant="outline" onClick={() => window.location.reload()}>Retry</Button>}
-        />
       ) : (
         <>
+          {/* Needs attention */}
+          {(pendingBookings.length > 0 || pendingVerification.length > 0) && (
+            <Card className="border-warning/30 bg-warning/5">
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-warning/15 text-warning">
+                      <Clock className="h-5 w-5" aria-hidden />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium">Needs your attention</p>
+                      <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                        {pendingBookings.length > 0 && (
+                          <span>{pendingBookings.length} pending {pendingBookings.length === 1 ? "booking" : "bookings"}</span>
+                        )}
+                        {pendingVerification.length > 0 && (
+                          <span>{pendingVerification.length} pending {pendingVerification.length === 1 ? "verification" : "verifications"}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    {pendingBookings.length > 0 && (
+                      <Button asChild size="sm" variant="outline" className="shrink-0">
+                        <Link href="/landlord/bookings">View bookings</Link>
+                      </Button>
+                    )}
+                    {pendingVerification.length > 0 && (
+                      <Button asChild size="sm" className="shrink-0">
+                        <Link href="/landlord/verification">Check verification</Link>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Stats */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Total units" value={totalUnits} hint={`Across ${properties.length} ${properties.length === 1 ? "property" : "properties"}`} icon={<DoorOpen className="h-4 w-4" aria-hidden />} />
-            <StatCard label="Available" value={availableUnits} hint={`${occupiedUnits} occupied · ${heldUnits} on hold`} icon={<Building2 className="h-4 w-4" aria-hidden />} />
-            <StatCard label="Pending bookings" value={pendingBookings.length} hint={`${confirmedBookings.length} confirmed`} icon={<CalendarCheck className="h-4 w-4" aria-hidden />} />
-            <StatCard label="Pending verification" value={pendingVerification.length} hint={pendingVerification.length === 0 ? "All clear" : "Needs attention"} icon={<CheckCircle2 className="h-4 w-4" aria-hidden />} />
+            <StatCard
+              label="Total revenue"
+              value={formatNgn(totalRevenue)}
+              icon={<Banknote className="h-4 w-4" aria-hidden />}
+              hint={`From ${confirmedBookings.length} confirmed ${confirmedBookings.length === 1 ? "booking" : "bookings"}`}
+            />
+            <StatCard
+              label="Pending revenue"
+              value={pendingRevenue > 0 ? formatNgn(pendingRevenue) : "₦0"}
+              icon={<Wallet className="h-4 w-4" aria-hidden />}
+              hint={pendingRevenue > 0 ? `${pendingBookings.length} awaiting payment` : "No pending payments"}
+            />
+            <StatCard
+              label="Occupancy"
+              value={`${occupancyRate}%`}
+              icon={<Percent className="h-4 w-4" aria-hidden />}
+              hint={`${occupiedUnits} occupied · ${heldUnits} held · ${availableUnits} available`}
+            />
+            <StatCard
+              label="Total units"
+              value={totalUnits}
+              icon={<DoorOpen className="h-4 w-4" aria-hidden />}
+              hint={`Across ${properties.length} ${properties.length === 1 ? "property" : "properties"}`}
+            />
           </div>
 
           {/* Properties */}
@@ -112,69 +201,145 @@ export default function LandlordDashboardPage() {
               />
             ) : (
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {properties.map((p) => (
-                  <Card key={p.id}>
-                    <CardContent className="space-y-3 p-5">
-                      <div className="flex items-start justify-between gap-2">
-                        <Link href={`/landlord/properties/${p.id}`} className="space-y-1">
-                          <p className="font-medium leading-tight hover:text-primary">{p.name}</p>
-                          <p className="text-xs text-muted-foreground">{p.public_address_line}</p>
-                        </Link>
-                        <PropertyStatusBadge status={p.status} />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <VerificationBadge status={p.verification_status} />
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                        <div className="rounded-md bg-muted/40 p-2">
-                          <p className="font-semibold text-foreground">{p.total_units}</p>
-                          <p className="text-muted-foreground">Total</p>
+                {properties.map((p) => {
+                  const propUnits = p.total_units || 0;
+                  const propOccupied = p.occupied_units || 0;
+                  const propHeld = p.held_units || 0;
+                  const propAvail = p.available_units || 0;
+                  const propOccRate = propUnits > 0 ? Math.round(((propOccupied + propHeld) / propUnits) * 100) : 0;
+                  return (
+                    <Card key={p.id} className="flex flex-col">
+                      <CardContent className="flex flex-1 flex-col space-y-3 p-5">
+                        <div className="flex items-start justify-between gap-2">
+                          <Link href={`/landlord/properties/${p.id}`} className="space-y-1">
+                            <p className="font-medium leading-tight hover:text-primary">{p.name}</p>
+                            <p className="text-xs text-muted-foreground">{p.public_address_line}</p>
+                          </Link>
+                          <PropertyStatusBadge status={p.status} />
                         </div>
-                        <div className="rounded-md bg-success/10 p-2">
-                          <p className="font-semibold text-success">{p.available_units}</p>
-                          <p className="text-muted-foreground">Available</p>
+                        <div className="flex items-center gap-2">
+                          <VerificationBadge status={p.verification_status} />
                         </div>
-                        <div className="rounded-md bg-info/10 p-2">
-                          <p className="font-semibold text-info">{p.occupied_units}</p>
-                          <p className="text-muted-foreground">Occupied</p>
+
+                        {/* Occupancy bar */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">Occupancy</span>
+                            <span className="font-medium">{propOccRate}%</span>
+                          </div>
+                          <div className="h-2 overflow-hidden rounded-full bg-muted">
+                            <div
+                              className="h-full rounded-full bg-primary transition-all"
+                              style={{ width: `${propOccRate}%` }}
+                            />
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <Price kobo={p.price_from_kobo} fromLabel period="/yr" />
-                        <Link href={`/landlord/properties/${p.id}/rooms`} className="text-primary hover:underline">Manage rooms →</Link>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+
+                        <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                          <div className="rounded-md bg-muted/40 p-2">
+                            <p className="font-semibold text-foreground">{propUnits}</p>
+                            <p className="text-muted-foreground">Total</p>
+                          </div>
+                          <div className="rounded-md bg-success/10 p-2">
+                            <p className="font-semibold text-success">{propAvail}</p>
+                            <p className="text-muted-foreground">Available</p>
+                          </div>
+                          <div className="rounded-md bg-info/10 p-2">
+                            <p className="font-semibold text-info">{propOccupied}</p>
+                            <p className="text-muted-foreground">Occupied</p>
+                          </div>
+                        </div>
+                        <div className="mt-auto flex items-center justify-between text-xs pt-1">
+                          <Price kobo={p.price_from_kobo} fromLabel period="/yr" />
+                          <Link href={`/landlord/properties/${p.id}/rooms`} className="text-primary hover:underline">Manage rooms →</Link>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </section>
 
-          {/* Recent bookings */}
-          {bookings.length > 0 && (
-            <section>
-              <SectionHeading eyebrow="Activity" title="Recent bookings" />
-              <Card className="mt-4">
-                <CardContent className="p-0">
-                  <ul className="divide-y divide-border">
-                    {bookings.slice(0, 5).map((b) => (
-                      <li key={b.id} className="flex items-center justify-between gap-3 p-4">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="truncate font-medium">{b.properties?.name ?? "Property"}</p>
-                            <BookingStatusBadge status={b.status} />
-                          </div>
-                          <p className="text-xs text-muted-foreground">{b.reference} · {formatRelativeTime(b.created_at)}</p>
-                          {b.rentable_units && <p className="text-xs text-muted-foreground">Unit {b.rentable_units.identifier}</p>}
-                        </div>
-                        <Price kobo={b.total_kobo} compact />
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+          {/* Recent bookings + Quick actions */}
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Recent bookings */}
+            <section className="lg:col-span-2">
+              <SectionHeading
+                eyebrow="Activity"
+                title="Recent bookings"
+                action={bookings.length > 0 ? <Button asChild variant="ghost" size="sm"><Link href="/landlord/bookings">View all</Link></Button> : undefined}
+              />
+              {bookings.length === 0 ? (
+                <EmptyState
+                  className="mt-4"
+                  icon={<CalendarCheck className="h-5 w-5" aria-hidden />}
+                  title="No bookings yet"
+                  description="Once students book your rooms, they'll appear here."
+                />
+              ) : (
+                <Card className="mt-4">
+                  <CardContent className="p-0">
+                    <ul className="divide-y divide-border">
+                      {bookings.slice(0, 5).map((b) => (
+                        <li key={b.id}>
+                          <Link href={`/landlord/bookings/${b.id}`} className="flex items-center justify-between gap-3 p-4 hover:bg-muted/40">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="truncate font-medium">{b.properties?.name ?? "Property"}</p>
+                                <BookingStatusBadge status={b.status} />
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                {b.reference} · {formatRelativeTime(b.created_at)}
+                                {b.rentable_units && ` · Unit ${b.rentable_units.identifier}`}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="text-right">
+                                <Price kobo={b.total_kobo} compact />
+                                {b.outstanding_kobo > 0 && (
+                                  <p className="text-xs text-warning">{formatNgn(b.outstanding_kobo)} due</p>
+                                )}
+                              </div>
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
+                            </div>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
             </section>
-          )}
+
+            {/* Quick actions */}
+            <section>
+              <SectionHeading title="Quick actions" />
+              <div className="mt-4 space-y-3">
+                {[
+                  { href: "/landlord/properties/new", icon: Plus, label: "Add property", desc: "List a new building" },
+                  { href: "/landlord/payouts", icon: Banknote, label: "Payouts", desc: "View withdrawal history" },
+                  { href: "/landlord/transactions", icon: TrendingUp, label: "Transactions", desc: "All financial activity" },
+                  { href: "/landlord/verification", icon: CheckCircle2, label: "Verification", desc: pendingVerification.length > 0 ? `${pendingVerification.length} pending` : "All verified" },
+                ].map((q) => (
+                  <Link key={q.href} href={q.href}>
+                    <Card className="transition-all hover:shadow-md hover:-translate-y-0.5">
+                      <CardContent className="flex items-center gap-3 p-4">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <q.icon className="h-4 w-4" aria-hidden />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium">{q.label}</p>
+                          <p className="text-xs text-muted-foreground">{q.desc}</p>
+                        </div>
+                        <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          </div>
         </>
       )}
     </div>
