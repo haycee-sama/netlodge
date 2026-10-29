@@ -393,6 +393,14 @@ export async function createRoom(input: {
   facilities?: string[];
 }): Promise<ServiceResult<{ id: string }>> {
   try {
+    // Validate inputs
+    if (!input.identifier?.trim()) return { data: null, error: "Unit identifier is required" };
+    if (input.annualRentKobo <= 0) return { data: null, error: "Annual rent must be positive" };
+    if (input.capacity < 1) return { data: null, error: "Capacity must be at least 1" };
+    if (input.cautionDepositKobo !== undefined && input.cautionDepositKobo < 0) {
+      return { data: null, error: "Caution deposit cannot be negative" };
+    }
+
     const supabase = createClient();
 
     // Verify the floor belongs to this property (RLS will also enforce this)

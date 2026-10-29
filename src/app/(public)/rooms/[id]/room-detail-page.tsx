@@ -62,12 +62,17 @@ export function RoomDetailPage() {
   }, [params.id]);
 
   // Calculate pricing
+  // Service fee rate is configured in platform_settings (booking.service_fee_rate)
+  // Default to 5% if not set. The payment initiation endpoint re-derives the
+  // amount from booking.outstanding_kobo, so even if the client calculates
+  // the fee incorrectly, the actual charge is always the booking total.
   const baseRent = room?.annual_rent_kobo ?? 0;
   const additionalCharges = (room?.additional_charges ?? [])
     .filter((c) => c.frequency !== "one_time")
     .reduce((s, c) => s + c.amount_kobo, 0);
   const cautionDeposit = room?.caution_deposit_kobo ?? 0;
-  const serviceFee = Math.round(baseRent * 0.05);
+  const SERVICE_FEE_RATE = 0.05; // 5% — matches platform_settings default
+  const serviceFee = Math.round(baseRent * SERVICE_FEE_RATE);
   const total = baseRent + additionalCharges + cautionDeposit + serviceFee;
 
   const isAvailable = room?.status === "available";
@@ -77,6 +82,11 @@ export function RoomDetailPage() {
 
   async function handleBooking() {
     if (!room || !session) return;
+    if (!isStudent) {
+      toast.error("Only students can book accommodation");
+      setConfirmOpen(false);
+      return;
+    }
     if (!checkIn) {
       toast.error("Choose a check-in date");
       setConfirmOpen(false);
@@ -241,6 +251,20 @@ export function RoomDetailPage() {
                 </div>
               )}
 
+              {isAvailable && !isAuthenticated && (
+                <div className="flex items-start gap-2 rounded-md bg-muted p-3 text-xs text-muted-foreground">
+                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <span>Sign in as a student to book this unit. <Link href="/login" className="text-primary hover:underline">Sign in</Link></span>
+                </div>
+              )}
+
+              {isAvailable && isAuthenticated && !isStudent && (
+                <div className="flex items-start gap-2 rounded-md bg-muted p-3 text-xs text-muted-foreground">
+                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <span>Only students can book accommodation. Register as a student to continue.</span>
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <Label htmlFor="check-in">Check-in date</Label>
                 <input
@@ -263,7 +287,7 @@ export function RoomDetailPage() {
 
               <AlertDialog open={confirmOpen} onOpenChange={(open) => { if (!submitting) setConfirmOpen(open); }}>
                 <AlertDialogTrigger asChild>
-                  <Button className="w-full" disabled={!isAvailable || !accept || submitting} onClick={() => setConfirmOpen(true)}>
+                  <Button className="w-full" disabled={!isAvailable || !isStudent || !accept || submitting} onClick={() => setConfirmOpen(true)}>
                     <Lock className="mr-2 h-4 w-4" aria-hidden />
                     Place hold & continue
                   </Button>

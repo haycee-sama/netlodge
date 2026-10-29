@@ -42,6 +42,17 @@ export async function GET(request: NextRequest) {
     const adminClient = createAdminClient();
     const supabase = await createClient();
 
+    // Step 0: Release expired booking holds
+    // This runs the release_expired_holds() RPC which resets bookings
+    // past their hold_expires_at back to expired and frees the room.
+    try {
+      await adminClient.rpc("release_expired_holds");
+      console.log("[cron/reconciliation] Released expired holds");
+    } catch (err) {
+      console.error("[cron/reconciliation] Failed to release expired holds:", err instanceof Error ? err.message : String(err));
+      // Non-fatal — continue with reconciliation
+    }
+
     // Date range: last 24 hours
     const to = new Date();
     const from = new Date(to.getTime() - 24 * 60 * 60 * 1000);

@@ -361,6 +361,23 @@ export async function createBooking(params: {
   try {
     const supabase = createClient();
 
+    // Verify the caller is authenticated and has the student role
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { data: null, error: "Not authenticated" };
+    }
+    if (user.id !== params.studentId) {
+      return { data: null, error: "Student ID must match the authenticated user" };
+    }
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
+    const userRoles = (roles ?? []).map((r: any) => r.role as string);
+    if (!userRoles.includes("student")) {
+      return { data: null, error: "Only students can book accommodation" };
+    }
+
     // Call the database function via RPC
     const { data, error } = await supabase.rpc("create_booking", {
       p_student_id: params.studentId,

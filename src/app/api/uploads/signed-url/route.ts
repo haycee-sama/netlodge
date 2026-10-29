@@ -19,6 +19,12 @@ export async function POST(request: NextRequest) {
 
   if (!body.bucket || !body.path) return NextResponse.json({ error: "bucket and path are required" }, { status: 400 });
 
+  // Validate bucket against allowlist — prevents accessing arbitrary storage buckets
+  const ALLOWED_BUCKETS = ["property-images", "verification-evidence", "ticket-attachments"];
+  if (!ALLOWED_BUCKETS.includes(body.bucket)) {
+    return NextResponse.json({ error: "Invalid bucket" }, { status: 400 });
+  }
+
   const result = await getSignedUrl(body.bucket, body.path, 3600, request);
   if (result.error) return NextResponse.json({ error: result.error }, { status: result.status });
   return NextResponse.json(result.data);
