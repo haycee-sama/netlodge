@@ -28,6 +28,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { config } from "dotenv";
 
 try { config(); } catch {}
+try { config({ path: ".env.test" }); } catch {}
 
 const secretKey = process.env.PAYSTACK_SECRET_KEY!;
 const baseUrl = "https://api.paystack.co";

@@ -19,6 +19,7 @@ import { config } from "dotenv";
 import { assertTestDatabase } from "./_test-guard";
 
 try { config(); } catch {}
+try { config({ path: ".env.test" }); } catch {}
 
 assertTestDatabase("scripts/test-phase8-student-storage.ts");
 
@@ -58,6 +59,7 @@ async function main() {
   const student2Pwd = `TestPass123!_${ts}`;
   const { data: s2Auth, error: s2Err } = await supabase.auth.admin.createUser({
     email: student2Email, password: student2Pwd, email_confirm: true,
+    user_metadata: { first_name: "Student2", last_name: "Test", role: "student" },
   });
   if (s2Err) { console.error("  s2Err:", s2Err.message); process.exit(1); }
   assert(!!s2Auth?.user, "Student 2 created");

@@ -21,6 +21,7 @@ import { config } from "dotenv";
 import { assertTestDatabase } from "./_test-guard";
 
 try { config(); } catch {}
+try { config({ path: ".env.test" }); } catch {}
 
 assertTestDatabase("scripts/test-finance-support-rpcs.ts");
 
@@ -62,11 +63,11 @@ async function main() {
   const faPwd = `TestPass123!_${ts}`;
   const ssPwd = `TestPass456!_${ts}`;
 
-  const { data: faAuth, error: faErr } = await supabase.auth.admin.createUser({ email: faEmail, password: faPwd, email_confirm: true });
+  const { data: faAuth, error: faErr } = await supabase.auth.admin.createUser({ email: faEmail, password: faPwd, email_confirm: true, user_metadata: { first_name: "FA", last_name: "Test", role: "finance_admin" } });
   if (faErr) { console.error("  faErr:", faErr.message); process.exit(1); }
   assert(!!faAuth?.user, "Finance Admin created");
 
-  const { data: ssAuth, error: ssErr } = await supabase.auth.admin.createUser({ email: ssEmail, password: ssPwd, email_confirm: true });
+  const { data: ssAuth, error: ssErr } = await supabase.auth.admin.createUser({ email: ssEmail, password: ssPwd, email_confirm: true, user_metadata: { first_name: "SS", last_name: "Test", role: "support_staff" } });
   if (ssErr) { console.error("  ssErr:", ssErr.message); process.exit(1); }
   assert(!!ssAuth?.user, "Support Staff created");
 

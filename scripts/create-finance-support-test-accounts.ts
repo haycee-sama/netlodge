@@ -14,6 +14,7 @@ import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
 
 try { config(); } catch {}
+try { config({ path: ".env.test" }); } catch {}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

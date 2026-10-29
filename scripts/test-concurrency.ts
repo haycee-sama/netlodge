@@ -41,6 +41,7 @@ import { config } from "dotenv";
 import { assertTestDatabase } from "./_test-guard";
 
 try { config(); } catch {}
+try { config({ path: ".env.test" }); } catch {}
 
 assertTestDatabase("scripts/test-concurrency.ts");
 
@@ -132,13 +133,13 @@ async function main() {
   // Create student auth sessions for concurrent booking tests
   const s1Email = `conc_s1_${ts}@netlodge.test`;
   const s1Pwd = `TestPass123!_${ts}`;
-  const { data: s1Auth } = await admin.auth.admin.createUser({ email: s1Email, password: s1Pwd, email_confirm: true });
+  const { data: s1Auth } = await admin.auth.admin.createUser({ email: s1Email, password: s1Pwd, email_confirm: true, user_metadata: { first_name: "Conc", last_name: "S1", role: "student" } });
   assert(!!s1Auth?.user, "student 1 auth created");
   cleanupTasks.push(async () => { try { await admin.auth.admin.deleteUser(s1Auth!.user!.id); } catch {} });
 
   const s2Email = `conc_s2_${ts}@netlodge.test`;
   const s2Pwd = `TestPass123!_${ts}`;
-  const { data: s2Auth } = await admin.auth.admin.createUser({ email: s2Email, password: s2Pwd, email_confirm: true });
+  const { data: s2Auth } = await admin.auth.admin.createUser({ email: s2Email, password: s2Pwd, email_confirm: true, user_metadata: { first_name: "Conc", last_name: "S2", role: "student" } });
   assert(!!s2Auth?.user, "student 2 auth created");
   cleanupTasks.push(async () => { try { await admin.auth.admin.deleteUser(s2Auth!.user!.id); } catch {} });
 

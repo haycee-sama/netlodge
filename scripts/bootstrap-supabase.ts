@@ -60,6 +60,7 @@ import { config } from "dotenv";
 import { assertTestDatabase } from "./_test-guard";
 
 try { config(); } catch {}
+try { config({ path: ".env.test" }); } catch {}
 try { config({ path: ".env.bootstrap" }); } catch {}
 
 // ---------------------------------------------------------------------------
@@ -137,6 +138,7 @@ async function connectWithFallbacks(
   // Common pooler regions. Add more as needed.
   const poolerHosts = [
     "aws-0-eu-west-1.pooler.supabase.com",
+    "aws-0-eu-west-2.pooler.supabase.com",
     "aws-0-us-east-1.pooler.supabase.com",
     "aws-0-us-west-1.pooler.supabase.com",
     "aws-0-ap-southeast-1.pooler.supabase.com",
@@ -153,7 +155,7 @@ async function connectWithFallbacks(
   for (const host of allHosts) {
     const isPooler = host.includes(".pooler.");
     const user = isPooler ? `postgres.${projectRef}` : "postgres";
-    const port = isPooler ? 5432 : 5432;
+    const port = isPooler ? 6543 : 5432;
 
     process.stdout.write(`  Trying ${host} as ${user}... `);
     const client = new Client({

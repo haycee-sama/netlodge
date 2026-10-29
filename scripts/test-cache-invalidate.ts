@@ -27,6 +27,7 @@ import { config } from "dotenv";
 import { readFileSync } from "fs";
 
 try { config(); } catch {}
+try { config({ path: ".env.test" }); } catch {}
 
 const APP_URL = process.env.TEST_APP_URL ?? "http://localhost:3000";
 

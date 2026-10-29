@@ -20,6 +20,7 @@ import { config } from "dotenv";
 import { assertTestDatabase } from "./_test-guard";
 
 try { config(); } catch {}
+try { config({ path: ".env.test" }); } catch {}
 
 assertTestDatabase("scripts/test-admin-api-auth.ts");
 

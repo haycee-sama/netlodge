@@ -20,6 +20,7 @@ import { config } from "dotenv";
 import { assertTestDatabase } from "./_test-guard";
 
 try { config(); } catch {}
+try { config({ path: ".env.test" }); } catch {}
 
 assertTestDatabase("scripts/test-phase9-integrity.ts");
 
@@ -176,6 +177,7 @@ async function main() {
   const faPwd = `TestPass123!_${ts}`;
   const { data: faAuth } = await supabase.auth.admin.createUser({
     email: faEmail, password: faPwd, email_confirm: true,
+    user_metadata: { first_name: "FA", last_name: "Test", role: "finance_admin" },
   });
   await supabase.from("user_roles").insert({ user_id: faAuth!.user!.id, role: "finance_admin", reason: "Test" });
   await supabase.from("user_roles").delete().eq("user_id", faAuth!.user!.id).eq("role", "student");
@@ -262,6 +264,7 @@ async function main() {
   const s2Pwd = `TestPass123!_${ts}`;
   const { data: s2Auth } = await supabase.auth.admin.createUser({
     email: s2Email, password: s2Pwd, email_confirm: true,
+    user_metadata: { first_name: "S2", last_name: "Test", role: "student" },
   });
   cleanupTasks.push(async () => { await supabase.auth.admin.deleteUser(s2Auth!.user!.id); });
 

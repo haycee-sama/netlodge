@@ -18,6 +18,7 @@ import { config } from "dotenv";
 import { assertTestDatabase } from "./_test-guard";
 
 try { config(); } catch {}
+try { config({ path: ".env.test" }); } catch {}
 
 assertTestDatabase("scripts/test-admin-rpcs.ts");
 
@@ -76,12 +77,14 @@ async function main() {
 
   const { data: voAuth, error: voAuthErr } = await supabase.auth.admin.createUser({
     email: voEmail, password: voPassword, email_confirm: true,
+    user_metadata: { first_name: "VO", last_name: "Test", role: "verification_officer" },
   });
   if (voAuthErr) { console.error("  voAuthErr:", voAuthErr.message); process.exit(1); }
   assert(!!voAuth?.user, "VO auth user created");
 
   const { data: saAuth, error: saAuthErr } = await supabase.auth.admin.createUser({
     email: saEmail, password: saPassword, email_confirm: true,
+    user_metadata: { first_name: "SA", last_name: "Test", role: "super_admin" },
   });
   if (saAuthErr) { console.error("  saAuthErr:", saAuthErr.message); process.exit(1); }
   assert(!!saAuth?.user, "Super Admin auth user created");
@@ -275,6 +278,7 @@ async function main() {
   const sa2Password = `TestPass789!_${ts}`;
   const { data: sa2Auth } = await supabase.auth.admin.createUser({
     email: sa2Email, password: sa2Password, email_confirm: true,
+    user_metadata: { first_name: "SA2", last_name: "Test", role: "super_admin" },
   });
   await supabase.from("user_roles").insert([
     { user_id: sa2Auth!.user!.id, role: "super_admin", reason: "Test setup" },

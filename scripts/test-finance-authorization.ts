@@ -27,6 +27,7 @@ import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
 
 try { config(); } catch {}
+try { config({ path: ".env.test" }); } catch {}
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_KEY = process.env.SUPABASE_SECRET_KEY!;

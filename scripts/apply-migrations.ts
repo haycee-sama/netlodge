@@ -26,6 +26,7 @@ import { join } from "path";
 import { config } from "dotenv";
 
 try { config(); } catch {}
+try { config({ path: ".env.test" }); } catch {}
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const DB_PASSWORD = process.env.SUPABASE_DB_PASSWORD;
@@ -56,6 +57,7 @@ async function connect(projectRef: string, password: string): Promise<Client> {
     ? [explicitHost]
     : [
         "aws-0-eu-west-1.pooler.supabase.com",
+        "aws-0-eu-west-2.pooler.supabase.com",
         "aws-0-us-east-1.pooler.supabase.com",
         "aws-0-us-west-1.pooler.supabase.com",
         "aws-0-ap-southeast-1.pooler.supabase.com",
@@ -74,7 +76,7 @@ async function connect(projectRef: string, password: string): Promise<Client> {
 
     const client = new Client({
       host,
-      port: 5432,
+      port: isPooler ? 6543 : 5432,
       user,
       password,
       database: "postgres",
