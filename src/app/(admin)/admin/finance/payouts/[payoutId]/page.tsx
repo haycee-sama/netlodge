@@ -6,11 +6,11 @@ import { useParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AdminPageHeader, DemoModeBanner, DetailLayout } from "@/components/admin/admin-page-components";
 import { PayoutStatusBadge } from "@/components/shared/status-badges";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatNgn, formatDateTime, formatRelativeTime } from "@/lib/utils/format";
 import { Loader2, ArrowLeft, AlertTriangle } from "lucide-react";
+import { AdminPageHeader, DetailLayout } from "@/components/admin/admin-page-components";
 
 interface PayoutDetail {
   payout: {
@@ -130,7 +130,6 @@ export default function FinancePayoutDetailPage() {
           </Button>
         }
       />
-      <DemoModeBanner message="Live data — payout record, ledger entries, and audit trail from the database. Bank account numbers are stored masked and never decrypted." />
 
       <DetailLayout
         sidebar={<PayoutSidebar payout={payout} />}
@@ -258,8 +257,7 @@ function PayoutSidebar({ payout }: { payout: PayoutDetail["payout"] }) {
 }
 
 function Field({
-  label, value, mono = false, emphasize = false, tone,
-}: {
+  label, value, mono = false, emphasize = false, tone }: {
   label: string;
   value: string;
   mono?: boolean;

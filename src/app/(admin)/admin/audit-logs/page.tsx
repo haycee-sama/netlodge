@@ -2,16 +2,15 @@
 
 import * as React from "react";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatRelativeTime, formatDateTime } from "@/lib/utils/format";
 import { Loader2 } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 interface AuditLogRow {
   id: string;
@@ -36,8 +35,7 @@ const SEVERITY_OPTIONS = ["all", "info", "warning", "critical"];
 const SEVERITY_CLASS: Record<string, string> = {
   info: "text-muted-foreground",
   warning: "text-warning-foreground",
-  critical: "text-destructive",
-};
+  critical: "text-destructive" };
 
 export default function AdminAuditLogsPage() {
   const { session } = useAuth();
@@ -59,8 +57,7 @@ export default function AdminAuditLogsPage() {
     try {
       const params = new URLSearchParams({
         page: String(page),
-        pageSize: String(pageSize),
-      });
+        pageSize: String(pageSize) });
       if (q) params.set("q", q);
       if (category !== "all") params.set("category", category);
       if (severity !== "all") params.set("severity", severity);
@@ -99,7 +96,6 @@ export default function AdminAuditLogsPage() {
         description="Immutable record of every administrative action across the platform. Audit logs cannot be edited or deleted through any application interface."
         breadcrumbs={[{ label: "Admin", href: "/admin" }, { label: "Audit logs" }]}
       />
-      <DemoModeBanner message="Live data — audit_logs table is append-only (no UPDATE/DELETE policies). Super_admin sees all; finance_admin sees only finance-category rows." />
 
       {/* Filters */}
       <Card>

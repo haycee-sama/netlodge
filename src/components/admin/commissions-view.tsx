@@ -5,10 +5,10 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatNgn, formatDateTime, formatRelativeTime } from "@/lib/utils/format";
 import { Loader2, Percent, Wallet, CheckCircle2, Clock } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 interface CommissionSummary {
   configured_rate_percentage: number | null;
@@ -102,7 +102,6 @@ export function CommissionsView({ breadcrumbs, eyebrow = "Finance operations" }:
         description="Platform commission summary. Read-only — derived from real payouts and platform_settings. No mutation endpoints exist."
         breadcrumbs={breadcrumbs}
       />
-      <DemoModeBanner message="Live data — accrued commission is the sum of platform_fee_kobo across all payouts. Paid commission is the sum for settled payouts. The configured rate is read from platform_settings and applied to NEW payouts at creation time." />
 
       {/* Stat cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -190,8 +189,7 @@ export function CommissionsView({ breadcrumbs, eyebrow = "Finance operations" }:
 }
 
 function StatCard({
-  icon, label, value, hint, tone = "default",
-}: {
+  icon, label, value, hint, tone = "default" }: {
   icon: React.ReactNode;
   label: string;
   value: string;

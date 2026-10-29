@@ -3,19 +3,18 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { RoleBadge } from "@/components/shared/status-badges";
 import { useAuth } from "@/lib/auth/auth-context";
 import { USER_ROLES, roleLabel } from "@/lib/types";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 interface UserRow {
   id: string;
@@ -53,8 +52,7 @@ export default function AdminUsersPage() {
       const params = new URLSearchParams({
         page: String(page),
         pageSize: String(pageSize),
-        active,
-      });
+        active });
       if (q) params.set("q", q);
       const res = await fetch(`/api/admin/users?${params}`, { credentials: "include" });
       const data = await res.json();
@@ -98,7 +96,6 @@ export default function AdminUsersPage() {
         description="Search, filter, and manage every NetLodge account. Role changes and suspensions are server-authorized and audit-logged."
         breadcrumbs={[{ label: "Super Admin", href: "/admin" }, { label: "Users" }]}
       />
-      <DemoModeBanner message="Live data — role changes are protected by the set_user_role RPC (no self-escalation, no demoting the last super_admin)." />
 
       {/* Filters */}
       <Card>

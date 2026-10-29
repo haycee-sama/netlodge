@@ -4,11 +4,11 @@ import * as React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { IntegrationStatusBadge } from "@/components/shared/status-badges";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils/format";
 import { Loader2, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 interface IntegrationRow {
   id: string;
@@ -78,7 +78,6 @@ export default function AdminIntegrationsPage() {
         description="Read-only view of integration_health rows plus a live 'is it actually configured?' check derived from environment variables. Super Admin only."
         breadcrumbs={[{ label: "Super Admin", href: "/admin" }, { label: "Integrations" }]}
       />
-      <DemoModeBanner message="Live data — integration_health rows + environment variable presence checks. Actual secret values are never exposed. No live provider calls are made to test connectivity." />
 
       {/* Effective configuration */}
       <Card>

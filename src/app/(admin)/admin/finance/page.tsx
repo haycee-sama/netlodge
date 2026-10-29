@@ -5,11 +5,11 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { StatCard, SectionHeading } from "@/components/shared/page-components";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatNgn } from "@/lib/utils/format";
 import { Banknote, Receipt, RotateCcw, AlertTriangle, CheckCircle2, TrendingUp, Wallet, Loader2 } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 interface Metrics {
   gross_volume_kobo: number;
@@ -62,7 +62,6 @@ export default function FinanceDashboardPage() {
         description="Real-time financial metrics — gross volume, platform revenue, payouts, refunds, and reconciliation. All figures derived from verified database records."
         breadcrumbs={[{ label: "Finance Admin", href: "/admin/finance" }, { label: "Dashboard" }]}
       />
-      <DemoModeBanner message="Live data — every metric comes from the database. Pending/failed transactions are never counted as settled funds." />
 
       {error && (
         <Card className="border-destructive/40 bg-destructive/5">

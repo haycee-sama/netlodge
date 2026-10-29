@@ -6,11 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, StatCard, EmptyState, SectionHeading } from "@/components/shared/page-components";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { VerificationBadge, PriorityBadge } from "@/components/shared/status-badges";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { ListChecks, Clock, AlertTriangle, ArrowUpCircle, CheckCircle2, XCircle, FileSearch, Loader2 } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 interface CaseRow {
   id: string;
@@ -88,7 +88,6 @@ export default function VerificationDashboardPage() {
           <Button asChild><Link href="/admin/verification/queue"><ListChecks className="mr-2 h-4 w-4" aria-hidden /> Open review queue</Link></Button>
         }
       />
-      <DemoModeBanner message="Live data — every metric comes from the database." />
 
       {error && (
         <Card className="border-destructive/40 bg-destructive/5">

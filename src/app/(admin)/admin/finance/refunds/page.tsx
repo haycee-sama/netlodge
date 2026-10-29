@@ -10,12 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { RefundStatusBadge } from "@/components/shared/status-badges";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatNgn, formatDateTime } from "@/lib/utils/format";
 import { Loader2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 interface Refund {
   id: string;
@@ -98,8 +98,7 @@ export default function FinanceRefundsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ paymentId, amountKobo: amt, reason, reasonDetail }),
-      });
+        body: JSON.stringify({ paymentId, amountKobo: amt, reason, reasonDetail }) });
       const data = await res.json();
       if (!res.ok) { toast.error("Failed to create refund", { description: data.error }); return; }
       toast.success("Refund request created", { description: "It is now in the review queue." });
@@ -116,8 +115,7 @@ export default function FinanceRefundsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ action, notes }),
-      });
+        body: JSON.stringify({ action, notes }) });
       const data = await res.json();
       if (!res.ok) { toast.error("Review failed", { description: data.error }); return; }
       toast.success(`Refund ${action}d`, { description: data.providerReference ? `Provider ref: ${data.providerReference}` : undefined });
@@ -185,7 +183,6 @@ export default function FinanceRefundsPage() {
           </Dialog>
         }
       />
-      <DemoModeBanner message="Live data — refund approvals call Paystack test mode. Live refunds are blocked at the API layer." />
 
       <Card>
         <CardContent className="flex items-center gap-2 p-4">

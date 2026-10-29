@@ -158,15 +158,6 @@ function LoginForm() {
           Create one
         </Link>
       </p>
-
-      <Card className="border-dashed bg-muted/30">
-        <CardContent className="p-3 text-xs text-muted-foreground">
-          <strong className="text-foreground">Authentication:</strong> Sign-in uses
-          Supabase Auth with server-side session verification. New registrations
-          always receive the student role only — admin roles require server-side
-          assignment by a Super Admin.
-        </CardContent>
-      </Card>
     </div>
   );
 }

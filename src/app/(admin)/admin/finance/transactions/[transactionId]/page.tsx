@@ -6,11 +6,11 @@ import { useParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AdminPageHeader, DemoModeBanner, DetailLayout } from "@/components/admin/admin-page-components";
 import { PaymentStatusBadge, RefundStatusBadge } from "@/components/shared/status-badges";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatNgn, formatDateTime, formatRelativeTime } from "@/lib/utils/format";
 import { Loader2, ArrowLeft, AlertTriangle, ExternalLink } from "lucide-react";
+import { AdminPageHeader, DetailLayout } from "@/components/admin/admin-page-components";
 
 interface PaymentDetail {
   payment: {
@@ -66,8 +66,7 @@ const STATUS_DEFINITION: Record<string, string> = {
   successful: "Paystack confirmed the payment AND our backend has independently verified it (confirmed_by_backend=true).",
   failed: "Payment was declined or failed at the gateway. No money moved.",
   refunded: "All or part of the payment has been refunded. Linked refunds appear below.",
-  reversed: "Payment was reversed after settlement (e.g. chargeback).",
-};
+  reversed: "Payment was reversed after settlement (e.g. chargeback)." };
 
 export default function FinanceTransactionDetailPage() {
   const params = useParams<{ transactionId: string }>();
@@ -150,7 +149,6 @@ export default function FinanceTransactionDetailPage() {
           </Button>
         }
       />
-      <DemoModeBanner message="Live data — payment record, linked refunds, ledger entries, and audit trail. Sensitive payment instrument data is never stored or exposed." />
 
       <DetailLayout
         sidebar={<TransactionSidebar payment={payment} refundableBalance={refundableBalance} />}
@@ -296,8 +294,7 @@ export default function FinanceTransactionDetailPage() {
 }
 
 function TransactionSidebar({
-  payment, refundableBalance,
-}: {
+  payment, refundableBalance }: {
   payment: PaymentDetail["payment"];
   refundableBalance: number;
 }) {
@@ -327,8 +324,7 @@ function TransactionSidebar({
 }
 
 function Field({
-  label, value, mono = false, emphasize = false, tone,
-}: {
+  label, value, mono = false, emphasize = false, tone }: {
   label: string;
   value: string;
   mono?: boolean;

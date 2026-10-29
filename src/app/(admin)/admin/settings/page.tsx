@@ -5,10 +5,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils/format";
 import { Loader2, Lock } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 interface SettingRow {
   id: string;
@@ -93,7 +93,6 @@ export default function AdminSettingsPage() {
         description="Read-only view of platform_settings. Sensitive values are masked server-side and never exposed. Mutations require an audited, reauthenticated workflow that is not yet implemented."
         breadcrumbs={[{ label: "Super Admin", href: "/admin" }, { label: "Settings" }]}
       />
-      <DemoModeBanner message="Live data — values are read from the platform_settings table. Sensitive keys (containing secret/password/token/key) are masked server-side. No mutation endpoints exist." />
 
       <Card>
         <CardContent className="flex flex-wrap items-center gap-2 p-4">

@@ -6,11 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { DisputeStatusBadge } from "@/components/shared/status-badges";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatNgn, formatDateTime } from "@/lib/utils/format";
 import { Loader2 } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 interface Dispute {
   id: string;
@@ -79,7 +79,6 @@ export default function FinanceDisputesPage() {
         description="Read-only list of disputes raised against bookings. The dispute workflow is currently read-only — there is no resolution RPC or UI mutation yet. Refunds and support tickets are tracked separately."
         breadcrumbs={[{ label: "Finance Admin", href: "/admin/finance" }, { label: "Disputes" }]}
       />
-      <DemoModeBanner message="Live data — disputes table is real. The create/update workflow is not yet defined; this view exposes only persisted records." />
 
       <Card>
         <CardContent className="flex flex-wrap items-center gap-2 p-4">

@@ -10,11 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatDateTime } from "@/lib/utils/format";
 import { Loader2, Plus, CheckCircle2, XCircle, Star, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 interface Testimonial {
   id: string;
@@ -36,8 +36,7 @@ const ROLE_LABELS: Record<string, string> = {
   student: "Student",
   landlord: "Landlord",
   parent: "Parent",
-  staff: "Staff",
-};
+  staff: "Staff" };
 
 export default function AdminTestimonialsPage() {
   const { session } = useAuth();
@@ -73,13 +72,11 @@ export default function AdminTestimonialsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ action, reviewNotes: notes || null }),
-      });
+        body: JSON.stringify({ action, reviewNotes: notes || null }) });
       const data = await res.json();
       if (!res.ok) { toast.error("Review failed", { description: data.error }); return; }
       toast.success(`Testimonial ${action}d`, {
-        description: action === "approve" ? "It is now published on the homepage." : "It has been removed from the queue.",
-      });
+        description: action === "approve" ? "It is now published on the homepage." : "It has been removed from the queue." });
       await fetchPage();
     } finally { setSubmitting(false); }
   }
@@ -104,7 +101,6 @@ export default function AdminTestimonialsPage() {
         breadcrumbs={[{ label: "Super Admin", href: "/admin" }, { label: "Testimonials" }]}
         actions={<CreateTestimonialDialog onCreated={fetchPage} submitting={submitting} />}
       />
-      <DemoModeBanner message="Live data — testimonials are stored in the database and reviewed by super admins. Approved testimonials with published=true appear on the homepage." />
 
       <Card>
         <CardContent className="flex items-center gap-2 p-4">
@@ -209,8 +205,7 @@ function StatusBadge({ status }: { status: string }) {
 function ReviewDialog({
   action,
   onSubmit,
-  submitting,
-}: {
+  submitting }: {
   action: "approve" | "reject";
   onSubmit: (notes: string) => void;
   submitting: boolean;
@@ -260,8 +255,7 @@ function ReviewDialog({
 
 function CreateTestimonialDialog({
   onCreated,
-  submitting,
-}: {
+  submitting }: {
   onCreated: () => void;
   submitting: boolean;
 }) {
@@ -286,9 +280,7 @@ function CreateTestimonialDialog({
           authorUniversity: authorUniversity.trim() || undefined,
           authorLevel: authorLevel.trim() || undefined,
           quote: quote.trim(),
-          rating: rating ? Number(rating) : undefined,
-        }),
-      });
+          rating: rating ? Number(rating) : undefined }) });
       const data = await res.json();
       if (!res.ok) { toast.error("Failed to create testimonial", { description: data.error }); return; }
       toast.success("Testimonial created", { description: "It is now in the pending queue — approve it to publish." });

@@ -8,13 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { RoleBadge } from "@/components/shared/status-badges";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { useAuth } from "@/lib/auth/auth-context";
 import { initials } from "@/lib/utils/format";
 import { roleLabel as formatRoleLabel } from "@/lib/types";
 import { toast } from "sonner";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 export function AdminProfilePage({ roleLabel }: { roleLabel: string }) {
   const { session } = useAuth();
@@ -38,7 +38,6 @@ export function AdminProfilePage({ roleLabel }: { roleLabel: string }) {
         description="Your personal details as a NetLodge administrator."
         breadcrumbs={[{ label: roleLabel }, { label: "Profile" }]}
       />
-      <DemoModeBanner />
 
       <Card>
         <CardContent className="flex items-center gap-4 p-5">
@@ -101,7 +100,6 @@ export function AdminSettingsPage({ roleLabel }: { roleLabel: string }) {
         description="Customise your administrative workspace."
         breadcrumbs={[{ label: roleLabel }, { label: "Settings" }]}
       />
-      <DemoModeBanner />
 
       <Card>
         <CardHeader><CardTitle className="text-base">Appearance</CardTitle></CardHeader>

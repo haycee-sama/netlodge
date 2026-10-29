@@ -4,32 +4,26 @@ import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
-  Card, CardContent, CardHeader, CardTitle,
-} from "@/components/ui/card";
+  Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
-} from "@/components/ui/dialog";
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
-  ArrowLeft, CheckCircle2, XCircle, ArrowUpCircle, MessageSquarePlus, Loader2, AlertTriangle, Clock, FileText, User,
-} from "lucide-react";
-import { AdminPageHeader, DemoModeBanner, DetailLayout } from "@/components/admin/admin-page-components";
+  ArrowLeft, CheckCircle2, XCircle, ArrowUpCircle, MessageSquarePlus, Loader2, AlertTriangle, Clock, FileText, User } from "lucide-react";
 import {
-  VerificationBadge, PriorityBadge,
-} from "@/components/shared/status-badges";
+  VerificationBadge, PriorityBadge } from "@/components/shared/status-badges";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils/format";
 import { toast } from "sonner";
+import { AdminPageHeader, DetailLayout } from "@/components/admin/admin-page-components";
 
 interface CaseDetail {
   id: string;
@@ -139,8 +133,7 @@ export default function VerificationCaseDetailPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ action, ...body }),
-      });
+        body: JSON.stringify({ action, ...body }) });
       const data = await res.json();
       if (!res.ok) {
         toast.error("Action failed", { description: data.error });
@@ -193,8 +186,7 @@ export default function VerificationCaseDetailPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ message: internalNote }),
-      });
+        body: JSON.stringify({ message: internalNote }) });
       const data = await res.json();
       if (!res.ok) {
         toast.error("Could not add note", { description: data.error });
@@ -252,8 +244,6 @@ export default function VerificationCaseDetailPage() {
           {isOverdue && <Badge variant="outline" className="border-destructive/30 bg-destructive/10 text-destructive">Overdue</Badge>}
         </>}
       />
-
-      <DemoModeBanner message="Live data — every review action is server-authorized and recorded in the audit log. Self-approval is blocked." />
 
       <DetailLayout
         sidebar={

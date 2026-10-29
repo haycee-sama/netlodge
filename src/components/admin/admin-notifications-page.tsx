@@ -7,10 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, EmptyState } from "@/components/shared/page-components";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { toast } from "sonner";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 interface Notification {
   id: string;
@@ -28,8 +28,7 @@ const TYPE_ICON: Record<string, string> = {
   verification_update: "✓",
   message: "💬",
   system: "🔔",
-  promotion: "🎉",
-};
+  promotion: "🎉" };
 
 /**
  * Shared admin notifications page. Renders live notifications from the
@@ -59,8 +58,7 @@ export function AdminNotificationsPage({ roleLabel: _roleLabel }: { roleLabel: s
 
   async function markOne(id: string) {
     const res = await fetch(`/api/admin/notifications/${id}/read`, {
-      method: "POST", credentials: "include",
-    });
+      method: "POST", credentials: "include" });
     const data = await res.json();
     if (!res.ok) { toast.error("Could not mark as read", { description: data.error }); return; }
     setItems((arr) => arr.map((n) => n.id === id ? { ...n, read: true } : n));
@@ -72,8 +70,7 @@ export function AdminNotificationsPage({ roleLabel: _roleLabel }: { roleLabel: s
     const unread = items.filter((n) => !n.read);
     for (const n of unread) {
       await fetch(`/api/admin/notifications/${n.id}/read`, {
-        method: "POST", credentials: "include",
-      });
+        method: "POST", credentials: "include" });
     }
     setItems((arr) => arr.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
@@ -103,7 +100,6 @@ export function AdminNotificationsPage({ roleLabel: _roleLabel }: { roleLabel: s
           </Button>
         ) : undefined}
       />
-      <DemoModeBanner message="Live data — notifications are database-backed (not real-time). Real-time delivery via Supabase Realtime is a future enhancement." />
 
       {error && (
         <Card className="border-destructive/40 bg-destructive/5">

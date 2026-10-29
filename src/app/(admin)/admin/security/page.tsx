@@ -5,11 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { IntegrationStatusBadge, AuditSeverityBadge } from "@/components/shared/status-badges";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils/format";
 import { Loader2, ShieldCheck, ShieldAlert, Activity, Server } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 interface SecurityEvent {
   id: string;
@@ -84,7 +84,6 @@ export default function AdminSecurityPage() {
         description="Read-only view of security and authentication audit events, integration health, and rate-limiter mode. Super Admin only — enforced server-side and via RLS."
         breadcrumbs={[{ label: "Super Admin", href: "/admin" }, { label: "Security" }]}
       />
-      <DemoModeBanner message="Live data — security/auth/critical audit_logs rows + integration_health summary. No secrets, tokens, or raw request payloads are displayed." />
 
       {/* Summary cards */}
       {!loading && !error && data && (
@@ -201,8 +200,7 @@ export default function AdminSecurityPage() {
 }
 
 function SummaryCard({
-  icon, label, value, hint, tone = "default",
-}: {
+  icon, label, value, hint, tone = "default" }: {
   icon: React.ReactNode;
   label: string;
   value: string;

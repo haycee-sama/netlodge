@@ -9,12 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { PayoutStatusBadge } from "@/components/shared/status-badges";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatNgn, formatDateTime } from "@/lib/utils/format";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 interface Payout {
   id: string;
@@ -68,8 +68,7 @@ export default function FinancePayoutsPage() {
     setSubmitting(true);
     try {
       const res = await fetch(`/api/admin/finance/payouts/${payoutId}/approve`, {
-        method: "POST", credentials: "include",
-      });
+        method: "POST", credentials: "include" });
       const data = await res.json();
       if (!res.ok) { toast.error("Approve failed", { description: data.error }); return; }
       toast.success("Payout approved", { description: "Status moved to in_flight. No live transfer initiated." });
@@ -83,8 +82,7 @@ export default function FinancePayoutsPage() {
     try {
       const res = await fetch(`/api/admin/finance/payouts/${payoutId}/reject`, {
         method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
-        body: JSON.stringify({ reason }),
-      });
+        body: JSON.stringify({ reason }) });
       const data = await res.json();
       if (!res.ok) { toast.error("Reject failed", { description: data.error }); return; }
       toast.success("Payout rejected");
@@ -111,7 +109,6 @@ export default function FinancePayoutsPage() {
         description="Review and approve landlord payouts. Approval does NOT trigger a live transfer — it moves the payout to in_flight for separate settlement."
         breadcrumbs={[{ label: "Finance Admin", href: "/admin/finance" }, { label: "Payouts" }]}
       />
-      <DemoModeBanner message="Live data — approval is separated from money movement. Self-approval is blocked (a finance admin cannot approve their own payout)." />
 
       <Card>
         <CardContent className="flex items-center gap-2 p-4">

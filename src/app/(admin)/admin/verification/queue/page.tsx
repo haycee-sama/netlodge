@@ -4,17 +4,16 @@ import * as React from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { VerificationBadge, PriorityBadge } from "@/components/shared/status-badges";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { toast } from "sonner";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 interface QueueCase {
   id: string;
@@ -58,8 +57,7 @@ const ENTITY_OPTIONS = [
 ];
 
 const PRIORITY_LABEL: Record<string, string> = {
-  low: "Low", medium: "Medium", high: "High", urgent: "Urgent",
-};
+  low: "Low", medium: "Medium", high: "High", urgent: "Urgent" };
 
 export default function VerificationQueuePage() {
   const { session } = useAuth();
@@ -85,8 +83,7 @@ export default function VerificationQueuePage() {
     try {
       const params = new URLSearchParams({
         page: String(page),
-        pageSize: String(pageSize),
-      });
+        pageSize: String(pageSize) });
       if (status !== "all") params.set("status", status);
       if (submissionType !== "all") params.set("submissionType", submissionType);
       if (entityType !== "all") params.set("entityType", entityType);
@@ -130,7 +127,6 @@ export default function VerificationQueuePage() {
         </Card>
       ) : (
         <>
-          <DemoModeBanner message="Live data — verification cases come from the database. All decisions are server-authorized and audit-logged." />
 
           {/* Filters */}
           <Card>

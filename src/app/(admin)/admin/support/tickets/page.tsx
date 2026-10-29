@@ -7,12 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { SupportTicketStatusBadge, PriorityBadge } from "@/components/shared/status-badges";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 interface Ticket {
   id: string;
@@ -83,7 +83,6 @@ export default function SupportTicketsPage() {
         description="Live support tickets from the database. Use filters to find open, urgent, or escalated cases."
         breadcrumbs={[{ label: "Support Agent", href: "/admin/support" }, { label: "Tickets" }]}
       />
-      <DemoModeBanner message="Live data — every action (assign, escalate, resolve) is server-authorized and audit-logged." />
 
       <Card>
         <CardContent className="flex flex-wrap items-center gap-2 p-4">

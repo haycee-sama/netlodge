@@ -12,11 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ArrowLeft, Loader2, User, Send, Lock } from "lucide-react";
-import { AdminPageHeader, DemoModeBanner, DetailLayout } from "@/components/admin/admin-page-components";
 import { SupportTicketStatusBadge, PriorityBadge } from "@/components/shared/status-badges";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils/format";
 import { toast } from "sonner";
+import { AdminPageHeader, DetailLayout } from "@/components/admin/admin-page-components";
 
 interface Message {
   id: string;
@@ -91,8 +91,7 @@ export default function SupportTicketDetailPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ action, value, reason }),
-      });
+        body: JSON.stringify({ action, value, reason }) });
       const data = await res.json();
       if (!res.ok) { toast.error("Action failed", { description: data.error }); return false; }
       toast.success(`${action.replace(/_/g, " ")} succeeded`);
@@ -109,8 +108,7 @@ export default function SupportTicketDetailPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ message, internal }),
-      });
+        body: JSON.stringify({ message, internal }) });
       const data = await res.json();
       if (!res.ok) { toast.error("Could not send message", { description: data.error }); return; }
       toast.success(internal ? "Internal note added" : "Reply sent");
@@ -169,7 +167,6 @@ export default function SupportTicketDetailPage() {
           {ticket.escalated && <Badge variant="outline" className="text-destructive">Escalated → {ticket.escalated_to?.replace(/_/g, " ")}</Badge>}
         </>}
       />
-      <DemoModeBanner message="Live data — internal notes are never visible to customers (RLS-enforced). Every action is audit-logged." />
 
       <DetailLayout
         sidebar={

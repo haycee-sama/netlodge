@@ -10,11 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatNgn, formatDateTime } from "@/lib/utils/format";
 import { Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 interface Reconciliation {
   id: string;
@@ -38,8 +38,7 @@ const STATUS_COLORS: Record<string, string> = {
   amount_discrepancy: "text-destructive",
   duplicate_reference: "text-destructive",
   settlement_date_mismatch: "text-warning-foreground",
-  resolved: "text-muted-foreground",
-};
+  resolved: "text-muted-foreground" };
 
 export default function FinanceReconciliationPage() {
   const { session } = useAuth();
@@ -80,13 +79,11 @@ export default function FinanceReconciliationPage() {
     try {
       const res = await fetch("/api/admin/finance/reconciliation/run", {
         method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
-        body: JSON.stringify({ from: new Date(runFrom).toISOString(), to: new Date(runTo).toISOString() }),
-      });
+        body: JSON.stringify({ from: new Date(runFrom).toISOString(), to: new Date(runTo).toISOString() }) });
       const data = await res.json();
       if (!res.ok) { toast.error("Reconciliation run failed", { description: data.error }); return; }
       toast.success("Reconciliation complete", {
-        description: `${data.total} total · ${data.inserted} new · ${data.skipped} skipped · ${data.discrepancies} discrepancies`,
-      });
+        description: `${data.total} total · ${data.inserted} new · ${data.skipped} skipped · ${data.discrepancies} discrepancies` });
       setRunOpen(false); setRunFrom(""); setRunTo("");
       await fetchPage();
     } finally { setSubmitting(false); }
@@ -98,8 +95,7 @@ export default function FinanceReconciliationPage() {
     try {
       const res = await fetch(`/api/admin/finance/reconciliation/${recordId}/resolve`, {
         method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
-        body: JSON.stringify({ notes }),
-      });
+        body: JSON.stringify({ notes }) });
       const data = await res.json();
       if (!res.ok) { toast.error("Resolve failed", { description: data.error }); return; }
       toast.success("Record resolved");
@@ -157,7 +153,6 @@ export default function FinanceReconciliationPage() {
           </Dialog>
         }
       />
-      <DemoModeBanner message="Live data — reconciliation is idempotent. Discrepancies are flagged for human review, never auto-fixed." />
 
       <Card>
         <CardContent className="flex items-center gap-2 p-4">

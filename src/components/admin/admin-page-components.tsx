@@ -28,8 +28,7 @@ export function AdminPageHeader({
   eyebrow,
   breadcrumbs,
   actions,
-  className,
-}: AdminPageHeaderProps) {
+  className }: AdminPageHeaderProps) {
   return (
     <div className={cn("space-y-3", className)}>
       {breadcrumbs && breadcrumbs.length > 0 && (
@@ -67,32 +66,12 @@ export function AdminPageHeader({
 }
 
 /**
- * Info banner shown on admin pages to clarify that data is live and
- * privileged actions are server-authorised.
- */
-export function DemoModeBanner({ message }: { message?: string }) {
-  return (
-    <Card className="border-dashed border-info/40 bg-info/5">
-      <CardContent className="flex items-start gap-2 p-3 text-xs text-info">
-        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-        <span>
-          <strong className="text-foreground">Live data:</strong>{" "}
-          {message ??
-            "All data shown is from the production database. Privileged actions are authorised server-side and audit-logged."}
-        </span>
-      </CardContent>
-    </Card>
-  );
-}
-
-/**
  * Two-column detail layout: main content on the left, sidebar on the right.
  */
 export function DetailLayout({
   children,
   sidebar,
-  className,
-}: {
+  className }: {
   children: React.ReactNode;
   sidebar: React.ReactNode;
   className?: string;

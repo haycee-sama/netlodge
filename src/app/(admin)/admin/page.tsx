@@ -5,11 +5,11 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { StatCard, SectionHeading } from "@/components/shared/page-components";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatNgn } from "@/lib/utils/format";
 import { Users, Building2, DoorOpen, CalendarCheck, BadgeCheck, Ticket, Wallet, AlertTriangle, Loader2, Activity } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 interface Metrics {
   users: Record<string, number>;
@@ -30,8 +30,7 @@ const ROLE_LABELS: Record<string, string> = {
   verification_officer: "Verification Officers",
   support_staff: "Support Staff",
   finance_admin: "Finance Admins",
-  super_admin: "Super Admins",
-};
+  super_admin: "Super Admins" };
 
 export default function SuperAdminOverviewPage() {
   const { session } = useAuth();
@@ -71,7 +70,6 @@ export default function SuperAdminOverviewPage() {
         description="Real-time visibility into NetLodge's marketplace, operations, and system health — all derived from live database queries."
         breadcrumbs={[{ label: "Super Admin", href: "/admin" }, { label: "Overview" }]}
       />
-      <DemoModeBanner message="Live data — every figure comes from a real database query. No fabricated counts." />
 
       {error && (
         <Card className="border-destructive/40 bg-destructive/5">

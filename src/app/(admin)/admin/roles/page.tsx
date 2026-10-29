@@ -3,9 +3,9 @@
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { can, type Action } from "@/lib/auth/permissions";
 import { USER_ROLES, roleLabel } from "@/lib/types";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 const ALL_ACTIONS: Action[] = [
   "property:create", "property:edit_own", "property:edit_assigned", "property:delete", "property:view_all",
@@ -28,7 +28,6 @@ export default function AdminRolesPage() {
         description="The role-permission matrix for every NetLodge role. Permissions are enforced server-side via Supabase RLS policies."
         breadcrumbs={[{ label: "Admin", href: "/admin" }, { label: "Roles & permissions" }]}
       />
-      <DemoModeBanner message="This matrix is read-only in demo mode. In production, role-permission mappings are stored in the database and changes require super-admin reauthentication and are audit-logged." />
 
       <Card>
         <CardContent className="p-0">

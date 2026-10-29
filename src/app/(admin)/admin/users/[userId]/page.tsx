@@ -4,26 +4,23 @@ import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
-  Card, CardContent, CardHeader, CardTitle,
-} from "@/components/ui/card";
+  Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ArrowLeft, ShieldCheck, UserCog, AlertTriangle, Loader2, CheckCircle2, UserX, UserCheck } from "lucide-react";
-import { AdminPageHeader, DemoModeBanner, DetailLayout } from "@/components/admin/admin-page-components";
 import { RoleBadge } from "@/components/shared/status-badges";
 import { useAuth } from "@/lib/auth/auth-context";
 import { USER_ROLES, roleLabel } from "@/lib/types";
 import { formatRelativeTime, formatDateTime } from "@/lib/utils/format";
 import { toast } from "sonner";
+import { AdminPageHeader, DetailLayout } from "@/components/admin/admin-page-components";
 
 interface AdminUserDetail {
   id: string;
@@ -100,8 +97,7 @@ export default function AdminUserDetailPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ newRole, reason: roleReason }),
-      });
+        body: JSON.stringify({ newRole, reason: roleReason }) });
       const data = await res.json();
       if (!res.ok) { toast.error("Could not change role", { description: data.error }); return; }
       toast.success("Role updated", { description: `${user.email} is now a ${roleLabel(newRole as any)}.` });
@@ -122,8 +118,7 @@ export default function AdminUserDetailPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ active: false, reason: suspendReason }),
-      });
+        body: JSON.stringify({ active: false, reason: suspendReason }) });
       const data = await res.json();
       if (!res.ok) { toast.error("Could not suspend", { description: data.error }); return; }
       toast.success("Account suspended", { description: `${user.email} can no longer sign in.` });
@@ -142,8 +137,7 @@ export default function AdminUserDetailPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ active: true, reason: reactivateReason || "Reactivated by admin." }),
-      });
+        body: JSON.stringify({ active: true, reason: reactivateReason || "Reactivated by admin." }) });
       const data = await res.json();
       if (!res.ok) { toast.error("Could not reactivate", { description: data.error }); return; }
       toast.success("Account reactivated");
@@ -194,7 +188,6 @@ export default function AdminUserDetailPage() {
           </>
         }
       />
-      <DemoModeBanner message="Live data — role changes and suspensions are protected by SECURITY DEFINER RPCs (set_user_role, set_user_active_status) with last-super-admin guards." />
 
       {isSelf && (
         <Card className="border-warning/30 bg-warning/5">

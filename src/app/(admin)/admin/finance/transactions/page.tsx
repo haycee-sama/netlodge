@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AdminPageHeader, DemoModeBanner } from "@/components/admin/admin-page-components";
 import { PaymentStatusBadge } from "@/components/shared/status-badges";
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatNgn, formatDateTime, formatRelativeTime } from "@/lib/utils/format";
 import { Loader2 } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/admin-page-components";
 
 interface Payment {
   id: string;
@@ -82,7 +82,6 @@ export default function FinanceTransactionsPage() {
         description="Every payment processed through Paystack. All statuses are backend-verified."
         breadcrumbs={[{ label: "Finance Admin", href: "/admin/finance" }, { label: "Transactions" }]}
       />
-      <DemoModeBanner message="Live data — backend-verified payment records." />
 
       <Card>
         <CardContent className="flex flex-wrap items-center gap-2 p-4">
