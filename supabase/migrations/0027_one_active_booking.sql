@@ -44,6 +44,7 @@ declare
   v_period_days     integer;
   v_unit_period     rental_period;
   v_expected_days   integer;
+  v_actual_days     integer;
   v_active_count    integer;
 begin
   -- =====================================================================
