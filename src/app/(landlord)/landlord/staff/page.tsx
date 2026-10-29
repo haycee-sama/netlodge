@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Users, Plus, MoreVertical, Mail, Briefcase, Shield, Loader2, AlertCircle } from "lucide-react";
+import { Users, Plus, MoreVertical, Mail, Briefcase, Shield, Loader2, AlertCircle, UserPlus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,10 +24,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { PageHeader, EmptyState } from "@/components/shared/page-components";
 import { useAuth } from "@/lib/auth/auth-context";
 import { createClient } from "@/lib/supabase/client";
+import { fetchLandlordProperties } from "@/lib/supabase/landlord-service";
 import { initials } from "@/lib/utils/format";
 import { toast } from "sonner";
 
@@ -40,17 +40,22 @@ interface StaffAssignment {
   properties: { name: string } | null;
 }
 
+interface LandlordProperty {
+  id: string;
+  name: string;
+}
+
 export default function LandlordStaffPage() {
   const { session } = useAuth();
   const [assignments, setAssignments] = React.useState<StaffAssignment[]>([]);
+  const [properties, setProperties] = React.useState<LandlordProperty[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [open, setOpen] = React.useState(false);
-  const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
+  const [propertyId, setPropertyId] = React.useState("");
   const [role, setRole] = React.useState<"property_manager" | "agent">("property_manager");
-  const [perms, setPerms] = React.useState<string[]>([]);
-  const [inviting, setInviting] = React.useState(false);
+  const [assigning, setAssigning] = React.useState(false);
   const isSupabaseAuth = session?.authenticated === true;
 
   const fetchStaff = React.useCallback(async () => {
@@ -59,9 +64,6 @@ export default function LandlordStaffPage() {
     setError(null);
     try {
       const supabase = createClient();
-      // Fetch property_assignments for properties owned by this landlord.
-      // RLS on property_assignments restricts to the landlord's properties,
-      // but we filter explicitly as defense-in-depth.
       const { data, error } = await supabase
         .from("property_assignments")
         .select(`
@@ -81,7 +83,17 @@ export default function LandlordStaffPage() {
     }
   }, [isSupabaseAuth, session]);
 
-  React.useEffect(() => { fetchStaff(); }, [fetchStaff]);
+  React.useEffect(() => {
+    fetchStaff();
+    // Also load the landlord's properties for the assignment dropdown
+    if (isSupabaseAuth) {
+      fetchLandlordProperties().then((res) => {
+        if (res.data) {
+          setProperties(res.data.map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })));
+        }
+      });
+    }
+  }, [fetchStaff, isSupabaseAuth]);
 
   // Group assignments by user to show one row per staff member
   const staffByUser = React.useMemo(() => {
@@ -112,28 +124,41 @@ export default function LandlordStaffPage() {
     return Array.from(map.values());
   }, [assignments]);
 
-  async function invite() {
-    if (!name.trim() || !email.trim()) {
-      toast.error("Name and email are required");
+  async function handleAssign() {
+    if (!email.trim()) {
+      toast.error("Email is required");
       return;
     }
-    setInviting(true);
+    if (!propertyId) {
+      toast.error("Select a property");
+      return;
+    }
+    setAssigning(true);
     try {
-      // Real staff invitation would require:
-      // 1. Check if the email matches an existing user
-      // 2. Create a property_assignment row (if the user exists)
-      // 3. Send an invitation email (requires a server-side email service)
-      //
-      // Without an email service configured, we honestly tell the user
-      // that the invitation system is not yet connected. We do NOT
-      // pretend an email was sent.
-      toast.info("Invitations not yet connected", {
-        description: "Staff assignment is available once a team member registers. Ask them to create an account, then assign them to a property from the property detail page.",
+      const res = await fetch("/api/landlord/staff/assign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), propertyId, role }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Could not assign staff", {
+          description: data.description,
+        });
+        return;
+      }
+      toast.success("Staff assigned", {
+        description: `${data.staffName} is now assigned as ${role === "property_manager" ? "manager" : "agent"}.`,
       });
       setOpen(false);
-      setName(""); setEmail(""); setRole("property_manager"); setPerms([]);
+      setEmail(""); setPropertyId(""); setRole("property_manager");
+      fetchStaff(); // refresh the list
+    } catch (e) {
+      toast.error("Could not assign staff", {
+        description: e instanceof Error ? e.message : "Please try again.",
+      });
     } finally {
-      setInviting(false);
+      setAssigning(false);
     }
   }
 
@@ -142,60 +167,62 @@ export default function LandlordStaffPage() {
       <PageHeader
         eyebrow="Team"
         title="Staff & permissions"
-        description="Add managers and agents. They see only what you assign — never your full finances or verification controls."
+        description="Assign registered users to your properties as managers or agents. They see only what you assign."
         actions={
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" aria-hidden /> Invite staff</Button>
+              <Button disabled={properties.length === 0}>
+                <UserPlus className="mr-2 h-4 w-4" aria-hidden />
+                Assign staff
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Invite a team member</DialogTitle>
-                <DialogDescription>Managers operate assigned properties. Agents manage enquiries and referrals.</DialogDescription>
+                <DialogTitle>Assign a team member</DialogTitle>
+                <DialogDescription>
+                  Enter the email of a registered NetLodge user and select a property to assign them to.
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5"><Label htmlFor="name">Name</Label><Input id="name" value={name} onChange={(e) => setName(e.target.value)} /></div>
-                  <div className="space-y-1.5"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="email">User email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="e.g. manager@example.com"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    The user must already have a NetLodge account with this email.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Property</Label>
+                  <Select value={propertyId} onValueChange={setPropertyId}>
+                    <SelectTrigger><SelectValue placeholder="Select a property" /></SelectTrigger>
+                    <SelectContent>
+                      {properties.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-1.5">
                   <Label>Role</Label>
                   <Select value={role} onValueChange={(v) => setRole(v as "property_manager" | "agent")}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="property_manager">Manager</SelectItem>
-                      <SelectItem value="agent">Agent</SelectItem>
+                      <SelectItem value="property_manager">Manager — operate assigned properties</SelectItem>
+                      <SelectItem value="agent">Agent — manage enquiries and referrals</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                {role === "property_manager" && (
-                  <div className="space-y-2">
-                    <Label>Permissions</Label>
-                    {[
-                      { id: "manage_inventory", label: "Manage inventory (rooms, floors)" },
-                      { id: "manage_bookings", label: "Manage bookings" },
-                      { id: "manage_availability", label: "Manage availability" },
-                      { id: "record_inspections", label: "Record inspections" },
-                      { id: "view_assigned_finances", label: "View finances for assigned properties only" },
-                    ].map((p) => (
-                      <label key={p.id} className="flex items-center gap-2 text-sm">
-                        <Checkbox
-                          checked={perms.includes(p.id)}
-                          onCheckedChange={(v) => setPerms((arr) => v ? [...arr, p.id] : arr.filter((x) => x !== p.id))}
-                        />
-                        <span>{p.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-                <div className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-                  The invitee must create a NetLodge account first. After they register, assign them to a property from the property detail page.
                 </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button onClick={invite} disabled={inviting}>
-                  {inviting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> Sending…</> : "Got it"}
+                <Button onClick={handleAssign} disabled={assigning}>
+                  {assigning ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> Assigning…</> : "Assign"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -209,6 +236,15 @@ export default function LandlordStaffPage() {
           <span>Managers cannot change your payout account, transfer ownership, view unassigned finances, or approve verification. Agents gain no access to pricing, payments, ownership information, or verification.</span>
         </CardContent>
       </Card>
+
+      {properties.length === 0 && (
+        <Card className="border-info/30 bg-info/5">
+          <CardContent className="flex items-start gap-2 p-3 text-xs text-info-foreground">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span>You need at least one property before you can assign staff. <a href="/landlord/properties/new" className="underline">Add a property</a> first.</span>
+          </CardContent>
+        </Card>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
@@ -225,7 +261,7 @@ export default function LandlordStaffPage() {
         <EmptyState
           icon={<Users className="h-5 w-5" aria-hidden />}
           title="No team members assigned"
-          description="Assign a registered user to a property from the property detail page. They'll appear here with their assigned properties."
+          description="Assign a registered user to one of your properties. Enter their email and select a property to get started."
         />
       ) : (
         <Card>
@@ -234,19 +270,32 @@ export default function LandlordStaffPage() {
               {staffByUser.map((s) => (
                 <li key={s.userId} className="flex items-center justify-between gap-3 p-4">
                   <div className="flex items-center gap-3">
-                    <Avatar><AvatarFallback className="bg-primary/10 text-primary text-xs">{initials(...s.name.split(" "))}</AvatarFallback></Avatar>
+                    <Avatar>
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                        {initials(s.name.split(" ")[0], s.name.split(" ")[1])}
+                      </AvatarFallback>
+                    </Avatar>
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{s.name}</p>
-                        <Badge variant="outline" className="capitalize">{s.role === "property_manager" ? "manager" : "agent"}</Badge>
+                        <Badge variant="outline" className="capitalize">
+                          {s.role === "property_manager" ? "manager" : "agent"}
+                        </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" aria-hidden />{s.email}</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Mail className="h-3 w-3" aria-hidden />{s.email}
+                      </p>
                       {s.assignedProperties.length > 0 && (
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"><Briefcase className="h-3 w-3" aria-hidden />{s.assignedProperties.length} assigned {s.assignedProperties.length === 1 ? "property" : "properties"}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                          <Briefcase className="h-3 w-3" aria-hidden />
+                          {s.assignedProperties.join(", ")}
+                        </p>
                       )}
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="More options"><MoreVertical className="h-4 w-4" aria-hidden /></Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="More options">
+                    <MoreVertical className="h-4 w-4" aria-hidden />
+                  </Button>
                 </li>
               ))}
             </ul>

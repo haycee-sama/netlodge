@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/shared/page-components";
+import { TwoFactorCard } from "@/components/shared/two-factor-card";
 import { useAuth } from "@/lib/auth/auth-context";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -134,36 +135,8 @@ export default function StudentSecurityPage() {
         </CardContent>
       </Card>
 
-      {/* 2FA */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Smartphone className="h-4 w-4 text-primary" aria-hidden />
-            Two-factor authentication
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">Authenticator app</p>
-              <p className="text-xs text-muted-foreground">Use Google Authenticator or similar</p>
-            </div>
-            <Badge variant="outline">Not available</Badge>
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">SMS verification</p>
-              <p className="text-xs text-muted-foreground">Receive codes by SMS</p>
-            </div>
-            <Badge variant="outline">Not available</Badge>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Two-factor authentication is not yet available. We're working on adding TOTP-based 2FA
-            for enhanced account security.
-          </p>
-        </CardContent>
-      </Card>
+      {/* 2FA — real TOTP via Supabase MFA */}
+      <TwoFactorCard />
 
       {/* Sessions */}
       <Card>
