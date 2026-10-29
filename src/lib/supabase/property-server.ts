@@ -99,7 +99,8 @@ export async function fetchPropertiesServer(params: {
     let query = supabase
       .from("properties")
       .select(`*`)
-      .in("status", ["verified", "pending_verification"])
+      .eq("status", "verified")
+      .eq("verification_status", "approved")
       .order("created_at", { ascending: false });
 
     if (params.universityId) {

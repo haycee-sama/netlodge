@@ -1,6 +1,5 @@
 import * as React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   Search,
   ShieldCheck,
@@ -41,7 +40,6 @@ import { UniversityCard } from "@/components/public/university-card";
 import { SectionHeading } from "@/components/shared/page-components";
 import { fetchPropertiesServer, fetchUniversitiesServer, fetchHomepageStatsServer, fetchPublishedTestimonialsServer } from "@/lib/supabase/property-server";
 import { PropertyCardAdapter } from "@/components/public/property-card-adapter";
-import { Price } from "@/components/shared/price";
 import { FACILITY_LABELS } from "@/lib/types";
 
 export const metadata = {
@@ -198,29 +196,34 @@ export default async function HomePage() {
               </dl>
             </div>
             <div className="relative">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
-                <Image
-                  src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200&q=80&auto=format&fit=crop"
-                  alt="A modern, well-lit student room with a desk, chair and neatly made bed."
-                  fill
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover"
-                />
-                <div className="absolute inset-x-4 bottom-4 rounded-xl border border-border bg-background/95 p-4 shadow-lg backdrop-blur-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
-                      <BadgeCheck className="h-5 w-5" aria-hidden />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold">G-101 · Akoka Heights Hostel</p>
-                      <p className="text-xs text-muted-foreground">
-                        Verified · Self-contain · ₦450,000/yr
-                      </p>
-                    </div>
-                    <Price kobo={45000000} period="/yr" className="ml-auto" />
-                  </div>
+              <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-muted shadow-xl">
+                {/* Decorative illustration — no external image dependency.
+                    If a real featured property with an image is available,
+                    it is shown in the carousel below instead. */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Building2 className="h-24 w-24 text-primary/20" aria-hidden />
                 </div>
+                {featured[0] && (
+                  <div className="absolute inset-x-4 bottom-4 rounded-xl border border-border bg-background/95 p-4 shadow-lg backdrop-blur-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
+                        <BadgeCheck className="h-5 w-5" aria-hidden />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">
+                          {featured[0].name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {featured[0].city}
+                          {featured[0].verification_status === "approved" ? " · Verified" : " · Pending verification"}
+                        </p>
+                      </div>
+                      <Button asChild size="sm" variant="outline" className="ml-auto shrink-0">
+                        <Link href={`/properties/${featured[0].slug}`}>View</Link>
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -481,14 +484,10 @@ export default async function HomePage() {
                 </Button>
               </div>
             </div>
-            <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border bg-background shadow-sm">
-              <Image
-                src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&q=80&auto=format&fit=crop"
-                alt="A modern multi-storey hostel building in Nigeria."
-                fill
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover"
-              />
+            <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border bg-gradient-to-br from-primary/10 via-card to-muted shadow-sm">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Building2 className="h-24 w-24 text-primary/20" aria-hidden />
+              </div>
             </div>
           </CardContent>
         </Card>

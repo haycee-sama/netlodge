@@ -115,7 +115,8 @@ export async function fetchProperties(params: {
         universities(id, name, short_name, slug),
         neighbourhoods(id, name, slug)
       `, { count: "exact" })
-      .in("status", ["verified", "pending_verification"])
+      .eq("status", "verified")
+      .eq("verification_status", "approved")
       .order("created_at", { ascending: false })
       .range(from, to);
 

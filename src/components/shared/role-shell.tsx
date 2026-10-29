@@ -204,12 +204,23 @@ export function RoleShell({ role, children }: RoleShellProps) {
     if (signingOut) return;
     setSigningOut(true);
     try {
-      await signOut();
-    } catch {
-      // Non-fatal — proceed with redirect
+      const result = await signOut();
+      if (!result.success) {
+        // Sign-out failed — do not redirect. The user is still authenticated
+        // server-side; redirecting would give a false sense of having signed
+        // out while the session cookie persists.
+        const { toast } = await import("sonner");
+        toast.error("Could not sign out", {
+          description: result.error ?? "Please check your connection and try again.",
+        });
+        return;
+      }
+      // Success — redirect to homepage and refresh to clear server-side cache.
+      router.push("/");
+      router.refresh();
+    } finally {
+      setSigningOut(false);
     }
-    router.push("/");
-    router.refresh();
   }
 
   // Active-link check: a nav item is active if its href exactly matches the

@@ -56,18 +56,30 @@ export default function StudentSecurityPage() {
   async function handleSignOutAllDevices() {
     setSubmitting(true);
     try {
-      // Sign out from the current session, which invalidates the current
-      // refresh token. Other devices' sessions will expire when their
-      // access tokens expire (Supabase doesn't support global session
-      // revocation from the client SDK).
+      // Sign out globally — invalidates all refresh tokens for this user.
       const supabase = createClient();
-      await supabase.auth.signOut({ scope: "global" });
+      const { error: globalError } = await supabase.auth.signOut({ scope: "global" });
+      if (globalError) {
+        toast.error("Could not sign out from all devices", {
+          description: globalError.message,
+        });
+        return;
+      }
+      // Then clear the local session state via the auth context.
+      const result = await signOut();
+      if (!result.success) {
+        toast.error("Signed out server-side, but could not clear local session", {
+          description: result.error,
+        });
+        return;
+      }
       toast.success("Signed out from all devices", {
         description: "You'll need to sign in again on each device.",
       });
-      await signOut();
     } catch (e) {
-      toast.error("Could not sign out other devices");
+      toast.error("Could not sign out other devices", {
+        description: e instanceof Error ? e.message : "Please try again.",
+      });
     } finally {
       setSubmitting(false);
     }

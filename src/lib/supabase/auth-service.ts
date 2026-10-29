@@ -120,12 +120,19 @@ export async function signUpWithEmail(input: {
   }
 }
 
-export async function signOut(): Promise<void> {
+export async function signOut(): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = createClient();
-    await supabase.auth.signOut();
-  } catch {
-    // Non-fatal
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Sign-out failed",
+    };
   }
 }
 

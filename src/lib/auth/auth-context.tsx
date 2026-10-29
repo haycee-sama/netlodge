@@ -32,7 +32,19 @@ export interface AuthSession {
 export interface AuthContextValue {
   session: AuthSession | null;
   isLoading: boolean;
-  signOut: () => Promise<void>;
+  /**
+   * Signs the user out by calling supabase.auth.signOut().
+   * Returns true if the server-side session was invalidated successfully,
+   * false if the call failed (network error, Supabase error, etc.).
+   *
+   * On success: clears the local session state. The onAuthStateChange
+   * listener also fires SIGNED_OUT, providing a second clearing path.
+   *
+   * On failure: does NOT clear local session state — the user may still
+   * be authenticated server-side, and clearing the UI would give a false
+   * sense of having signed out. The caller should show an error message.
+   */
+  signOut: () => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = React.createContext<AuthContextValue | null>(null);
@@ -101,15 +113,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const signOut = React.useCallback(async () => {
+  const signOut = React.useCallback(async (): Promise<{ success: boolean; error?: string }> => {
     try {
       const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
-      await supabase.auth.signOut();
-    } catch {
-      // Non-fatal
+      // supabase.auth.signOut() invalidates the server-side session and
+      // clears the auth cookies. It returns { error } on failure.
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        // Supabase returned an error — the session may still be active.
+        // Do NOT clear local state; the user is still authenticated.
+        return { success: false, error: error.message };
+      }
+      // Success — clear local session state. The onAuthStateChange
+      // listener (SIGNED_OUT event) also clears, providing a second path.
+      setSession(null);
+      return { success: true };
+    } catch (err) {
+      // Network or unexpected error — the session may still be active
+      // server-side. Do NOT clear local state; show an error instead.
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : "Sign-out failed. Check your connection and try again.",
+      };
     }
-    setSession(null);
   }, []);
 
   const value = React.useMemo<AuthContextValue>(

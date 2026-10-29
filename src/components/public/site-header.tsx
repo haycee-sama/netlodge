@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   ChevronDown,
   Sparkles,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,28 @@ const navItems = [
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
-  const { session } = useAuth();
+  const { session, signOut } = useAuth();
+  const [signingOut, setSigningOut] = React.useState(false);
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    try {
+      const result = await signOut();
+      if (!result.success) {
+        // Sign-out failed — the user may still be authenticated server-side.
+        // Do not redirect or pretend success; show the error.
+        const { toast } = await import("sonner");
+        toast.error("Could not sign out", {
+          description: result.error ?? "Please check your connection and try again.",
+        });
+        return;
+      }
+      // Success — session is cleared in context; header re-renders to show
+      // "Sign in / Get started" buttons automatically.
+    } finally {
+      setSigningOut(false);
+    }
+  }
 
   const isActive = (href: string) =>
     pathname === href || (href !== "/" && pathname?.startsWith(href));
@@ -93,14 +115,27 @@ export function SiteHeader() {
             </nav>
             <div className="mt-auto space-y-2 border-t border-border p-3">
               {session ? (
-                <SheetClose asChild>
-                  <Button asChild className="w-full">
-                    <Link href={homeRouteForRole(session.role)}>
-                      <LayoutDashboard className="mr-2 h-4 w-4" aria-hidden />
-                      Go to dashboard
-                    </Link>
-                  </Button>
-                </SheetClose>
+                <>
+                  <SheetClose asChild>
+                    <Button asChild className="w-full">
+                      <Link href={homeRouteForRole(session.role)}>
+                        <LayoutDashboard className="mr-2 h-4 w-4" aria-hidden />
+                        Go to dashboard
+                      </Link>
+                    </Button>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleSignOut}
+                      disabled={signingOut}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" aria-hidden />
+                      {signingOut ? "Signing out…" : "Sign out"}
+                    </Button>
+                  </SheetClose>
+                </>
               ) : (
                 <>
                   <SheetClose asChild>
@@ -185,6 +220,15 @@ export function SiteHeader() {
                   <Link href={`${homeRouteForRole(session.role)}/settings`}>
                     Settings
                   </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  disabled={signingOut}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <LogOut className="mr-2 h-4 w-4" aria-hidden />
+                  {signingOut ? "Signing out…" : "Sign out"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -7,10 +7,18 @@ export const metadata = {
   alternates: { canonical: "/privacy" },
 };
 
+// Privacy contact — uses the configured support email if available, otherwise
+// directs users to the contact page. We do not hardcode an unverified email
+// in a legal document.
+const PRIVACY_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? null;
+const privacyContact = PRIVACY_EMAIL
+  ? `email ${PRIVACY_EMAIL}`
+  : "use our contact page at /contact";
+
 const sections = [
   {
     title: "1. Who we are",
-    body: "NetLodge Technologies Ltd. (\"NetLodge\", \"we\", \"us\") is a Nigerian PropTech company registered in Lagos. We operate the NetLodge marketplace at netlodge.example. This Privacy Policy explains how we collect, use, share and protect your personal data.",
+    body: "NetLodge Technologies Ltd. (\"NetLodge\", \"we\", \"us\") is a Nigerian PropTech company registered in Lagos. We operate the NetLodge marketplace at netlodge.com. This Privacy Policy explains how we collect, use, share and protect your personal data.",
   },
   {
     title: "2. Data we collect",
@@ -38,7 +46,7 @@ const sections = [
   },
   {
     title: "8. Your rights",
-    body: "Under the Nigeria Data Protection Act 2023, you have the right to: access your data; correct inaccurate data; delete your account (subject to ongoing legal obligations); object to processing; data portability; withdraw consent. To exercise these rights, email privacy@netlodge.example.",
+    body: `Under the Nigeria Data Protection Act 2023, you have the right to: access your data; correct inaccurate data; delete your account (subject to ongoing legal obligations); object to processing; data portability; withdraw consent. To exercise these rights, ${privacyContact}.`,
   },
   {
     title: "9. Security",
@@ -54,7 +62,7 @@ const sections = [
   },
   {
     title: "12. Contact",
-    body: "For privacy questions or requests, email privacy@netlodge.example or write to: Data Protection Officer, NetLodge Technologies Ltd., 2A Herbert Macaulay Way, Yaba, Lagos.",
+    body: `For privacy questions or requests, ${privacyContact} or write to: Data Protection Officer, NetLodge Technologies Ltd., Yaba, Lagos, Nigeria.`,
   },
 ];
 

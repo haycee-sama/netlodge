@@ -1,48 +1,59 @@
+"use client";
+
 import * as React from "react";
 import Link from "next/link";
 import { Mail, MapPin, Phone, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
-
-const footerLinks = [
-  {
-    heading: "Discover",
-    links: [
-      { label: "Search accommodation", href: "/search" },
-      { label: "Universities", href: "/universities" },
-      { label: "Properties", href: "/properties" },
-      { label: "How it works", href: "/how-it-works" },
-    ],
-  },
-  {
-    heading: "Trust & safety",
-    links: [
-      { label: "Verification", href: "/safety" },
-      { label: "Booking safety", href: "/safety#booking" },
-      { label: "Report a listing", href: "/contact" },
-      { label: "Privacy policy", href: "/privacy" },
-    ],
-  },
-  {
-    heading: "For landlords",
-    links: [
-      { label: "List a property", href: "/register" },
-      { label: "Landlord guide", href: "/how-it-works#landlords" },
-      { label: "Verification", href: "/safety#landlords" },
-      { label: "Terms of service", href: "/terms" },
-    ],
-  },
-  {
-    heading: "Support",
-    links: [
-      { label: "Help centre", href: "/help" },
-      { label: "Contact us", href: "/contact" },
-      { label: "Cookie policy", href: "/cookies" },
-      { label: "Sign in", href: "/login" },
-    ],
-  },
-];
+import { useAuth } from "@/lib/auth/auth-context";
+import { homeRouteForRole } from "@/lib/auth/permissions";
+import { SUPPORT_EMAIL, SUPPORT_PHONE, BUSINESS_ADDRESS } from "@/lib/config/contact";
 
 export function SiteFooter() {
+  const { session } = useAuth();
+  // The auth link in the Support column adapts to the session state.
+  const authLink = session
+    ? { label: "Dashboard", href: homeRouteForRole(session.role) }
+    : { label: "Sign in", href: "/login" };
+
+  const footerLinks = [
+    {
+      heading: "Discover",
+      links: [
+        { label: "Search accommodation", href: "/search" },
+        { label: "Universities", href: "/universities" },
+        { label: "Properties", href: "/properties" },
+        { label: "How it works", href: "/how-it-works" },
+      ],
+    },
+    {
+      heading: "Trust & safety",
+      links: [
+        { label: "Verification", href: "/safety" },
+        { label: "Booking safety", href: "/safety#booking" },
+        { label: "Report a listing", href: "/contact" },
+        { label: "Privacy policy", href: "/privacy" },
+      ],
+    },
+    {
+      heading: "For landlords",
+      links: [
+        { label: "List a property", href: "/register" },
+        { label: "Landlord guide", href: "/how-it-works#landlords" },
+        { label: "Verification", href: "/safety#landlords" },
+        { label: "Terms of service", href: "/terms" },
+      ],
+    },
+    {
+      heading: "Support",
+      links: [
+        { label: "Help centre", href: "/help" },
+        { label: "Contact us", href: "/contact" },
+        { label: "Cookie policy", href: "/cookies" },
+        { label: authLink.label, href: authLink.href },
+      ],
+    },
+  ];
+
   return (
     <footer className="mt-auto border-t border-border bg-card/30">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -54,23 +65,36 @@ export function SiteFooter() {
               around Nigerian universities — book rooms, not just buildings.
             </p>
             <ul className="mt-5 space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary" aria-hidden />
-                <span>Yaba, Lagos, Nigeria</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-primary" aria-hidden />
-                <a
-                  href="mailto:hello@netlodge.example"
-                  className="hover:text-foreground hover:underline"
-                >
-                  hello@netlodge.example
-                </a>
-              </li>
-              <li className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-primary" aria-hidden />
-                <span>+234 800 NETLODGE</span>
-              </li>
+              {BUSINESS_ADDRESS && (
+                <li className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-primary" aria-hidden />
+                  <span>{BUSINESS_ADDRESS}</span>
+                </li>
+              )}
+              {SUPPORT_EMAIL && (
+                <li className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-primary" aria-hidden />
+                  <a
+                    href={`mailto:${SUPPORT_EMAIL}`}
+                    className="hover:text-foreground hover:underline"
+                  >
+                    {SUPPORT_EMAIL}
+                  </a>
+                </li>
+              )}
+              {SUPPORT_PHONE && (
+                <li className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-primary" aria-hidden />
+                  <span>{SUPPORT_PHONE}</span>
+                </li>
+              )}
+              {!SUPPORT_EMAIL && !SUPPORT_PHONE && !BUSINESS_ADDRESS && (
+                <li className="text-xs">
+                  <Link href="/contact" className="text-primary hover:underline">
+                    Contact us
+                  </Link>
+                </li>
+              )}
             </ul>
           </div>
 

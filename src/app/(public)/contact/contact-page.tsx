@@ -19,6 +19,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/shared/page-components";
 import { contactSchema, type ContactInput } from "@/lib/validators";
 import { toast } from "sonner";
+import { SUPPORT_EMAIL, SUPPORT_PHONE, BUSINESS_ADDRESS, FALLBACK_SUPPORT_EMAIL } from "@/lib/config/contact";
 
 export function ContactPage() {
   const [submitted, setSubmitted] = React.useState(false);
@@ -57,7 +58,7 @@ export function ContactPage() {
         // Anonymous user — we can't create a ticket without auth.
         // In production, this should use a server action or edge function
         // to send an email. For now, store the attempt honestly.
-        throw new Error("Please sign in to submit a support ticket, or email us directly at hello@netlodge.com");
+        throw new Error("Please sign in to submit a support ticket, or email us directly at " + FALLBACK_SUPPORT_EMAIL);
       }
 
       setSubmitted(true);
@@ -67,7 +68,7 @@ export function ContactPage() {
       reset();
     } catch (e) {
       toast.error("Could not send message", {
-        description: e instanceof Error ? e.message : "Please try again or email hello@netlodge.com",
+        description: e instanceof Error ? e.message : `Please try again or email ${FALLBACK_SUPPORT_EMAIL}`,
       });
     }
   }
@@ -181,20 +182,32 @@ export function ContactPage() {
             <CardContent className="space-y-3 p-5 text-sm">
               <p className="font-display font-semibold">Other ways to reach us</p>
               <ul className="space-y-2 text-muted-foreground">
-                <li className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-primary" aria-hidden />
-                  <a href="mailto:hello@netlodge.example" className="hover:text-foreground hover:underline">
-                    hello@netlodge.example
-                  </a>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-primary" aria-hidden />
-                  <span>+234 800 NETLODGE</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <MapPin className="mt-0.5 h-4 w-4 text-primary" aria-hidden />
-                  <span>2A Herbert Macaulay Way, Yaba, Lagos, Nigeria</span>
-                </li>
+                {SUPPORT_EMAIL && (
+                  <li className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-primary" aria-hidden />
+                    <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-foreground hover:underline">
+                      {SUPPORT_EMAIL}
+                    </a>
+                  </li>
+                )}
+                {SUPPORT_PHONE && (
+                  <li className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-primary" aria-hidden />
+                    <span>{SUPPORT_PHONE}</span>
+                  </li>
+                )}
+                {BUSINESS_ADDRESS && (
+                  <li className="flex items-start gap-2">
+                    <MapPin className="mt-0.5 h-4 w-4 text-primary" aria-hidden />
+                    <span>{BUSINESS_ADDRESS}</span>
+                  </li>
+                )}
+                {!SUPPORT_EMAIL && !SUPPORT_PHONE && !BUSINESS_ADDRESS && (
+                  <li className="text-xs">
+                    Contact details will be displayed here once configured.
+                    For now, use the form above — we respond within one business day.
+                  </li>
+                )}
               </ul>
             </CardContent>
           </Card>
