@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { RoleBadge } from "@/components/shared/status-badges";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { useAuth } from "@/lib/auth/auth-context";
+import { createClient } from "@/lib/supabase/client";
 import { initials } from "@/lib/utils/format";
 import { roleLabel as formatRoleLabel } from "@/lib/types";
 import { toast } from "sonner";
@@ -22,12 +23,50 @@ export function AdminProfilePage({ roleLabel }: { roleLabel: string }) {
   const [lastName, setLastName] = React.useState(session?.lastName ?? "");
   const [phone, setPhone] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
+
+  // Load existing profile from the database
+  React.useEffect(() => {
+    if (!session?.userId) { setLoading(false); return; }
+    const supabase = createClient();
+    supabase
+      .from("profiles")
+      .select("first_name, last_name, phone")
+      .eq("id", session.userId)
+      .single()
+      .then(({ data, error }) => {
+        if (error && error.code !== "PGRST116") {
+          toast.error("Could not load profile", { description: error.message });
+        }
+        if (data) {
+          setFirstName(data.first_name ?? "");
+          setLastName(data.last_name ?? "");
+          setPhone(data.phone ?? "");
+        }
+        setLoading(false);
+      });
+  }, [session?.userId]);
 
   async function save() {
+    if (!session?.userId) return;
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 500));
-    setSubmitting(false);
-    toast.success("Profile saved");
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.from("profiles").update({
+        first_name: firstName,
+        last_name: lastName,
+        phone: phone || null,
+        updated_at: new Date().toISOString(),
+      }).eq("id", session.userId);
+      if (error) throw new Error(error.message);
+      toast.success("Profile saved");
+    } catch (e) {
+      toast.error("Could not save profile", {
+        description: e instanceof Error ? e.message : "Please try again.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (

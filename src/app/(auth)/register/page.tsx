@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -44,9 +44,24 @@ const roleOptions: {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const referralCode = searchParams.get("ref");
   const [showPw, setShowPw] = React.useState(false);
   const [showConfirm, setShowConfirm] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
+
+  // Log the referral click on mount if a ref code is present
+  React.useEffect(() => {
+    if (referralCode) {
+      fetch("/api/referral/click", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: referralCode }),
+      }).catch(() => {
+        // Non-fatal — don't block registration if click tracking fails
+      });
+    }
+  }, [referralCode]);
 
   const {
     register,
