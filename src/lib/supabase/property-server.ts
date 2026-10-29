@@ -4,51 +4,51 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
-import { unstable_cache } from "next/cache";
 
 /**
  * Server-side caching wrapper for homepage stats.
- * Revalidates every 5 minutes (300 seconds). The cache is keyed by a
- * single tag "homepage-stats" so it can be manually invalidated via
- * `revalidateTag("homepage-stats")` when a property is verified or a
- * booking is confirmed.
+ * Uses Next.js fetch-level caching with revalidate=300 (5 minutes).
+ *
+ * Note: unstable_cache was removed because it runs outside the request
+ * context, breaking the cookies() call inside createClient(). The
+ * server client needs cookies for RLS-aware queries. Instead, we rely
+ * on Next.js's default fetch caching + revalidate.
  */
-export const fetchHomepageStatsServer = unstable_cache(
-  async (): Promise<{ data: HomepageStats | null; error: string | null }> => {
-    try {
-      const supabase = await createClient();
+export async function fetchHomepageStatsServer(): Promise<{
+  data: HomepageStats | null;
+  error: string | null;
+}> {
+  try {
+    const supabase = await createClient();
 
-      const [
-        { count: verifiedProperties },
-        { count: universities },
-        { count: neighbourhoods },
-        { count: availableRooms },
-        { count: totalBookings },
-      ] = await Promise.all([
-        supabase.from("properties").select("*", { count: "exact", head: true }).eq("status", "verified").eq("verification_status", "approved"),
-        supabase.from("universities").select("*", { count: "exact", head: true }).eq("active", true),
-        supabase.from("neighbourhoods").select("*", { count: "exact", head: true }).eq("active", true),
-        supabase.from("rentable_units").select("*", { count: "exact", head: true }).eq("status", "available"),
-        supabase.from("bookings").select("*", { count: "exact", head: true }).in("status", ["confirmed", "active", "completed"]),
-      ]);
+    const [
+      { count: verifiedProperties },
+      { count: universities },
+      { count: neighbourhoods },
+      { count: availableRooms },
+      { count: totalBookings },
+    ] = await Promise.all([
+      supabase.from("properties").select("*", { count: "exact", head: true }).eq("status", "verified").eq("verification_status", "approved"),
+      supabase.from("universities").select("*", { count: "exact", head: true }).eq("active", true),
+      supabase.from("neighbourhoods").select("*", { count: "exact", head: true }).eq("active", true),
+      supabase.from("rentable_units").select("*", { count: "exact", head: true }).eq("status", "available"),
+      supabase.from("bookings").select("*", { count: "exact", head: true }).in("status", ["confirmed", "active", "completed"]),
+    ]);
 
-      return {
-        data: {
-          verifiedProperties: verifiedProperties ?? 0,
-          universities: universities ?? 0,
-          neighbourhoods: neighbourhoods ?? 0,
-          availableRooms: availableRooms ?? 0,
-          totalBookings: totalBookings ?? 0,
-        },
-        error: null,
-      };
-    } catch (err) {
-      return { data: null, error: err instanceof Error ? err.message : "Failed to fetch homepage stats" };
-    }
-  },
-  ["homepage-stats"],
-  { revalidate: 300, tags: ["homepage-stats"] }
-);
+    return {
+      data: {
+        verifiedProperties: verifiedProperties ?? 0,
+        universities: universities ?? 0,
+        neighbourhoods: neighbourhoods ?? 0,
+        availableRooms: availableRooms ?? 0,
+        totalBookings: totalBookings ?? 0,
+      },
+      error: null,
+    };
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : "Failed to fetch homepage stats" };
+  }
+}
 
 export interface UniversitySummary {
   id: string;
@@ -143,7 +143,7 @@ export async function fetchPropertiesServer(params: {
     const supabase = await createClient();
     let query = supabase
       .from("properties")
-      .select(`*`)
+      .select(`*, property_images(id, storage_path, public_url, alt_text, position), property_facilities(facility), universities(id, name, short_name, slug), neighbourhoods(id, name, slug)`)
       .eq("status", "verified")
       .eq("verification_status", "approved")
       .order("created_at", { ascending: false });
