@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Receipt, Download, Loader2 } from "lucide-react";
+import { Receipt, Download, Loader2, FileDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { fetchLandlordPayments, type LandlordPaymentWithRelations } from "@/lib/supabase/payment-service";
 import { formatNgn, formatDateTime } from "@/lib/utils/format";
 import { exportPaymentsCsv } from "@/lib/utils/csv-export";
+import { downloadPaymentReceiptPdf } from "@/lib/utils/receipt-pdf";
 
 export default function LandlordTransactionsPage() {
   const { session } = useAuth();
@@ -130,9 +131,29 @@ export default function LandlordTransactionsPage() {
                         <p className="text-xs text-destructive">Reason: {p.failure_reason}</p>
                       )}
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium">{formatNgn(p.amount_kobo)}</p>
-                      <p className="text-xs text-muted-foreground">fee {formatNgn(p.fee_kobo)}</p>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="font-medium">{formatNgn(p.amount_kobo)}</p>
+                        <p className="text-xs text-muted-foreground">fee {formatNgn(p.fee_kobo)}</p>
+                      </div>
+                      {p.status === "successful" && p.confirmed_by_backend && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            downloadPaymentReceiptPdf(p, {
+                              recipientLabel: "landlord",
+                              recipientName: session ? `${session.firstName} ${session.lastName}`.trim() : undefined,
+                              recipientEmail: session?.email,
+                            })
+                          }
+                          className="shrink-0"
+                        >
+                          <FileDown className="mr-2 h-3.5 w-3.5" aria-hidden />
+                          <span className="hidden sm:inline">Receipt</span>
+                          <span className="sm:hidden">PDF</span>
+                        </Button>
+                      )}
                     </div>
                   </li>
                 );

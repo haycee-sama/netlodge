@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { CreditCard, Download, Receipt, Loader2, CheckCircle2, TrendingUp } from "lucide-react";
+import { CreditCard, Download, Receipt, Loader2, CheckCircle2, TrendingUp, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,7 @@ import { Price } from "@/components/shared/price";
 import { useAuth } from "@/lib/auth/auth-context";
 import { fetchStudentPayments, type PaymentWithBooking } from "@/lib/supabase/payment-service";
 import { formatNgn, formatDateTime } from "@/lib/utils/format";
-import { downloadPaymentReceipt } from "@/lib/utils/receipt";
+import { downloadPaymentReceiptPdf } from "@/lib/utils/receipt-pdf";
 
 export default function StudentPaymentsPage() {
   const { session } = useAuth();
@@ -37,10 +37,21 @@ export default function StudentPaymentsPage() {
   }, [isSupabaseAuth]);
 
   const successful = payments.filter((p) => p.status === "successful");
+  const pending = payments.filter((p) => ["initiated", "pending"].includes(p.status));
   const totalPaid = successful.reduce((s, p) => s + p.amount_kobo, 0);
+  const totalPending = pending.reduce((s, p) => s + p.amount_kobo, 0);
+  // Total paid this year
+  const thisYear = new Date().getFullYear();
+  const paidThisYear = successful
+    .filter((p) => new Date(p.initiated_at).getFullYear() === thisYear)
+    .reduce((s, p) => s + p.amount_kobo, 0);
 
   function downloadReceipt(p: PaymentWithBooking) {
-    downloadPaymentReceipt(p);
+    downloadPaymentReceiptPdf(p, {
+      recipientLabel: "student",
+      recipientName: session ? `${session.firstName} ${session.lastName}`.trim() : undefined,
+      recipientEmail: session?.email,
+    });
   }
 
   return (
@@ -56,25 +67,27 @@ export default function StudentPaymentsPage() {
           <CardContent className="space-y-1 p-5">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-success" aria-hidden />
-              <p className="text-xs text-muted-foreground">Total paid (lifetime)</p>
+              <p className="text-xs text-muted-foreground">Paid this year</p>
             </div>
-            <p className="font-display text-2xl font-bold">{formatNgn(totalPaid)}</p>
+            <p className="font-display text-2xl font-bold text-success">{formatNgn(paidThisYear)}</p>
+            <p className="text-xs text-muted-foreground">{successful.length} successful {successful.length === 1 ? "payment" : "payments"}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="space-y-1 p-5">
             <div className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-primary" aria-hidden />
-              <p className="text-xs text-muted-foreground">Transactions</p>
+              <Clock className="h-4 w-4 text-warning" aria-hidden />
+              <p className="text-xs text-muted-foreground">Pending payments</p>
             </div>
-            <p className="font-display text-2xl font-bold">{payments.length}</p>
+            <p className="font-display text-2xl font-bold text-warning">{pending.length}</p>
+            {totalPending > 0 && <p className="text-xs text-muted-foreground">{formatNgn(totalPending)} awaiting</p>}
           </CardContent>
         </Card>
         <Card>
           <CardContent className="space-y-1 p-5">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
-              <p className="text-xs text-muted-foreground">Backend-confirmed</p>
+              <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden />
+              <p className="text-xs text-muted-foreground">Backend-verified</p>
             </div>
             <p className="font-display text-2xl font-bold">
               {successful.filter((p) => p.confirmed_by_backend).length}
@@ -155,7 +168,7 @@ export default function StudentPaymentsPage() {
                           onClick={() => downloadReceipt(p)}
                         >
                           <Download className="mr-2 h-3.5 w-3.5" aria-hidden />
-                          Receipt
+                          Download Receipt
                         </Button>
                       )}
                     </div>
