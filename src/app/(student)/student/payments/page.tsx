@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { CreditCard, Download, Receipt, Loader2 } from "lucide-react";
+import { CreditCard, Download, Receipt, Loader2, CheckCircle2, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,7 @@ import { Price } from "@/components/shared/price";
 import { useAuth } from "@/lib/auth/auth-context";
 import { fetchStudentPayments, type PaymentWithBooking } from "@/lib/supabase/payment-service";
 import { formatNgn, formatDateTime } from "@/lib/utils/format";
-import { toast } from "sonner";
+import { downloadPaymentReceipt } from "@/lib/utils/receipt";
 
 export default function StudentPaymentsPage() {
   const { session } = useAuth();
@@ -40,9 +40,7 @@ export default function StudentPaymentsPage() {
   const totalPaid = successful.reduce((s, p) => s + p.amount_kobo, 0);
 
   function downloadReceipt(p: PaymentWithBooking) {
-    toast.info("Receipt download", {
-      description: `In production, this would download a PDF receipt for ${p.reference}.`,
-    });
+    downloadPaymentReceipt(p);
   }
 
   return (
@@ -56,19 +54,28 @@ export default function StudentPaymentsPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardContent className="space-y-1 p-5">
-            <p className="text-xs text-muted-foreground">Total paid (lifetime)</p>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-success" aria-hidden />
+              <p className="text-xs text-muted-foreground">Total paid (lifetime)</p>
+            </div>
             <p className="font-display text-2xl font-bold">{formatNgn(totalPaid)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="space-y-1 p-5">
-            <p className="text-xs text-muted-foreground">Transactions</p>
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-primary" aria-hidden />
+              <p className="text-xs text-muted-foreground">Transactions</p>
+            </div>
             <p className="font-display text-2xl font-bold">{payments.length}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="space-y-1 p-5">
-            <p className="text-xs text-muted-foreground">Backend-confirmed</p>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
+              <p className="text-xs text-muted-foreground">Backend-confirmed</p>
+            </div>
             <p className="font-display text-2xl font-bold">
               {successful.filter((p) => p.confirmed_by_backend).length}
             </p>

@@ -19,9 +19,12 @@ export default function LandlordReportsPage() {
   React.useEffect(() => {
     if (!isSupabaseAuth) { setLoading(false); return; }
     const supabase = createClient();
+    // Fetch bookings through properties owned by this landlord. RLS also
+    // enforces this, but we filter explicitly as defense-in-depth.
     supabase
       .from("bookings")
-      .select(`id, reference, status, total_kobo, paid_kobo, outstanding_kobo, created_at, properties(name)`)
+      .select(`id, reference, status, total_kobo, paid_kobo, outstanding_kobo, created_at, properties!inner(name, landlord_id)`)
+      .eq("properties.landlord_id", session!.userId)
       .order("created_at", { ascending: false })
       .limit(50)
       .then(({ data, error }) => {

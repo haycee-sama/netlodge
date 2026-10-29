@@ -10,7 +10,7 @@ import { PaymentStatusBadge } from "@/components/shared/status-badges";
 import { useAuth } from "@/lib/auth/auth-context";
 import { fetchLandlordPayments, type LandlordPaymentWithRelations } from "@/lib/supabase/payment-service";
 import { formatNgn, formatDateTime } from "@/lib/utils/format";
-import { toast } from "sonner";
+import { exportPaymentsCsv } from "@/lib/utils/csv-export";
 
 export default function LandlordTransactionsPage() {
   const { session } = useAuth();
@@ -52,7 +52,8 @@ export default function LandlordTransactionsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.info("Export", { description: "CSV download in production." })}
+            onClick={() => exportPaymentsCsv(myPayments)}
+            disabled={myPayments.length === 0}
           >
             <Download className="mr-2 h-4 w-4" aria-hidden /> Export CSV
           </Button>

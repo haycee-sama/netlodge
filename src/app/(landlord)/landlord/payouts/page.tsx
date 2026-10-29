@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Wallet, Loader2 } from "lucide-react";
+import { Wallet, Loader2, TrendingUp, Clock, CheckCircle2, Banknote } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader, EmptyState } from "@/components/shared/page-components";
 import { PayoutStatusBadge } from "@/components/shared/status-badges";
@@ -60,13 +60,53 @@ export default function LandlordPayoutsPage() {
 
   const totalSettled = payouts.filter((p) => p.status === "settled").reduce((s, p) => s + p.net_kobo, 0);
   const totalPending = payouts.filter((p) => ["scheduled", "in_flight"].includes(p.status)).reduce((s, p) => s + p.net_kobo, 0);
+  const totalGross = payouts.reduce((s, p) => s + p.gross_kobo, 0);
+  const totalFees = payouts.reduce((s, p) => s + p.platform_fee_kobo, 0);
+  const settledCount = payouts.filter((p) => p.status === "settled").length;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader eyebrow="Finances" title="Payouts" description="Your settlement history and upcoming payouts." />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card><CardContent className="space-y-1 p-5"><p className="text-xs text-muted-foreground">Settled (total)</p><p className="font-display text-2xl font-bold text-success">{formatNgn(totalSettled)}</p></CardContent></Card>
-        <Card><CardContent className="space-y-1 p-5"><p className="text-xs text-muted-foreground">Pending</p><p className="font-display text-2xl font-bold">{formatNgn(totalPending)}</p></CardContent></Card>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardContent className="space-y-1 p-5">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
+              <p className="text-xs text-muted-foreground">Settled (total)</p>
+            </div>
+            <p className="font-display text-2xl font-bold text-success">{formatNgn(totalSettled)}</p>
+            <p className="text-xs text-muted-foreground">{settledCount} {settledCount === 1 ? "payout" : "payouts"}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="space-y-1 p-5">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-warning" aria-hidden />
+              <p className="text-xs text-muted-foreground">Pending</p>
+            </div>
+            <p className="font-display text-2xl font-bold">{formatNgn(totalPending)}</p>
+            <p className="text-xs text-muted-foreground">{payouts.filter((p) => ["scheduled", "in_flight"].includes(p.status)).length} in progress</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="space-y-1 p-5">
+            <div className="flex items-center gap-2">
+              <Banknote className="h-4 w-4 text-primary" aria-hidden />
+              <p className="text-xs text-muted-foreground">Gross volume</p>
+            </div>
+            <p className="font-display text-2xl font-bold">{formatNgn(totalGross)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="space-y-1 p-5">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-destructive" aria-hidden />
+              <p className="text-xs text-muted-foreground">Platform fees</p>
+            </div>
+            <p className="font-display text-2xl font-bold text-destructive">{formatNgn(totalFees)}</p>
+          </CardContent>
+        </Card>
       </div>
       {error ? (
         <Card className="border-destructive/40 bg-destructive/5"><CardContent className="p-4 text-sm text-destructive">{error}</CardContent></Card>
