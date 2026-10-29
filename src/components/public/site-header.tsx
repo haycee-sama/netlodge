@@ -189,12 +189,6 @@ export function SiteHeader() {
 
         {/* Right actions */}
         <div className="ml-auto flex items-center gap-1.5">
-          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <Link href="/search">
-              <Search className="mr-2 h-4 w-4" aria-hidden />
-              Search
-            </Link>
-          </Button>
           <LanguageSwitcher compact />
           <ThemeToggle compact />
           {session ? (

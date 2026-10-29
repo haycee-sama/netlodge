@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   MapPin, Building2, DoorOpen, Layers, Home, Loader2, ChevronRight,
   CheckCircle2, Info, Heart,
@@ -142,46 +143,78 @@ export function PropertyDetailPage() {
         </TabsList>
 
         {/* Rooms */}
-        <TabsContent value="rooms" className="space-y-4">
+        <TabsContent value="rooms" className="space-y-6">
           <p className="text-sm text-muted-foreground">
-            Each unit below is its own bookable entity. Click a unit to see its specific details and booking terms.
+            Each unit below is its own bookable entity with its own photos, facilities, and price.
+            Click a unit to see its full image gallery and booking terms.
           </p>
           {floors.map((floor) => {
             const floorRooms = rooms.filter((r) => r.floor_id === floor.id);
             if (floorRooms.length === 0) return null;
             return (
-              <div key={floor.id} className="rounded-lg border border-border">
-                <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-2.5">
+              <div key={floor.id} className="space-y-3">
+                <div className="flex items-center justify-between border-b border-border pb-2">
                   <p className="text-sm font-semibold">{floor.label}</p>
                   <p className="text-xs text-muted-foreground">
                     {floor.available_count} available · {floor.room_count} total
                   </p>
                 </div>
-                <ul className="divide-y divide-border">
-                  {floorRooms.map((room) => (
-                    <li key={room.id}>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {floorRooms.map((room) => {
+                    const thumb = room.unit_images?.[0];
+                    const imageCount = room.unit_images?.length ?? 0;
+                    return (
                       <Link
+                        key={room.id}
                         href={`/rooms/${room.id}`}
-                        className="flex flex-col gap-2 p-4 transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
+                        className="group overflow-hidden rounded-xl border border-border bg-card transition-all hover:shadow-lg hover:-translate-y-0.5"
                       >
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium">Unit {room.identifier}</p>
+                        {/* Room image thumbnail */}
+                        <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+                          {thumb?.public_url ? (
+                            <Image
+                              src={thumb.public_url}
+                              alt={thumb.alt_text || `Unit ${room.identifier}`}
+                              fill
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                              className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center text-muted-foreground">
+                              <DoorOpen className="h-8 w-8" aria-hidden />
+                            </div>
+                          )}
+                          {/* Status badge */}
+                          <div className="absolute left-2 top-2">
                             <RoomStatusBadge status={room.status as any} />
+                          </div>
+                          {/* Image count badge */}
+                          {imageCount > 1 && (
+                            <div className="absolute bottom-2 right-2 rounded-md bg-background/90 px-2 py-0.5 text-xs font-medium text-foreground backdrop-blur-sm">
+                              {imageCount} photos
+                            </div>
+                          )}
+                        </div>
+                        {/* Room details */}
+                        <div className="space-y-1.5 p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="font-medium">Unit {room.identifier}</p>
+                            <Price kobo={room.annual_rent_kobo} compact period="/yr" className="shrink-0" />
                           </div>
                           <p className="text-xs text-muted-foreground">
                             {(UNIT_TYPE_LABELS as any)[room.unit_type] ?? room.unit_type} · sleeps {room.capacity} · {room.bedrooms}br · {room.bathrooms}ba
                             {room.has_balcony && " · balcony"}
                           </p>
-                        </div>
-                        <div className="text-left sm:text-right">
-                          <Price kobo={room.annual_rent_kobo} period="/yr" />
-                          <p className="text-xs text-muted-foreground">{formatNgn(room.annual_rent_kobo)}/yr</p>
+                          {room.furnishing !== "unfurnished" && (
+                            <p className="text-xs text-muted-foreground capitalize">
+                              {room.furnishing.replace(/_/g, " ")}
+                            </p>
+                          )}
                         </div>
                       </Link>
-                    </li>
-                  ))}
-                </ul>
+                    );
+                  })}
+                </div>
               </div>
             );
           })}

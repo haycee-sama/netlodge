@@ -3,9 +3,11 @@
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowLeft, DoorOpen, BedDouble, Bath, Users, Maximize, Loader2,
-  CheckCircle2, Lock, AlertCircle, Calendar,
+  CheckCircle2, Lock, AlertCircle, Calendar, ChevronLeft, ChevronRight,
+  ImageOff,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -223,6 +225,10 @@ export function RoomDetailPage() {
         <Price kobo={room.annual_rent_kobo} period={`/${(RENTAL_PERIOD_LABELS as any)[room.rental_period]?.split(" ")[0]?.toLowerCase() ?? "yr"}`} className="text-2xl" />
       </div>
 
+      {/* Image carousel — shows all unit_images so students see exactly
+          what they're booking. Each room differs in color, space, layout. */}
+      <RoomImageGallery images={room.unit_images ?? []} identifier={room.identifier} />
+
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
         <div className="space-y-6">
           {/* Quick stats */}
@@ -409,6 +415,126 @@ export function RoomDetailPage() {
           </Card>
         </aside>
       </div>
+    </div>
+  );
+}
+
+// ─── Room Image Gallery ──────────────────────────────────────────────
+// A simple carousel that shows all unit_images for a room. Students need
+// to see exactly what they're booking — each room differs in color, space,
+// layout, and furnishing. No external carousel library needed; this uses
+// a scroll-snap container with prev/next buttons and a thumbnail strip.
+
+interface RoomImage {
+  id: string;
+  public_url: string | null;
+  storage_path: string;
+  alt_text: string;
+  position: number;
+}
+
+function RoomImageGallery({ images, identifier }: { images: RoomImage[]; identifier: string }) {
+  const [activeIndex, setActiveIndex] = React.useState(0);
+  const sorted = [...images].sort((a, b) => a.position - b.position);
+
+  if (sorted.length === 0) {
+    return (
+      <div className="mt-6 flex aspect-[16/9] items-center justify-center rounded-xl border border-border bg-muted">
+        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+          <ImageOff className="h-8 w-8" aria-hidden />
+          <p className="text-sm">No photos available for this unit yet</p>
+          <p className="text-xs">Ask the landlord to upload photos, or schedule a visit.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const current = sorted[activeIndex];
+
+  function goPrev() {
+    setActiveIndex((i) => (i === 0 ? sorted.length - 1 : i - 1));
+  }
+  function goNext() {
+    setActiveIndex((i) => (i === sorted.length - 1 ? 0 : i + 1));
+  }
+
+  return (
+    <div className="mt-6 space-y-3">
+      {/* Main image */}
+      <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-border bg-muted">
+        {current.public_url ? (
+          <Image
+            src={current.public_url}
+            alt={current.alt_text || `Unit ${identifier} — photo ${activeIndex + 1}`}
+            fill
+            sizes="(max-width: 1024px) 100vw, 66vw"
+            className="object-cover"
+            priority
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-muted-foreground">
+            <DoorOpen className="h-10 w-10" aria-hidden />
+          </div>
+        )}
+
+        {/* Prev/Next buttons (only if more than 1 image) */}
+        {sorted.length > 1 && (
+          <>
+            <button
+              onClick={goPrev}
+              aria-label="Previous photo"
+              className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 shadow-sm backdrop-blur-sm transition-all hover:scale-110 hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <ChevronLeft className="h-5 w-5" aria-hidden />
+            </button>
+            <button
+              onClick={goNext}
+              aria-label="Next photo"
+              className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 shadow-sm backdrop-blur-sm transition-all hover:scale-110 hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <ChevronRight className="h-5 w-5" aria-hidden />
+            </button>
+
+            {/* Counter */}
+            <div className="absolute bottom-3 right-3 rounded-md bg-background/90 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
+              {activeIndex + 1} / {sorted.length}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Thumbnail strip (only if more than 1 image) */}
+      {sorted.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {sorted.map((img, i) => (
+            <button
+              key={img.id}
+              onClick={() => setActiveIndex(i)}
+              aria-label={`View photo ${i + 1}`}
+              aria-pressed={i === activeIndex}
+              className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-md border-2 transition-all ${
+                i === activeIndex
+                  ? "border-primary ring-2 ring-primary/20"
+                  : "border-border opacity-60 hover:opacity-100"
+              }`}
+            >
+              {img.public_url ? (
+                <Image
+                  src={img.public_url}
+                  alt=""
+                  fill
+                  sizes="96px"
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <DoorOpen className="h-4 w-4 text-muted-foreground" aria-hidden />
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

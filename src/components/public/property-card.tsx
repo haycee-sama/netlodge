@@ -9,6 +9,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Price } from "@/components/shared/price";
 import { VerificationBadge } from "@/components/shared/status-badges";
+import { SavedButton } from "@/components/public/saved-button";
 import type { Property } from "@/lib/types";
 import { FACILITY_LABELS } from "@/lib/types";
 
@@ -54,8 +55,8 @@ export function PropertyCard({ property, className, variant = "default" }: Prope
               </Badge>
             )}
           </div>
-          {/* Save-property toggle — only rendered for authenticated students.
-              The shared SavedButton component handles the actual toggle. */}
+          {/* Heart save button — top-right corner of the image */}
+          <SavedButton propertyId={property.id} size="sm" />
         </div>
       </Link>
       <CardContent className={cn("space-y-2", variant === "compact" ? "p-3" : "p-4")}>
