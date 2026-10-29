@@ -14,26 +14,86 @@ import { PageHeader } from "@/components/shared/page-components";
 import { useAuth } from "@/lib/auth/auth-context";
 import { landlordProfileSchema, type LandlordProfileInput } from "@/lib/validators";
 import { initials } from "@/lib/utils/format";
+import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 export default function LandlordProfilePage() {
   const { session } = useAuth();
+  const [loading, setLoading] = React.useState(true);
+
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<LandlordProfileInput>({
     resolver: zodResolver(landlordProfileSchema),
     defaultValues: {
-      displayName: session ? `${session.firstName} ${session.lastName}` : "",
-      businessName: "Akoka Heights Ltd.",
-      officeAddress: "14 St. Finbarr's College Road, Akoka, Lagos",
+      displayName: "",
+      businessName: "",
+      officeAddress: "",
+      rcNumber: "",
     },
   });
 
-  async function onSubmit(_values: LandlordProfileInput) {
-    await new Promise((r) => setTimeout(r, 500));
-    toast.success("Profile saved");
+  // Load existing landlord profile from the database.
+  React.useEffect(() => {
+    if (!session?.userId) { setLoading(false); return; }
+    const supabase = createClient();
+    supabase
+      .from("landlord_profiles")
+      .select("display_name, business_name, office_address, rc_number")
+      .eq("user_id", session.userId)
+      .single()
+      .then(({ data, error }) => {
+        if (error && error.code !== "PGRST116") {
+          // PGRST116 = no row found yet — not an error, just empty.
+          toast.error("Could not load profile", { description: error.message });
+        }
+        if (data) {
+          reset({
+            displayName: data.display_name ?? "",
+            businessName: data.business_name ?? "",
+            officeAddress: data.office_address ?? "",
+            rcNumber: data.rc_number ?? "",
+          });
+        } else {
+          // No profile row yet — prefill display name from auth session.
+          reset({
+            displayName: `${session.firstName} ${session.lastName}`.trim(),
+            businessName: "",
+            officeAddress: "",
+            rcNumber: "",
+          });
+        }
+        setLoading(false);
+      });
+  }, [session?.userId, reset]);
+
+  async function onSubmit(values: LandlordProfileInput) {
+    if (!session?.userId) return;
+    const supabase = createClient();
+    const { error } = await supabase.from("landlord_profiles").upsert({
+      user_id: session.userId,
+      display_name: values.displayName,
+      business_name: values.businessName || null,
+      office_address: values.officeAddress || null,
+      rc_number: values.rcNumber || null,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) {
+      toast.error("Could not save profile", { description: error.message });
+    } else {
+      toast.success("Profile saved");
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden />
+      </div>
+    );
   }
 
   return (
@@ -66,11 +126,11 @@ export default function LandlordProfilePage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="businessName">Business name (optional)</Label>
-              <Input id="businessName" {...register("businessName")} />
+              <Input id="businessName" {...register("businessName")} placeholder="e.g. Akoka Heights Ltd." />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="officeAddress">Office address (optional)</Label>
-              <Input id="officeAddress" {...register("officeAddress")} />
+              <Input id="officeAddress" {...register("officeAddress")} placeholder="e.g. 14 St. Finbarr's College Road, Akoka, Lagos" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="rcNumber">RC number (optional)</Label>

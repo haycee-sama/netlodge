@@ -105,7 +105,6 @@ export default function LandlordSettingsPage() {
                 <SelectItem value="en">English (Nigeria)</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">More languages coming soon.</p>
           </div>
           <div className="space-y-1.5">
             <Label>Currency</Label>
