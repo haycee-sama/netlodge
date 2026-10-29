@@ -4,6 +4,51 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
+
+/**
+ * Server-side caching wrapper for homepage stats.
+ * Revalidates every 5 minutes (300 seconds). The cache is keyed by a
+ * single tag "homepage-stats" so it can be manually invalidated via
+ * `revalidateTag("homepage-stats")` when a property is verified or a
+ * booking is confirmed.
+ */
+export const fetchHomepageStatsServer = unstable_cache(
+  async (): Promise<{ data: HomepageStats | null; error: string | null }> => {
+    try {
+      const supabase = await createClient();
+
+      const [
+        { count: verifiedProperties },
+        { count: universities },
+        { count: neighbourhoods },
+        { count: availableRooms },
+        { count: totalBookings },
+      ] = await Promise.all([
+        supabase.from("properties").select("*", { count: "exact", head: true }).eq("status", "verified").eq("verification_status", "approved"),
+        supabase.from("universities").select("*", { count: "exact", head: true }).eq("active", true),
+        supabase.from("neighbourhoods").select("*", { count: "exact", head: true }).eq("active", true),
+        supabase.from("rentable_units").select("*", { count: "exact", head: true }).eq("status", "available"),
+        supabase.from("bookings").select("*", { count: "exact", head: true }).in("status", ["confirmed", "active", "completed"]),
+      ]);
+
+      return {
+        data: {
+          verifiedProperties: verifiedProperties ?? 0,
+          universities: universities ?? 0,
+          neighbourhoods: neighbourhoods ?? 0,
+          availableRooms: availableRooms ?? 0,
+          totalBookings: totalBookings ?? 0,
+        },
+        error: null,
+      };
+    } catch (err) {
+      return { data: null, error: err instanceof Error ? err.message : "Failed to fetch homepage stats" };
+    }
+  },
+  ["homepage-stats"],
+  { revalidate: 300, tags: ["homepage-stats"] }
+);
 
 export interface UniversitySummary {
   id: string;
@@ -166,62 +211,6 @@ export interface HomepageStats {
   availableRooms: number;
   /** Count of confirmed bookings (all-time). */
   totalBookings: number;
-}
-
-export async function fetchHomepageStatsServer(): Promise<{
-  data: HomepageStats | null;
-  error: string | null;
-}> {
-  try {
-    const supabase = await createClient();
-
-    // Run all counts in parallel for speed.
-    const [
-      { count: verifiedProperties },
-      { count: universities },
-      { count: neighbourhoods },
-      { count: availableRooms },
-      { count: totalBookings },
-    ] = await Promise.all([
-      supabase
-        .from("properties")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "verified")
-        .eq("verification_status", "approved"),
-      supabase
-        .from("universities")
-        .select("*", { count: "exact", head: true })
-        .eq("active", true),
-      supabase
-        .from("neighbourhoods")
-        .select("*", { count: "exact", head: true })
-        .eq("active", true),
-      supabase
-        .from("rentable_units")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "available"),
-      supabase
-        .from("bookings")
-        .select("*", { count: "exact", head: true })
-        .in("status", ["confirmed", "active", "completed"]),
-    ]);
-
-    return {
-      data: {
-        verifiedProperties: verifiedProperties ?? 0,
-        universities: universities ?? 0,
-        neighbourhoods: neighbourhoods ?? 0,
-        availableRooms: availableRooms ?? 0,
-        totalBookings: totalBookings ?? 0,
-      },
-      error: null,
-    };
-  } catch (err) {
-    return {
-      data: null,
-      error: err instanceof Error ? err.message : "Failed to fetch homepage stats",
-    };
-  }
 }
 
 // ---------------------------------------------------------------------------

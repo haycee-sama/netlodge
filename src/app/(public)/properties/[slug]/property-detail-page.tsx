@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader, EmptyState, StatCard } from "@/components/shared/page-components";
+import { ReviewSection } from "@/components/shared/review-section";
 import { VerificationBadge, PropertyStatusBadge, RoomStatusBadge } from "@/components/shared/status-badges";
 import { Price } from "@/components/shared/price";
 import { fetchPropertyBySlug, fetchFloors, fetchRentableUnits, type PropertyWithRelations, type FloorWithCounts, type RentableUnitWithRelations } from "@/lib/supabase/property-service";
@@ -236,6 +237,13 @@ export function PropertyDetailPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Reviews */}
+      {property.id && property.landlord_id && (
+        <div className="mt-6">
+          <ReviewSection propertyId={property.id} landlordId={property.landlord_id} />
+        </div>
+      )}
 
       {/* Verification info */}
       <Card className="mt-6">
