@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Map as MapIcon, LayoutGrid } from "lucide-react";
 import {
   Search as SearchIcon,
   SlidersHorizontal,
@@ -36,6 +37,12 @@ import { PageHeader, EmptyState } from "@/components/shared/page-components";
 import { fetchUniversities, fetchNeighbourhoods, fetchProperties, type PropertyWithRelations } from "@/lib/supabase/property-service";
 import type { SearchFilters, RentableUnitType, Facility } from "@/lib/types";
 import { FACILITY_LABELS, UNIT_TYPE_LABELS } from "@/lib/types";
+
+// Dynamic import for the map — Leaflet requires `window` so it must be
+// client-only and cannot be SSR'd.
+const DynamicPropertyMap = React.lazy(() =>
+  import("@/components/public/property-map").then((m) => ({ default: m.PropertyMap }))
+);
 import { ngnToKobo } from "@/lib/utils/format";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -78,6 +85,7 @@ export function SearchPageContent() {
   const [facilities, setFacilities] = React.useState<Facility[]>(
     (searchParams.get("facilities")?.split(",").filter(Boolean) as Facility[]) ?? [],
   );
+  const [viewMode, setViewMode] = React.useState<"list" | "map">("list");
   const [sortBy, setSortBy] = React.useState<(typeof SORT_OPTIONS)[number]["value"]>(
     (searchParams.get("sortBy") as typeof sortBy) ?? "relevance",
   );
@@ -399,12 +407,30 @@ export function SearchPageContent() {
                 </span>
               )}
             </p>
-            {activeFilterCount > 0 && (
-              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={resetAll}>
-                Clear filters
-                <X className="ml-1 h-3 w-3" aria-hidden />
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {activeFilterCount > 0 && (
+                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={resetAll}>
+                  Clear filters
+                </Button>
+              )}
+              {/* Map/list toggle */}
+              <div className="flex rounded-lg border border-border p-0.5">
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  aria-label="List view"
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" aria-hidden /> List
+                </button>
+                <button
+                  onClick={() => setViewMode("map")}
+                  className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${viewMode === "map" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  aria-label="Map view"
+                >
+                  <MapIcon className="h-3.5 w-3.5" aria-hidden /> Map
+                </button>
+              </div>
+            </div>
           </div>
 
           {loading ? (
@@ -428,6 +454,10 @@ export function SearchPageContent() {
                 </Button>
               }
             />
+          ) : viewMode === "map" ? (
+            <React.Suspense fallback={<div className="h-[400px] animate-pulse rounded-xl bg-muted/40" />}>
+              <DynamicPropertyMap properties={results} />
+            </React.Suspense>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {results.map((p) => (

@@ -159,13 +159,33 @@ export async function uploadFile(
   const validationError = validateFile(bucket, { size: file.size, type: file.type });
   if (validationError) return err(validationError, 400);
 
+  // Optimize images with Sharp before upload — resize to max 1600px wide,
+  // convert to JPEG quality 80. This reduces file size by 60-80% for
+  // phone photos without visible quality loss.
+  let uploadBuffer: ArrayBuffer = file.buffer;
+  let contentType = file.type;
+  if (file.type.startsWith("image/")) {
+    try {
+      const sharp = (await import("sharp")).default;
+      const processed = await sharp(Buffer.from(file.buffer))
+        .resize(1600, 1600, { fit: "inside", withoutEnlargement: true })
+        .jpeg({ quality: 80, mozjpeg: true })
+        .toBuffer();
+      uploadBuffer = processed.buffer.slice(processed.byteOffset, processed.byteOffset + processed.byteLength) as ArrayBuffer;
+      contentType = "image/jpeg";
+    } catch {
+      // Sharp failed (e.g. GIF) — upload the original
+      uploadBuffer = file.buffer;
+    }
+  }
+
   // Generate safe path
   const path = generateStoragePath(bucket, user.id, file.name, contextId);
 
   // Upload — the user's JWT authorizes this via the storage RLS policies
   const { data, error } = await supabase.storage
     .from(bucket)
-    .upload(path, file.buffer, { contentType: file.type, upsert: false });
+    .upload(path, uploadBuffer, { contentType, upsert: false });
 
   if (error) {
     return err(`Upload failed: ${error.message}`, 500);
