@@ -23,7 +23,7 @@ export default function AdminStaffPage() {
     if (!isSupabaseAuth) { setLoading(false); return; }
     const supabase = createClient();
     supabase.from("user_roles")
-      .select("user_id, role, assigned_at, reason, profiles(email, first_name, last_name, status, last_seen_at)")
+      .select("user_id, role, assigned_at, reason, profiles!user_roles_user_id_fkey(email, first_name, last_name, status)")
       .in("role", ADMIN_ROLES)
       .order("assigned_at", { ascending: false })
       .limit(100)
