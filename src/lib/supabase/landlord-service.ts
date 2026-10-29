@@ -427,7 +427,46 @@ export async function createRoom(input: {
 
     const supabase = createClient();
 
-    // Verify the floor belongs to this property (RLS will also enforce this)
+    // ─── Server-side authorization (defense-in-depth alongside RLS) ───
+    // Verify the caller is authenticated and is a landlord.
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { data: null, error: "Not authenticated" };
+    }
+    const { data: callerRoles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
+    const roles = (callerRoles ?? []).map((r: { role: string }) => r.role as string);
+    if (!roles.includes("landlord") && !roles.includes("property_manager") && !roles.includes("super_admin")) {
+      return { data: null, error: "Only landlords can create rooms" };
+    }
+
+    // Verify the caller owns the property (RLS also enforces this, but we
+    // check explicitly so the error is friendly and the log is clear).
+    const { data: property } = await supabase
+      .from("properties")
+      .select("id, landlord_id")
+      .eq("id", input.propertyId)
+      .single();
+    if (!property) {
+      return { data: null, error: "Property not found" };
+    }
+    const isOwner = property.landlord_id === user.id;
+    const canAccess = !isOwner && await (async () => {
+      const { data: assigned } = await supabase
+        .from("property_assignments")
+        .select("id")
+        .eq("property_id", input.propertyId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return !!assigned;
+    })();
+    if (!isOwner && !canAccess && !roles.includes("super_admin")) {
+      return { data: null, error: "You do not own this property" };
+    }
+
+    // Verify the floor belongs to this property
     const { data: floor } = await supabase
       .from("floors")
       .select("property_id")
@@ -517,6 +556,48 @@ export async function updateRoom(roomId: string, patch: {
 
     const supabase = createClient();
 
+    // ─── Server-side authorization (defense-in-depth alongside RLS) ───
+    // Verify the caller is authenticated and owns the property this room
+    // belongs to (or is an assigned manager / super admin).
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { data: null, error: "Not authenticated" };
+    }
+
+    // Fetch the room + its property's landlord_id in one query
+    const { data: roomWithProp } = await supabase
+      .from("rentable_units")
+      .select("id, property_id, properties!inner(landlord_id)")
+      .eq("id", roomId)
+      .single();
+
+    if (!roomWithProp) {
+      return { data: null, error: "Room not found" };
+    }
+
+    // @ts-expect-error — properties is a nested relation
+    const landlordId = roomWithProp.properties?.landlord_id;
+    if (landlordId !== user.id) {
+      // Check if the caller is an assigned manager
+      const { data: assigned } = await supabase
+        .from("property_assignments")
+        .select("id")
+        .eq("property_id", roomWithProp.property_id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!assigned) {
+        // Check super_admin
+        const { data: roles } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "super_admin");
+        if (!roles?.length) {
+          return { data: null, error: "You do not have permission to update this room" };
+        }
+      }
+    }
+
     // If trying to change status, check for active bookings
     if (patch.status) {
       const { data: room } = await supabase
@@ -568,6 +649,32 @@ export async function deleteRoom(roomId: string): Promise<ServiceResult<null>> {
   try {
     const supabase = createClient();
 
+    // ─── Server-side authorization (defense-in-depth alongside RLS) ───
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { data: null, error: "Not authenticated" };
+    }
+    const { data: roomWithProp } = await supabase
+      .from("rentable_units")
+      .select("id, property_id, properties!inner(landlord_id)")
+      .eq("id", roomId)
+      .single();
+    if (!roomWithProp) {
+      return { data: null, error: "Room not found" };
+    }
+    // @ts-expect-error — properties is a nested relation
+    const landlordId = roomWithProp.properties?.landlord_id;
+    if (landlordId !== user.id) {
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .in("role", ["super_admin", "property_manager"]);
+      if (!(roles ?? []).length) {
+        return { data: null, error: "You do not have permission to delete this room" };
+      }
+    }
+
     // Check for active bookings
     const { data: room } = await supabase
       .from("rentable_units")
@@ -607,6 +714,32 @@ export async function bulkCreateRooms(input: {
 }): Promise<ServiceResult<{ created: number }>> {
   try {
     const supabase = createClient();
+
+    // ─── Server-side authorization (defense-in-depth alongside RLS) ───
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return { data: null, error: "Not authenticated" };
+    }
+    // Verify the caller owns the property
+    const { data: prop } = await supabase
+      .from("properties")
+      .select("landlord_id")
+      .eq("id", input.propertyId)
+      .single();
+    if (!prop) {
+      return { data: null, error: "Property not found" };
+    }
+    if (prop.landlord_id !== user.id) {
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .in("role", ["super_admin", "property_manager"]);
+      const hasElevated = (roles ?? []).length > 0;
+      if (!hasElevated) {
+        return { data: null, error: "You do not own this property" };
+      }
+    }
 
     // Get floor default price if requested
     let priceKobo = input.annualRentKobo;
