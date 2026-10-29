@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { validateOrigin } from "@/lib/security/api-security";
 
 /**
  * POST /api/notifications/send-email
@@ -20,6 +21,10 @@ import { createClient } from "@/lib/supabase/server";
  *   NEXT_PUBLIC_SITE_URL — Used for links in the email body
  */
 export async function POST(request: NextRequest) {
+  // CSRF protection
+  const originError = validateOrigin(request);
+  if (originError) return originError;
+
   try {
     const body = await request.json();
     const { userId, type, title, body: notifBody, href } = body;

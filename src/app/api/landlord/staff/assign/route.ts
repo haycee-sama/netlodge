@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { validateOrigin } from "@/lib/security/api-security";
 
 /**
  * POST /api/landlord/staff/assign
@@ -18,6 +19,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * - The role must be 'property_manager' or 'agent'
  */
 export async function POST(request: NextRequest) {
+  // CSRF protection — validate Origin header for cookie-authenticated mutations
+  const originError = validateOrigin(request);
+  if (originError) return originError;
+
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();

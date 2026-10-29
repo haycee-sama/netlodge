@@ -25,6 +25,13 @@ export async function signInWithEmail(
   email: string,
   password: string,
 ): Promise<{ success: boolean; error?: string; session?: SupabaseSession }> {
+  // Client-side rate limiting (defense-in-depth alongside Supabase's own)
+  const { checkAuthRateLimit, recordAuthAttempt } = await import("@/lib/security/auth-rate-limit");
+  const { allowed, retryAfter } = checkAuthRateLimit("login");
+  if (!allowed) {
+    return { success: false, error: `Too many login attempts. Try again in ${retryAfter} seconds.` };
+  }
+
   try {
     const supabase = createClient();
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -33,12 +40,17 @@ export async function signInWithEmail(
     });
 
     if (error) {
+      recordAuthAttempt("login", false);
       return { success: false, error: error.message };
     }
 
     if (!data.user) {
+      recordAuthAttempt("login", false);
       return { success: false, error: "No user returned" };
     }
+
+    // Success — reset the rate limit counter
+    recordAuthAttempt("login", true);
 
     // Fetch the user's role from the profiles table
     const { data: profile } = await supabase
@@ -88,6 +100,13 @@ export async function signUpWithEmail(input: {
   lastName: string;
   role?: UserRole;
 }): Promise<{ success: boolean; error?: string }> {
+  // Client-side rate limiting
+  const { checkAuthRateLimit, recordAuthAttempt } = await import("@/lib/security/auth-rate-limit");
+  const { allowed, retryAfter } = checkAuthRateLimit("register");
+  if (!allowed) {
+    return { success: false, error: `Too many registration attempts. Try again in ${retryAfter} seconds.` };
+  }
+
   try {
     const supabase = createClient();
     const { data, error } = await supabase.auth.signUp({
@@ -139,6 +158,13 @@ export async function signOut(): Promise<{ success: boolean; error?: string }> {
 export async function resetPasswordForEmail(
   email: string,
 ): Promise<{ success: boolean; error?: string }> {
+  // Client-side rate limiting
+  const { checkAuthRateLimit, recordAuthAttempt } = await import("@/lib/security/auth-rate-limit");
+  const { allowed, retryAfter } = checkAuthRateLimit("reset-password");
+  if (!allowed) {
+    return { success: false, error: `Too many reset attempts. Try again in ${retryAfter} seconds.` };
+  }
+
   try {
     const supabase = createClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
