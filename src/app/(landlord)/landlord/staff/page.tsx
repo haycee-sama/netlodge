@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Users, Plus, MoreVertical, Mail, Briefcase, Shield, Loader2, AlertCircle, UserPlus } from "lucide-react";
+import { Users, Plus, Mail, Briefcase, Shield, Loader2, AlertCircle, UserPlus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -293,9 +293,6 @@ export default function LandlordStaffPage() {
                       )}
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="More options">
-                    <MoreVertical className="h-4 w-4" aria-hidden />
-                  </Button>
                 </li>
               ))}
             </ul>
