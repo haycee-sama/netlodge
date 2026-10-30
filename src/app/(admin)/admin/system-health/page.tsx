@@ -18,7 +18,7 @@ export default function AdminSystemHealthPage() {
   React.useEffect(() => {
     if (!isSupabaseAuth) { setLoading(false); return; }
     const supabase = createClient();
-    supabase.from("audit_logs")
+    supabase.from("audit_logs_safe")
       .select("id, timestamp, actor_email, category, action, summary, severity")
       .order("timestamp", { ascending: false })
       .limit(20)

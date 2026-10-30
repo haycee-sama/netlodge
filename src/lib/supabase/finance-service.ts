@@ -641,7 +641,7 @@ export async function fetchPayoutById(
 
   // Audit entries for this payout.
   const { data: audit } = await supabase
-    .from("audit_logs")
+    .from("audit_logs_safe")
     .select("id, timestamp, actor_email, action, summary, severity")
     .eq("resource_type", "payout")
     .eq("resource_id", payoutId)
@@ -726,7 +726,7 @@ export async function fetchPaymentById(
 
   // Audit entries for this payment.
   const { data: audit } = await supabase
-    .from("audit_logs")
+    .from("audit_logs_safe")
     .select("id, timestamp, actor_email, action, summary, severity")
     .eq("resource_type", "payment")
     .eq("resource_id", paymentId)

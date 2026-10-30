@@ -271,7 +271,7 @@ export async function fetchVerificationCaseDetail(
 
   // Audit logs — direct query (RLS restricts to permitted rows)
   const { data: aDirect } = await supabase
-    .from("audit_logs")
+    .from("audit_logs_safe")
     .select("*")
     .eq("resource_type", "verification_case")
     .eq("resource_id", caseId)
@@ -486,7 +486,7 @@ export async function fetchAdminUserDetail(userId: string, request?: Request): P
     .order("assigned_at", { ascending: true });
 
   const { data: auditLogs } = await supabase
-    .from("audit_logs")
+    .from("audit_logs_safe")
     .select("*")
     .eq("resource_id", userId)
     .order("timestamp", { ascending: false })
@@ -617,7 +617,7 @@ export async function fetchAuditLogs(
   const to = from + pageSize - 1;
 
   let query = supabase
-    .from("audit_logs")
+    .from("audit_logs_safe")
     .select("*", { count: "exact" });
 
   if (filters.category && filters.category !== "all") {
@@ -871,7 +871,7 @@ export async function fetchSecurityOverview(
 
   // Security events: category in (security, auth) OR severity = 'critical'.
   let query = supabase
-    .from("audit_logs")
+    .from("audit_logs_safe")
     .select("*", { count: "exact" })
     .or(`category.eq.security,category.eq.auth,severity.eq.critical`);
 
@@ -888,11 +888,11 @@ export async function fetchSecurityOverview(
   // Aggregate severity counts (over the full filtered set, not just this page).
   // We do separate counts to avoid PostgREST filter limits.
   const { count: criticalCount } = await supabase
-    .from("audit_logs")
+    .from("audit_logs_safe")
     .select("*", { count: "exact", head: true })
     .eq("severity", "critical");
   const { count: warningCount } = await supabase
-    .from("audit_logs")
+    .from("audit_logs_safe")
     .select("*", { count: "exact", head: true })
     .eq("severity", "warning");
 

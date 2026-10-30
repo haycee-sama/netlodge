@@ -69,6 +69,28 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // F-03: Server-side validation of the redirect parameter on auth pages.
+  // The login page also validates client-side (startsWith("/") &&
+  // !startsWith("//")), but this middleware check is defense-in-depth —
+  // it strips invalid redirect values before the page even renders.
+  if (isAuthPage) {
+    const redirect = request.nextUrl.searchParams.get("redirect");
+    if (redirect) {
+      // Must be a relative path: starts with /, not // (protocol-relative),
+      // not javascript:, not a data: URL, no backslash escapes.
+      const isValid = redirect.startsWith("/")
+        && !redirect.startsWith("//")
+        && !redirect.toLowerCase().startsWith("javascript:")
+        && !redirect.toLowerCase().startsWith("data:")
+        && !redirect.includes("\\");
+      if (!isValid) {
+        const url = request.nextUrl.clone();
+        url.searchParams.delete("redirect");
+        return NextResponse.redirect(url);
+      }
+    }
+  }
+
   // Redirect authenticated users away from auth pages.
   if (isAuthPage && user) {
     const url = request.nextUrl.clone();

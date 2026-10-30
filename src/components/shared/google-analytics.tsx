@@ -32,6 +32,7 @@ const EXCLUDED_PREFIXES = [
   "/register",
   "/forgot-password",
   "/reset-password",
+  "/auth/",
   "/api/",
 ];
 
@@ -41,16 +42,21 @@ function shouldTrack(pathname: string): boolean {
 
 export function GoogleAnalytics() {
   const pathname = usePathname();
+  const trackable = shouldTrack(pathname);
 
   // Track page views on route changes
   React.useEffect(() => {
-    if (!GA_MEASUREMENT_ID || !shouldTrack(pathname)) return;
+    if (!GA_MEASUREMENT_ID || !trackable) return;
     if (typeof window.gtag === "function") {
       window.gtag("config", GA_MEASUREMENT_ID, { page_path: pathname });
     }
-  }, [pathname]);
+  }, [pathname, trackable]);
 
-  if (!GA_MEASUREMENT_ID) return null;
+  // F-08: Do not load GA scripts at all on auth/private routes. This
+  // prevents the gtag.js library and init script from firing on /login,
+  // /register, /auth/callback, and dashboard pages — not just the page-
+  // view event.
+  if (!GA_MEASUREMENT_ID || !trackable) return null;
 
   return (
     <>
