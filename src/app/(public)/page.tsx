@@ -36,6 +36,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { HeroSearch } from "@/components/public/hero-search";
+import { HeroIntro } from "@/components/public/hero-intro";
 import { UniversityCard } from "@/components/public/university-card";
 import { SectionHeading } from "@/components/shared/page-components";
 import { fetchPropertiesServer, fetchUniversitiesServer, fetchHomepageStatsServer, fetchPublishedTestimonialsServer } from "@/lib/supabase/property-server";
@@ -153,48 +154,11 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-grid-pattern opacity-50" aria-hidden />
         <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-24">
           <div className="grid items-center gap-10 lg:grid-cols-2">
-            <div className="space-y-6">
-              <Badge variant="outline" className="gap-1.5 border-primary/30 bg-primary/5 text-primary">
-                <Sparkles className="h-3.5 w-3.5" aria-hidden />
-                Now serving UNILAG, Akoka, Yaba, Bariga & Somolu
-              </Badge>
-              <h1 className="font-display text-4xl font-extrabold leading-tight tracking-tight text-balance sm:text-5xl lg:text-6xl">
-                Find your <span className="text-gradient-brand">verified</span> student home in Nigeria.
-              </h1>
-              <p className="max-w-xl text-base text-muted-foreground text-pretty sm:text-lg">
-                NetLodge is the marketplace for student accommodation around Nigerian universities.
-                Browse individual rooms, inspect facilities, and book the actual unit you'll live in —
-                not just the building it sits in.
-              </p>
-              <div className="flex flex-wrap items-center gap-3">
-                <Button asChild size="lg">
-                  <Link href="/search">
-                    <Search className="mr-2 h-4 w-4" aria-hidden />
-                    Browse accommodation
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline">
-                  <Link href="/register">
-                    List your property
-                    <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
-                  </Link>
-                </Button>
-              </div>
-              <dl className="grid grid-cols-3 gap-4 pt-4 text-sm">
-                <div className="space-y-0.5">
-                  <dt className="text-muted-foreground">Properties</dt>
-                  <dd className="font-display text-2xl font-bold tabular-nums">{stats?.verifiedProperties ?? 0}</dd>
-                </div>
-                <div className="space-y-0.5">
-                  <dt className="text-muted-foreground">Rooms</dt>
-                  <dd className="font-display text-2xl font-bold tabular-nums">{stats?.availableRooms ?? 0}</dd>
-                </div>
-                <div className="space-y-0.5">
-                  <dt className="text-muted-foreground">Universities</dt>
-                  <dd className="font-display text-2xl font-bold tabular-nums">{stats?.universities ?? 0}</dd>
-                </div>
-              </dl>
-            </div>
+            <HeroIntro stats={{
+              verifiedProperties: stats?.verifiedProperties ?? 0,
+              totalRooms: stats?.availableRooms ?? 0,
+              universities: stats?.universities ?? 0,
+            }} />
             <div className="relative">
               <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-muted shadow-xl">
                 {/* Decorative illustration — no external image dependency.

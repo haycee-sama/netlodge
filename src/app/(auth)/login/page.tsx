@@ -17,6 +17,7 @@ import { homeRouteForRole } from "@/lib/auth/permissions";
 import { toast } from "sonner";
 import { roleLabel as formatRoleLabel } from "@/lib/types";
 import { signInWithEmail } from "@/lib/supabase/auth-service";
+import { useI18n } from "@/lib/i18n/context";
 
 export default function LoginPage() {
   return (
@@ -30,6 +31,7 @@ function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const redirect = params.get("redirect");
+  const { t } = useI18n();
   const [showPw, setShowPw] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const [authError, setAuthError] = React.useState<string | null>(null);
@@ -60,7 +62,7 @@ function LoginForm() {
         router.push(safeRedirect);
         return;
       }
-      setAuthError(result.error ?? "Invalid email or password.");
+      setAuthError(result.error ?? t("auth.invalidCredentials"));
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : "An unexpected error occurred.");
     } finally {
@@ -74,9 +76,9 @@ function LoginForm() {
         <div className="flex justify-center lg:hidden">
           <Logo />
         </div>
-        <h1 className="font-display text-2xl font-bold tracking-tight">Welcome back</h1>
+        <h1 className="font-display text-2xl font-bold tracking-tight">{t("auth.welcomeBack")}</h1>
         <p className="text-sm text-muted-foreground">
-          Sign in to your NetLodge account to continue.
+          {t("auth.signInToContinue")}
         </p>
       </div>
 
@@ -89,7 +91,7 @@ function LoginForm() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("auth.email")}</Label>
           <div className="relative">
             <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
             <Input
@@ -106,9 +108,9 @@ function LoginForm() {
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("auth.password")}</Label>
             <Link href="/forgot-password" className="text-xs text-primary hover:underline">
-              Forgot password?
+              {t("auth.forgotPassword")}
             </Link>
           </div>
           <div className="relative">
@@ -135,17 +137,17 @@ function LoginForm() {
 
         <label className="flex items-center gap-2 text-sm text-muted-foreground" htmlFor="remember">
           <Checkbox id="remember" defaultChecked />
-          <span>Remember me on this device</span>
+          <span>{t("auth.rememberMe")}</span>
         </label>
 
         <Button type="submit" className="w-full" size="lg" disabled={submitting}>
           {submitting ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> Signing in…
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> {t("auth.signingIn")}
             </>
           ) : (
             <>
-              Sign in
+              {t("auth.signIn")}
               <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
             </>
           )}
@@ -153,9 +155,9 @@ function LoginForm() {
       </form>
 
       <p className="text-center text-sm text-muted-foreground">
-        Don't have an account?{" "}
+        {t("auth.noAccount")}{" "}
         <Link href="/register" className="font-medium text-primary hover:underline">
-          Create one
+          {t("auth.createOne")}
         </Link>
       </p>
     </div>

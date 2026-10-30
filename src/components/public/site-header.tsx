@@ -31,21 +31,23 @@ import { Logo } from "@/components/shared/logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/context";
 import { homeRouteForRole } from "@/lib/auth/permissions";
 
-const navItems = [
-  { href: "/search", label: "Search", icon: Search },
-  { href: "/universities", label: "Universities", icon: GraduationCap },
-  { href: "/properties", label: "Properties", icon: Building2 },
-  { href: "/how-it-works", label: "How it works" },
-  { href: "/safety", label: "Safety", icon: ShieldCheck },
-  { href: "/help", label: "Help", icon: HelpCircle },
-];
+const navItemDefs = [
+  { href: "/search", tKey: "nav.search", icon: Search },
+  { href: "/universities", tKey: "nav.universities", icon: GraduationCap },
+  { href: "/properties", tKey: "nav.properties", icon: Building2 },
+  { href: "/how-it-works", tKey: "nav.howItWorks" },
+  { href: "/safety", tKey: "nav.safety", icon: ShieldCheck },
+  { href: "/help", tKey: "nav.help", icon: HelpCircle },
+] as const;
 
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
   const { session, signOut } = useAuth();
+  const { t } = useI18n();
   const [signingOut, setSigningOut] = React.useState(false);
 
   async function handleSignOut() {
@@ -53,16 +55,12 @@ export function SiteHeader() {
     try {
       const result = await signOut();
       if (!result.success) {
-        // Sign-out failed — the user may still be authenticated server-side.
-        // Do not redirect or pretend success; show the error.
         const { toast } = await import("sonner");
         toast.error("Could not sign out", {
           description: result.error ?? "Please check your connection and try again.",
         });
         return;
       }
-      // Success — session is cleared in context; header re-renders to show
-      // "Sign in / Get started" buttons automatically.
     } finally {
       setSigningOut(false);
     }
@@ -81,23 +79,23 @@ export function SiteHeader() {
               variant="ghost"
               size="icon"
               className="lg:hidden"
-              aria-label="Open menu"
+              aria-label={t("nav.openMenu")}
             >
               <Menu className="h-5 w-5" aria-hidden />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-full max-w-xs p-0">
-            <SheetTitle className="sr-only">Navigation menu</SheetTitle>
+            <SheetTitle className="sr-only">{t("nav.navigationMenu")}</SheetTitle>
             <div className="flex h-16 items-center justify-between border-b border-border px-4">
               <Logo />
               <SheetClose asChild>
-                <Button variant="ghost" size="icon" aria-label="Close menu">
+                <Button variant="ghost" size="icon" aria-label={t("nav.closeMenu")}>
                   <X className="h-5 w-5" aria-hidden />
                 </Button>
               </SheetClose>
             </div>
-            <nav className="flex flex-col gap-1 p-3" aria-label="Mobile">
-              {navItems.map((item) => (
+            <nav className="flex flex-col gap-1 p-3" aria-label={t("nav.primaryNav")}>
+              {navItemDefs.map((item) => (
                 <SheetClose asChild key={item.href}>
                   <Link
                     href={item.href}
@@ -108,8 +106,8 @@ export function SiteHeader() {
                         : "text-foreground hover:bg-muted",
                     )}
                   >
-                    {item.icon && <item.icon className="h-4 w-4" aria-hidden />}
-                    {item.label}
+                    {"icon" in item && item.icon ? <item.icon className="h-4 w-4" aria-hidden /> : null}
+                    {t(item.tKey)}
                   </Link>
                 </SheetClose>
               ))}
@@ -121,7 +119,7 @@ export function SiteHeader() {
                     <Button asChild className="w-full">
                       <Link href={homeRouteForRole(session.role)}>
                         <LayoutDashboard className="mr-2 h-4 w-4" aria-hidden />
-                        Go to dashboard
+                        {t("nav.goToDashboard")}
                       </Link>
                     </Button>
                   </SheetClose>
@@ -133,7 +131,7 @@ export function SiteHeader() {
                       disabled={signingOut}
                     >
                       <LogOut className="mr-2 h-4 w-4" aria-hidden />
-                      {signingOut ? "Signing out…" : "Sign out"}
+                      {signingOut ? t("nav.signingOut") : t("nav.signOut")}
                     </Button>
                   </SheetClose>
                 </>
@@ -141,14 +139,14 @@ export function SiteHeader() {
                 <>
                   <SheetClose asChild>
                     <Button asChild variant="outline" className="w-full">
-                      <Link href="/login">Sign in</Link>
+                      <Link href="/login">{t("nav.signIn")}</Link>
                     </Button>
                   </SheetClose>
                   <SheetClose asChild>
                     <Button asChild className="w-full">
                       <Link href="/register">
                         <Sparkles className="mr-2 h-4 w-4" aria-hidden />
-                        Get started
+                        {t("nav.getStarted")}
                       </Link>
                     </Button>
                   </SheetClose>
@@ -169,9 +167,9 @@ export function SiteHeader() {
         {/* Desktop nav */}
         <nav
           className="ml-4 hidden items-center gap-0.5 lg:flex"
-          aria-label="Primary"
+          aria-label={t("nav.primaryNav")}
         >
-          {navItems.map((item) => (
+          {navItemDefs.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -182,7 +180,7 @@ export function SiteHeader() {
                   : "text-foreground/80 hover:bg-muted hover:text-foreground",
               )}
             >
-              {item.label}
+              {t(item.tKey)}
             </Link>
           ))}
         </nav>
@@ -196,25 +194,25 @@ export function SiteHeader() {
               <DropdownMenuTrigger asChild>
                 <Button size="sm" className="gap-1.5">
                   <LayoutDashboard className="h-4 w-4" aria-hidden />
-                  <span className="hidden sm:inline">Dashboard</span>
+                  <span className="hidden sm:inline">{t("nav.dashboard")}</span>
                   <ChevronDown className="h-3 w-3 opacity-70" aria-hidden />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuLabel className="text-xs text-muted-foreground">
-                  Signed in as
+                  {t("nav.signedInAs")}
                   <div className="truncate text-foreground">{session.email}</div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href={homeRouteForRole(session.role)}>
                     <LayoutDashboard className="mr-2 h-4 w-4" aria-hidden />
-                    {session.role[0].toUpperCase() + session.role.slice(1)} dashboard
+                    {session.role[0].toUpperCase() + session.role.slice(1)} {t("nav.dashboard").toLowerCase()}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href={`${homeRouteForRole(session.role)}/settings`}>
-                    Settings
+                    {t("nav.settings")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -224,17 +222,17 @@ export function SiteHeader() {
                   className="text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" aria-hidden />
-                  {signingOut ? "Signing out…" : "Sign out"}
+                  {signingOut ? t("nav.signingOut") : t("nav.signOut")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <div className="hidden items-center gap-1.5 sm:flex">
               <Button asChild variant="ghost" size="sm">
-                <Link href="/login">Sign in</Link>
+                <Link href="/login">{t("nav.signIn")}</Link>
               </Button>
               <Button asChild size="sm">
-                <Link href="/register">Get started</Link>
+                <Link href="/register">{t("nav.getStarted")}</Link>
               </Button>
             </div>
           )}

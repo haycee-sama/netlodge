@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/context";
 import { createBooking } from "@/lib/supabase/property-service";
 import { RENTAL_PERIOD_LABELS, type RentableUnit, type Property, type RentalPeriod } from "@/lib/types";
 import { formatNgn } from "@/lib/utils/format";
@@ -54,6 +55,7 @@ interface RoomBookingCardProps {
 export function RoomBookingCard({ room, property }: RoomBookingCardProps) {
   const router = useRouter();
   const { session } = useAuth();
+  const { t } = useI18n();
   const [checkIn, setCheckIn] = React.useState("");
   // The rental period is the landlord's configured period — students cannot
   // change it. The booking duration is derived from the period type.
@@ -129,7 +131,7 @@ export function RoomBookingCard({ room, property }: RoomBookingCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Book this unit</CardTitle>
+        <CardTitle className="text-base">{t("booking.placeHold")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         {!isAvailable && (
@@ -143,7 +145,7 @@ export function RoomBookingCard({ room, property }: RoomBookingCardProps) {
         )}
 
         <div className="space-y-1.5">
-          <Label htmlFor="check-in">Check-in date</Label>
+          <Label htmlFor="check-in">{t("booking.checkIn")}</Label>
           <Input
             id="check-in"
             type="date"
@@ -154,7 +156,7 @@ export function RoomBookingCard({ room, property }: RoomBookingCardProps) {
         </div>
 
         <div className="space-y-1.5">
-          <Label>Rental period</Label>
+          <Label>{t("booking.rentalPeriod")}</Label>
           <div className="rounded-md border border-input bg-muted/30 px-3 py-2 text-sm">
             {RENTAL_PERIOD_LABELS[rentalPeriod] ?? rentalPeriod}
             <span className="ml-2 text-xs text-muted-foreground">
