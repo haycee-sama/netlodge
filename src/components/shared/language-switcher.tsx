@@ -21,11 +21,14 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size={compact ? "icon" : "sm"} className="gap-1.5">
+        <Button
+          variant="ghost"
+          size={compact ? "sm" : "sm"}
+          className="gap-1.5"
+          aria-label={`Language: ${current?.label ?? "English"}. Click to change.`}
+        >
           <Globe className="h-4 w-4" aria-hidden />
-          {!compact && (
-            <span className="hidden sm:inline">{current?.nativeLabel ?? "English"}</span>
-          )}
+          <span className="text-xs font-medium">{current?.nativeLabel ?? "English"}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
