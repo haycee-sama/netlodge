@@ -17,6 +17,8 @@
  *   NEXT_PUBLIC_SITE_URL — Used for links in the email
  */
 
+import { getSiteUrl } from "@/lib/config/site";
+
 interface EmailNotificationParams {
   userId: string;
   type: string;
@@ -28,7 +30,7 @@ interface EmailNotificationParams {
 export async function sendEmailNotification(params: EmailNotificationParams): Promise<void> {
   try {
     // Fire-and-forget — don't block the caller
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    const baseUrl = getSiteUrl();
     await fetch(`${baseUrl}/api/notifications/send-email`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

@@ -14,6 +14,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { getSiteUrl } from "@/lib/config/site";
 
 // ---------------------------------------------------------------------------
 // Rate limiting
@@ -161,7 +162,7 @@ function getClientIp(request: NextRequest): string {
 // ---------------------------------------------------------------------------
 
 const ALLOWED_ORIGINS = (() => {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const siteUrl = getSiteUrl();
   const origins = [siteUrl].filter(Boolean);
   // Allow localhost variants for dev
   if (process.env.NODE_ENV !== "production") {

@@ -10,6 +10,7 @@ import { PageHeader, StatCard, EmptyState } from "@/components/shared/page-compo
 import { useAuth } from "@/lib/auth/auth-context";
 import { formatNgn, formatRelativeTime } from "@/lib/utils/format";
 import { toast } from "sonner";
+import { getSiteUrl } from "@/lib/config/site";
 
 interface ReferralStats {
   referralCode: string;
@@ -57,7 +58,7 @@ export default function AgentReferralsPage() {
   }, [session?.userId]);
 
   const referralCode = stats?.referralCode ?? session?.userId?.slice(0, 8).toUpperCase() ?? "";
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://netlodge.vercel.app";
+  const siteUrl = getSiteUrl();
   const referralLink = `${siteUrl}/register?ref=${referralCode}`;
 
   function copy() {

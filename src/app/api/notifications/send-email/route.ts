@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { validateOrigin } from "@/lib/security/api-security";
+import { getSiteUrl } from "@/lib/config/site";
 
 /**
  * POST /api/notifications/send-email
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
     const { Resend } = await import("resend");
     const resend = new Resend(apiKey);
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://netlodge.vercel.app";
+    const siteUrl = getSiteUrl();
     const link = href ? `${siteUrl}${href}` : siteUrl;
 
     const html = `

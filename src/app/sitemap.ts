@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { getSiteUrl } from "@/lib/config/site";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://netlodge.vercel.app";
+const SITE_URL = getSiteUrl();
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [

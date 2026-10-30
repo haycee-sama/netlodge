@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { fetchPropertyBySlugServer } from "@/lib/supabase/property-server";
 import { PropertyDetailPage } from "./property-detail-page";
+import { getSiteUrl } from "@/lib/config/site";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://netlodge.vercel.app";
+const SITE_URL = getSiteUrl();
 
 type Params = { params: Promise<{ slug: string }> };
 

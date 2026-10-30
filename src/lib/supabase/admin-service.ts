@@ -22,6 +22,7 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createBrowserClient } from "@supabase/ssr";
 import { createClient as createSupabaseJsClient } from "@supabase/supabase-js";
 import type { User } from "@supabase/supabase-js";
+import { getSiteUrl } from "@/lib/config/site";
 
 export interface ServiceResult<T> {
   data: T | null;
@@ -753,7 +754,7 @@ export async function fetchIntegrationsOverview(
   const supabaseSecret = process.env.SUPABASE_SECRET_KEY ?? "";
   const redisUrl = process.env.UPSTASH_REDIS_REST_URL ?? "";
   const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN ?? "";
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const siteUrl = getSiteUrl();
   const cronSecret = process.env.CRON_SECRET ?? "";
 
   const effective: EffectiveConfigStatus[] = [

@@ -10,6 +10,7 @@ import { QueryProvider } from "@/components/shared/query-provider";
 import { ChatWidget } from "@/components/shared/chat-widget";
 import { GoogleAnalytics } from "@/components/shared/google-analytics";
 import { I18nProvider } from "@/lib/i18n/context";
+import { getSiteUrl } from "@/lib/config/site";
 
 const sans = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -30,7 +31,7 @@ const display = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://netlodge.vercel.app";
+const SITE_URL = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
