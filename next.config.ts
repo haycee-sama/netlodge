@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   reactStrictMode: false,
+  // Suppress the X-Powered-By header (F-06)
+  poweredByHeader: false,
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
@@ -30,6 +32,13 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
           // HSTS — only effective over HTTPS (Vercel enforces HTTPS by default)
           { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" },
+          // Content-Security-Policy (F-01) — restricts script/object/img/connect
+          // sources. 'unsafe-inline' for scripts is required for Next.js
+          // hydration; upgrade to nonce-based CSP in a future hardening pass.
+          { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://js.paystack.co https://widget.cloudinary.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://api.paystack.co https://liberal-thrush-242079.upstash.io; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'" },
+          // Cross-origin isolation headers (F-07)
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
         ],
       },
       // API routes + dashboard pages — no caching for personalized data

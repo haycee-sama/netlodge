@@ -9,12 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "*",
         allow: "/",
         disallow: [
-          "/student",
-          "/landlord",
-          "/manager",
-          "/agent",
-          "/admin",
-          "/auth",
           "/api",
         ],
       },

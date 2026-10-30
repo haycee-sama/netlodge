@@ -71,8 +71,11 @@ export async function GET() {
   const status = allOk ? "ok" : checks.config === "missing" ? "degraded" : "error";
   const httpStatus = allOk ? 200 : checks.supabase === "error" ? 503 : 200;
 
+  // F-04: Return only a coarse status to anonymous callers. Detailed
+  // component health (checks, timestamp, version) is withheld to avoid
+  // disclosing the backend integration type and server time.
   return NextResponse.json(
-    { status, timestamp, checks, version },
+    { status },
     { status: httpStatus },
   );
 }
