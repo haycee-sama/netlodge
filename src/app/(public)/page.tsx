@@ -45,6 +45,7 @@ import { FACILITY_LABELS } from "@/lib/types";
 
 export const metadata = {
   title: "NetLodge — Verified student accommodation in Nigeria",
+  description: "Book the actual room you'll live in — not just the building. NetLodge lists verified rooms around UNILAG, UNN and other Nigerian universities, with real photos, transparent pricing and backend-confirmed payments.",
   alternates: { canonical: "/" },
 };
 
@@ -161,12 +162,16 @@ export default async function HomePage() {
             }} />
             <div className="relative">
               <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-muted shadow-xl">
-                {/* Decorative illustration — no external image dependency.
-                    If a real featured property with an image is available,
-                    it is shown in the carousel below instead. */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Building2 className="h-24 w-24 text-primary/20" aria-hidden />
-                </div>
+                {/* Featured property image or clean gradient — no generic icon */}
+                {featured[0]?.property_images?.[0]?.public_url ? (
+                  <img
+                    src={featured[0].property_images[0].public_url}
+                    alt={featured[0].name}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-grid-pattern opacity-40" aria-hidden />
+                )}
                 {featured[0] && (
                   <div className="absolute inset-x-4 bottom-4 rounded-xl border border-border bg-background/95 p-4 shadow-lg backdrop-blur-sm">
                     <div className="flex items-center gap-3">
@@ -204,9 +209,9 @@ export default async function HomePage() {
       {/* ---------------------------------------------- University locations */}
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <SectionHeading
-          eyebrow="Browse by university"
-          title="Popular university locations"
-          description="Explore verified accommodation around Nigeria's leading universities. New campuses added every term."
+          eyebrow="Around campus"
+          title="Where students are looking"
+          description="Real verified rooms around UNILAG, UNN and more. Pick a school to start."
           action={
             <Button asChild variant="outline" size="sm">
               <Link href="/universities">
@@ -283,7 +288,7 @@ export default async function HomePage() {
             ))
           ) : (
             <p className="col-span-full py-8 text-center text-sm text-muted-foreground">
-              No verified listings yet. Check back soon.
+              We're onboarding landlords now. Verified rooms will appear here soon.
             </p>
           )}
         </div>
@@ -293,9 +298,9 @@ export default async function HomePage() {
       <section className="border-y border-border bg-card/30">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <SectionHeading
-            eyebrow="Take a look around"
-            title="Recently added properties"
-            description="Use the controls to browse the latest verified listings."
+            eyebrow="Fresh on NetLodge"
+            title="Recently added rooms"
+            description="Swipe through the latest verified listings."
           />
           <div className="mt-6">
             <Carousel

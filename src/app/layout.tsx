@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     template: "%s · NetLodge",
   },
   description:
-    "Discover, compare and book verified student accommodation around Nigerian universities. Browse individual rooms, inspect facilities, and reserve with confidence on NetLodge.",
+    "Book the actual room you'll live in — not just the building. NetLodge lists verified rooms around UNILAG, UNN and other Nigerian universities, with real photos, transparent pricing and backend-confirmed payments.",
   keywords: [
     "student accommodation Nigeria",
     "UNILAG housing",
@@ -65,13 +65,13 @@ export const metadata: Metadata = {
     siteName: "NetLodge",
     title: "NetLodge — Verified student accommodation in Nigeria",
     description:
-      "Discover, compare and book verified student accommodation around Nigerian universities.",
+      "Book the actual room you'll live in — not just the building.",
     images: [
       {
-        url: "/netlodge-mark.svg",
-        width: 1200,
-        height: 630,
-        alt: "NetLodge — Student Accommodation, Simplified.",
+        url: "/og.png",
+        width: 1344,
+        height: 768,
+        alt: "NetLodge — Verified student accommodation in Nigeria",
       },
     ],
   },
@@ -79,8 +79,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "NetLodge — Verified student accommodation in Nigeria",
     description:
-      "Discover, compare and book verified student accommodation around Nigerian universities.",
-    images: ["/netlodge-mark.svg"],
+      "Book the actual room you'll live in — not just the building.",
+    images: ["/og.png"],
   },
   robots: {
     index: true,
