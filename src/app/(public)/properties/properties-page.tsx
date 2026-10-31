@@ -15,8 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useI18n } from "@/lib/i18n/context";
 
 export function PropertiesPage() {
+  const { t } = useI18n();
   const [properties, setProperties] = React.useState<PropertyWithRelations[]>([]);
   const [total, setTotal] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
@@ -55,9 +57,9 @@ export function PropertiesPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <PageHeader
-        eyebrow="Property directory"
-        title="All verified properties"
-        description="Every property below has passed identity, address and ownership verification. Each one contains individual bookable rooms, self-contain units or apartments."
+        eyebrow={t("properties.eyebrow")}
+        title={t("properties.title")}
+        description={t("properties.description")}
       />
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -65,7 +67,7 @@ export function PropertiesPage() {
           <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
           <Input
             type="search"
-            placeholder="Search by name, area, or keyword…"
+            placeholder={t("properties.placeholder")}
             className="h-10 pl-9"
             value={q}
             onChange={(e) => { setQ(e.target.value); setPage(1); }}
@@ -73,10 +75,10 @@ export function PropertiesPage() {
         </div>
         <Select value={universityId} onValueChange={(v) => { setUniversityId(v === "all" ? "" : v); setPage(1); }}>
           <SelectTrigger className="h-10 w-full sm:w-52">
-            <SelectValue placeholder="All universities" />
+            <SelectValue placeholder={t("properties.allUniversities")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All universities</SelectItem>
+            <SelectItem value="all">{t("properties.allUniversities")}</SelectItem>
             {universities.map((u) => (
               <SelectItem key={u.id} value={u.id}>{u.short_name} — {u.name}</SelectItem>
             ))}
@@ -92,21 +94,20 @@ export function PropertiesPage() {
         ) : error ? (
           <EmptyState
             icon={<Building2 className="h-5 w-5" aria-hidden />}
-            title="Could not load properties"
+            title={t("properties.error.title")}
             description={error}
-            action={<Button variant="outline" onClick={() => setPage(page)}>Retry</Button>}
+            action={<Button variant="outline" onClick={() => setPage(page)}>{t("properties.retry")}</Button>}
           />
         ) : properties.length === 0 ? (
           <EmptyState
             icon={<Building2 className="h-5 w-5" aria-hidden />}
-            title="No properties found"
-            description="Try adjusting your search or check back soon as landlords list new properties."
+            title={t("properties.empty.title")}
+            description={t("properties.empty.description")}
           />
         ) : (
           <>
             <p className="mb-4 text-sm text-muted-foreground">
-              Showing <strong className="text-foreground">{properties.length}</strong> of{" "}
-              <strong className="text-foreground">{total}</strong> properties
+              {t("properties.showing", { x: properties.length, y: total })}
             </p>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {properties.map((p) => (
@@ -116,11 +117,11 @@ export function PropertiesPage() {
             {total > pageSize && (
               <div className="mt-6 flex items-center justify-center gap-2">
                 <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-                  Previous
+                  {t("properties.previous")}
                 </Button>
-                <span className="text-sm text-muted-foreground">Page {page} of {Math.ceil(total / pageSize)}</span>
+                <span className="text-sm text-muted-foreground">{t("properties.pageOf", { x: page, y: Math.ceil(total / pageSize) })}</span>
                 <Button variant="outline" size="sm" disabled={page * pageSize >= total} onClick={() => setPage(page + 1)}>
-                  Next
+                  {t("properties.next")}
                 </Button>
               </div>
             )}
@@ -130,9 +131,9 @@ export function PropertiesPage() {
 
       <div className="mt-12 rounded-xl border border-dashed border-border bg-card/30 p-6 text-center">
         <p className="text-sm text-muted-foreground">
-          Are you a landlord with rooms to fill?{" "}
+          {t("properties.landlordCta.prefix")}{" "}
           <Button asChild variant="link" className="h-auto p-0 text-primary">
-            <Link href="/register">List your property</Link>
+            <Link href="/register">{t("properties.landlordCta.action")}</Link>
           </Button>
         </p>
       </div>

@@ -26,6 +26,7 @@ import { fetchRentableUnitById, createBooking, getBookingPricing, type RentableU
 import { UNIT_TYPE_LABELS, RENTAL_PERIOD_LABELS } from "@/lib/types";
 import { formatNgn } from "@/lib/utils/format";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n/context";
 
 const FACILITY_LABELS: Record<string, string> = {
   wifi: "Wi-Fi", power_backup: "Power backup", water_borehole: "Borehole water",
@@ -43,6 +44,7 @@ export function RoomDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { session } = useAuth();
+  const { t } = useI18n();
   const [room, setRoom] = React.useState<RentableUnitWithRelations | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -111,29 +113,27 @@ export function RoomDetailPage() {
   async function handleBooking() {
     if (!room || !session) return;
     if (!isStudent) {
-      toast.error("Only students can book accommodation");
+      toast.error(t("roomDetail.signUpToBook"));
       setConfirmOpen(false);
       return;
     }
     if (!checkIn) {
-      toast.error("Choose a check-in date");
+      toast.error(t("roomDetail.selectCheckIn"));
       setConfirmOpen(false);
       return;
     }
     if (!accept) {
-      toast.error("Please accept the booking terms");
+      toast.error(t("roomDetail.acceptTerms"));
       setConfirmOpen(false);
       return;
     }
     if (!isSupabaseAuth) {
-      // Redirect to register with a return redirect to this room page.
-      // Students need an account to place a booking.
       setConfirmOpen(false);
       router.push(`/register?redirect=/rooms/${room.id}`);
       return;
     }
     if (!pricingReady) {
-      toast.error("Pricing is not available", {
+      toast.error(t("roomDetail.pricingUnavailable"), {
         description: "Please refresh the page. Booking is blocked until pricing loads.",
       });
       setConfirmOpen(false);
@@ -165,8 +165,8 @@ export function RoomDetailPage() {
         toast.error("Booking failed", { description: result.error });
         setConfirmOpen(false);
       } else if (result.data) {
-        toast.success("Hold placed", {
-          description: `Booking reserved for 24 hours pending payment.`,
+        toast.success(t("roomDetail.holdPlaced.title"), {
+          description: t("roomDetail.holdPlaced.description"),
         });
         setConfirmOpen(false);
         router.push("/student/bookings");
@@ -197,9 +197,9 @@ export function RoomDetailPage() {
         <Card>
           <CardContent className="p-6 text-center">
             <AlertCircle className="mx-auto h-8 w-8 text-muted-foreground" aria-hidden />
-            <p className="mt-2 font-medium">{error ?? "Room not found"}</p>
+            <p className="mt-2 font-medium">{error ?? t("roomDetail.notFound.title")}</p>
             <Button asChild variant="outline" className="mt-4">
-              <Link href="/properties">Browse properties</Link>
+              <Link href="/properties">{t("roomDetail.backToProperty")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -210,7 +210,7 @@ export function RoomDetailPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <Button asChild variant="ghost" size="sm" className="mb-4">
-        <Link href="/properties"><ArrowLeft className="mr-2 h-4 w-4" aria-hidden /> Back to properties</Link>
+        <Link href="/properties"><ArrowLeft className="mr-2 h-4 w-4" aria-hidden /> {t("roomDetail.backToProperty")}</Link>
       </Button>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -239,11 +239,11 @@ export function RoomDetailPage() {
             </CardContent></Card>
             <Card><CardContent className="flex items-center gap-3 p-4">
               <BedDouble className="h-5 w-5 text-primary" aria-hidden />
-              <div><p className="text-xs text-muted-foreground">Bedrooms</p><p className="font-semibold">{room.bedrooms}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t("roomDetail.bedrooms")}</p><p className="font-semibold">{room.bedrooms}</p></div>
             </CardContent></Card>
             <Card><CardContent className="flex items-center gap-3 p-4">
               <Bath className="h-5 w-5 text-primary" aria-hidden />
-              <div><p className="text-xs text-muted-foreground">Bathrooms</p><p className="font-semibold">{room.bathrooms}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t("roomDetail.bathrooms")}</p><p className="font-semibold">{room.bathrooms}</p></div>
             </CardContent></Card>
             {room.size_sqm && (
               <Card><CardContent className="flex items-center gap-3 p-4">
@@ -255,7 +255,7 @@ export function RoomDetailPage() {
 
           {/* Facilities */}
           <Card>
-            <CardHeader><CardTitle className="text-base">Inside this unit</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">{t("roomDetail.facilities")}</CardTitle></CardHeader>
             <CardContent>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {(room.unit_facilities ?? []).map((f) => (
@@ -284,7 +284,7 @@ export function RoomDetailPage() {
         {/* Sidebar — Booking */}
         <aside className="space-y-4">
           <Card>
-            <CardHeader><CardTitle className="text-base">Book this unit</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">{t("booking.placeHold")}</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
               {!isAvailable && (
                 <div className="flex items-start gap-2 rounded-md bg-muted p-3 text-xs text-muted-foreground">
@@ -296,19 +296,19 @@ export function RoomDetailPage() {
               {isAvailable && !isAuthenticated && (
                 <div className="flex items-start gap-2 rounded-md bg-muted p-3 text-xs text-muted-foreground">
                   <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-                  <span>Sign in as a student to book this unit. <Link href="/login" className="text-primary hover:underline">Sign in</Link></span>
+                  <span>Sign in as a student to book this unit. <Link href="/login" className="text-primary hover:underline">{t("common.signIn")}</Link></span>
                 </div>
               )}
 
               {isAvailable && isAuthenticated && !isStudent && (
                 <div className="flex items-start gap-2 rounded-md bg-muted p-3 text-xs text-muted-foreground">
                   <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-                  <span>Only students can book accommodation. Register as a student to continue.</span>
+                  <span>{t("roomDetail.signUpToBook")}</span>
                 </div>
               )}
 
               <div className="space-y-1.5">
-                <Label htmlFor="check-in">Check-in date</Label>
+                <Label htmlFor="check-in">{t("roomDetail.checkInDate")}</Label>
                 <input
                   id="check-in"
                   type="date"
@@ -323,7 +323,7 @@ export function RoomDetailPage() {
               <label className="flex items-start gap-2 pt-1 text-xs" htmlFor="accept-terms">
                 <Checkbox id="accept-terms" checked={accept} onCheckedChange={(v) => setAccept(v === true)} className="mt-0.5" disabled={!isAvailable} />
                 <span className="text-muted-foreground">
-                  I accept the <Link href="/terms" className="text-primary hover:underline">booking terms</Link> and understand a hold is reserved for 24 hours pending payment.
+                  {t("roomDetail.acceptTerms")}
                 </span>
               </label>
 
@@ -331,26 +331,23 @@ export function RoomDetailPage() {
                 <AlertDialogTrigger asChild>
                   <Button className="w-full" disabled={!isAvailable || !isStudent || !accept || submitting || !pricingReady} onClick={() => setConfirmOpen(true)}>
                     <Lock className="mr-2 h-4 w-4" aria-hidden />
-                    Place hold & continue
+                    {t("roomDetail.placeHold")}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Confirm hold on unit {room.identifier}</AlertDialogTitle>
+                    <AlertDialogTitle>{t("roomDetail.confirmHold")} — Unit {room.identifier}</AlertDialogTitle>
                     <AlertDialogDescription>
-                      A 24-hour hold will be placed on this unit. You'll be taken to your bookings to complete payment.
-                      The hold is released automatically if payment isn't received in time.
-                      <br /><br />
-                      Booking a hold does <strong>not</strong> reserve the unit permanently — only a successful payment confirmed by our backend confirms your booking.
+                      {t("roomDetail.holdPlaced.description")}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel disabled={submitting}>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel disabled={submitting}>{t("common.cancel")}</AlertDialogCancel>
                     <Button
                       onClick={handleBooking}
                       disabled={submitting}
                     >
-                      {submitting ? "Placing hold…" : "Place hold"}
+                      {submitting ? "…" : t("roomDetail.confirmHold")}
                     </Button>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -358,8 +355,8 @@ export function RoomDetailPage() {
 
               {!isAuthenticated && (
                 <p className="text-xs text-muted-foreground">
-                  <Link href="/login" className="text-primary hover:underline">Sign in</Link> or{" "}
-                  <Link href="/register" className="text-primary hover:underline">register</Link> to book.
+                  <Link href="/login" className="text-primary hover:underline">{t("common.signIn")}</Link>{" "}
+                  <Link href="/register" className="text-primary hover:underline">{t("common.signUp")}</Link>
                 </p>
               )}
 
@@ -373,24 +370,23 @@ export function RoomDetailPage() {
 
           {/* Pricing */}
           <Card>
-            <CardHeader><CardTitle className="text-base">Pricing breakdown</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">{t("roomDetail.pricingBreakdown")}</CardTitle></CardHeader>
             <CardContent className="space-y-2 text-sm">
               {pricingError ? (
                 <div className="flex items-start gap-2 rounded-md bg-muted p-3 text-xs text-muted-foreground">
                   <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
                   <span>
-                    Pricing is currently unavailable. Booking is blocked until
-                    pricing loads. Please refresh the page to try again.
+                    {t("roomDetail.pricingUnavailable")}
                   </span>
                 </div>
               ) : !pricingReady ? (
                 <div className="flex items-start gap-2 rounded-md bg-muted p-3 text-xs text-muted-foreground">
                   <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-                  <span>Loading pricing…</span>
+                  <span>{t("common.loading")}</span>
                 </div>
               ) : (
                 <>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Annual rent</span><span>{formatNgn(baseRent)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t("roomDetail.baseRent")}</span><span>{formatNgn(baseRent)}</span></div>
                   {(room.additional_charges ?? []).map((c) => (
                     <div key={c.id} className="flex justify-between text-muted-foreground">
                       <span>{c.label} <span className="text-xs">({c.frequency})</span></span>
@@ -399,15 +395,15 @@ export function RoomDetailPage() {
                   ))}
                   {cautionDeposit > 0 && (
                     <div className="flex justify-between text-muted-foreground">
-                      <span>Caution deposit (refundable)</span><span>{formatNgn(cautionDeposit)}</span>
+                      <span>{t("roomDetail.cautionDeposit")}</span><span>{formatNgn(cautionDeposit)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Service fee ({serviceFeeRatePct}%)</span><span>{formatNgn(serviceFee)}</span>
+                    <span>{t("roomDetail.serviceFee")} ({serviceFeeRatePct}%)</span><span>{formatNgn(serviceFee)}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-semibold">
-                    <span>Estimated total</span><span>{formatNgn(total)}</span>
+                    <span>{t("roomDetail.total")}</span><span>{formatNgn(total)}</span>
                   </div>
                 </>
               )}

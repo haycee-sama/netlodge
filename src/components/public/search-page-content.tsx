@@ -37,6 +37,7 @@ import { PageHeader, EmptyState } from "@/components/shared/page-components";
 import { fetchUniversities, fetchNeighbourhoods, fetchProperties, type PropertyWithRelations } from "@/lib/supabase/property-service";
 import type { SearchFilters, RentableUnitType, Facility } from "@/lib/types";
 import { FACILITY_LABELS, UNIT_TYPE_LABELS } from "@/lib/types";
+import { useI18n } from "@/lib/i18n/context";
 
 // Dynamic import for the map — Leaflet requires `window` so it must be
 // client-only and cannot be SSR'd.
@@ -48,16 +49,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const UNIT_TYPE_OPTIONS = Object.entries(UNIT_TYPE_LABELS) as [RentableUnitType, string][];
 const FACILITY_OPTIONS = Object.keys(FACILITY_LABELS) as Facility[];
-const SORT_OPTIONS = [
-  { value: "relevance", label: "Relevance" },
-  { value: "price_asc", label: "Price: low to high" },
-  { value: "price_desc", label: "Price: high to low" },
-  { value: "newest", label: "Newest" },
-] as const;
 
 export function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useI18n();
+  const SORT_OPTIONS = [
+    { value: "relevance", label: t("search.sortRelevance") },
+    { value: "price_asc", label: t("search.sortPriceAsc") },
+    { value: "price_desc", label: t("search.sortPriceDesc") },
+    { value: "newest", label: t("search.sortNewest") },
+  ] as const;
   const [loading, setLoading] = React.useState(true);
   const [results, setResults] = React.useState<PropertyWithRelations[]>([]);
   const [total, setTotal] = React.useState(0);
@@ -192,11 +194,11 @@ export function SearchPageContent() {
       {/* University */}
       <div className="space-y-2">
         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          University
+          {t("search.university")}
         </Label>
         <Select value={universityId} onValueChange={setUniversityId}>
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Any university" />
+            <SelectValue placeholder={t("search.anyUniversity")} />
           </SelectTrigger>
           <SelectContent>
             {universities.map((u: any) => (
@@ -211,11 +213,11 @@ export function SearchPageContent() {
       {/* Neighbourhood */}
       <div className="space-y-2">
         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Neighbourhood
+          {t("search.neighbourhood")}
         </Label>
         <Select value={neighbourhoodId} onValueChange={setNeighbourhoodId}>
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Any neighbourhood" />
+            <SelectValue placeholder={t("search.anyNeighbourhood")} />
           </SelectTrigger>
           <SelectContent>
             {availableNeighbourhoods.map((n) => (
@@ -232,14 +234,14 @@ export function SearchPageContent() {
       {/* Budget */}
       <div className="space-y-2">
         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Annual rent (NGN)
+          {t("search.annualRent")}
         </Label>
         <div className="grid grid-cols-2 gap-2">
           <Input
             type="number"
             min={0}
             step={50000}
-            placeholder="Min"
+            placeholder={t("search.min")}
             value={minRentNgn}
             onChange={(e) => setMinRentNgn(e.target.value)}
           />
@@ -247,7 +249,7 @@ export function SearchPageContent() {
             type="number"
             min={0}
             step={50000}
-            placeholder="Max"
+            placeholder={t("search.max")}
             value={maxRentNgn}
             onChange={(e) => setMaxRentNgn(e.target.value)}
           />
@@ -259,7 +261,7 @@ export function SearchPageContent() {
       {/* Unit type */}
       <div className="space-y-2">
         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Unit type
+          {t("search.unitType")}
         </Label>
         <div className="space-y-2">
           {UNIT_TYPE_OPTIONS.map(([value, label]) => (
@@ -289,7 +291,7 @@ export function SearchPageContent() {
       {/* Facilities */}
       <div className="space-y-2">
         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Facilities
+          {t("search.facilities")}
         </Label>
         <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
           {FACILITY_OPTIONS.map((value) => (
@@ -316,7 +318,7 @@ export function SearchPageContent() {
 
       {activeFilterCount > 0 && (
         <Button variant="ghost" size="sm" className="w-full" onClick={resetAll}>
-          Reset all filters
+          {t("search.resetAll")}
         </Button>
       )}
     </div>
@@ -325,9 +327,9 @@ export function SearchPageContent() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <PageHeader
-        eyebrow="Search"
-        title="Find your accommodation"
-        description="Filter by university, neighbourhood, budget, unit type and facilities."
+        eyebrow={t("search.eyebrow")}
+        title={t("search.title")}
+        description={t("search.description")}
       />
 
       {/* Search bar */}
@@ -339,7 +341,7 @@ export function SearchPageContent() {
           />
           <Input
             type="search"
-            placeholder="Property name, area, or keyword"
+            placeholder={t("search.placeholder")}
             className="h-11 pl-9"
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -347,7 +349,7 @@ export function SearchPageContent() {
         </div>
         <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
           <SelectTrigger className="h-11 sm:w-56">
-            <SelectValue placeholder="Sort by" />
+            <SelectValue placeholder={t("search.sortBy")} />
           </SelectTrigger>
           <SelectContent>
             {SORT_OPTIONS.map((opt) => (
@@ -362,7 +364,7 @@ export function SearchPageContent() {
           <SheetTrigger asChild>
             <Button variant="outline" className="h-11 lg:hidden">
               <SlidersHorizontal className="mr-2 h-4 w-4" aria-hidden />
-              Filters
+              {t("search.filters")}
               {activeFilterCount > 0 && (
                 <Badge className="ml-2" variant="secondary">
                   {activeFilterCount}
@@ -372,7 +374,7 @@ export function SearchPageContent() {
           </SheetTrigger>
           <SheetContent side="left" className="w-full max-w-xs overflow-y-auto">
             <SheetHeader>
-              <SheetTitle>Filters</SheetTitle>
+              <SheetTitle>{t("search.filters")}</SheetTitle>
             </SheetHeader>
             <div className="mt-4">{FiltersPanel}</div>
           </SheetContent>
@@ -384,9 +386,9 @@ export function SearchPageContent() {
         <aside className="hidden lg:block">
           <div className="sticky top-20 rounded-xl border border-border bg-card p-4">
             <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-semibold">Filters</p>
+              <p className="text-sm font-semibold">{t("search.filters")}</p>
               {activeFilterCount > 0 && (
-                <Badge variant="secondary">{activeFilterCount} active</Badge>
+                <Badge variant="secondary">{t("search.activeCount", { n: activeFilterCount })}</Badge>
               )}
             </div>
             {FiltersPanel}
@@ -399,18 +401,18 @@ export function SearchPageContent() {
             <p>
               {loading ? (
                 <span className="flex items-center gap-1.5">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> Searching…
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> {t("search.searching")}
                 </span>
               ) : (
                 <span>
-                  <strong className="text-foreground">{total}</strong> result{total === 1 ? "" : "s"}
+                  <strong className="text-foreground">{total}</strong> {total === 1 ? t("search.resultSingular", { n: total }) : t("search.resultsCount", { n: total })}
                 </span>
               )}
             </p>
             <div className="flex items-center gap-2">
               {activeFilterCount > 0 && (
                 <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={resetAll}>
-                  Clear filters
+                  {t("search.clearFilters")}
                 </Button>
               )}
               {/* Map/list toggle */}
@@ -418,16 +420,16 @@ export function SearchPageContent() {
                 <button
                   onClick={() => setViewMode("list")}
                   className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                  aria-label="List view"
+                  aria-label={t("search.listView")}
                 >
-                  <LayoutGrid className="h-3.5 w-3.5" aria-hidden /> List
+                  <LayoutGrid className="h-3.5 w-3.5" aria-hidden /> {t("search.listView")}
                 </button>
                 <button
                   onClick={() => setViewMode("map")}
                   className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${viewMode === "map" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                  aria-label="Map view"
+                  aria-label={t("search.mapView")}
                 >
-                  <MapIcon className="h-3.5 w-3.5" aria-hidden /> Map
+                  <MapIcon className="h-3.5 w-3.5" aria-hidden /> {t("search.mapView")}
                 </button>
               </div>
             </div>
@@ -446,11 +448,11 @@ export function SearchPageContent() {
           ) : results.length === 0 ? (
             <EmptyState
               icon={<Building2 className="h-5 w-5" aria-hidden />}
-              title="No matches found"
-              description="Try widening your filters — remove a budget cap, expand your neighbourhood, or change your unit type."
+              title={t("search.noMatches.title")}
+              description={t("search.noMatches.description")}
               action={
                 <Button variant="outline" onClick={resetAll}>
-                  Reset all filters
+                  {t("search.resetAll")}
                 </Button>
               }
             />

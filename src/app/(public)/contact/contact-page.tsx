@@ -20,8 +20,10 @@ import { PageHeader } from "@/components/shared/page-components";
 import { contactSchema, type ContactInput } from "@/lib/validators";
 import { toast } from "sonner";
 import { SUPPORT_EMAIL, SUPPORT_PHONE, BUSINESS_ADDRESS, FALLBACK_SUPPORT_EMAIL } from "@/lib/config/contact";
+import { useI18n } from "@/lib/i18n/context";
 
 export function ContactPage() {
+  const { t } = useI18n();
   const [submitted, setSubmitted] = React.useState(false);
   const {
     register,
@@ -62,12 +64,12 @@ export function ContactPage() {
       }
 
       setSubmitted(true);
-      toast.success("Message sent", {
-        description: "Our team will respond within one business day.",
+      toast.success(t("contact.toast.success.title"), {
+        description: t("contact.toast.success.description"),
       });
       reset();
     } catch (e) {
-      toast.error("Could not send message", {
+      toast.error(t("contact.toast.error.title"), {
         description: e instanceof Error ? e.message : `Please try again or email ${FALLBACK_SUPPORT_EMAIL}`,
       });
     }
@@ -76,9 +78,9 @@ export function ContactPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <PageHeader
-        eyebrow="Contact us"
-        title="Get in touch"
-        description="Questions, partnership enquiries, safety reports — we read every message. Expect a response within one business day."
+        eyebrow={t("contact.eyebrow")}
+        title={t("contact.title")}
+        description={t("contact.description")}
       />
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">
@@ -90,26 +92,26 @@ export function ContactPage() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/15 text-success">
                   <CheckCircle2 className="h-6 w-6" aria-hidden />
                 </div>
-                <p className="font-display text-lg font-semibold">Message sent</p>
+                <p className="font-display text-lg font-semibold">{t("contact.success.title")}</p>
                 <p className="max-w-md text-sm text-muted-foreground text-pretty">
-                  Thanks for reaching out. We'll reply to your email within one business day.
+                  {t("contact.success.description")}
                 </p>
                 <Button variant="outline" onClick={() => setSubmitted(false)}>
-                  Send another message
+                  {t("contact.success.sendAnother")}
                 </Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor="name">Your name</Label>
+                    <Label htmlFor="name">{t("contact.form.yourName")}</Label>
                     <Input id="name" autoComplete="name" {...register("name")} />
                     {errors.name && (
                       <p role="alert" className="text-xs text-destructive">{errors.name.message}</p>
                     )}
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t("contact.form.email")}</Label>
                     <Input id="email" type="email" autoComplete="email" {...register("email")} />
                     {errors.email && (
                       <p role="alert" className="text-xs text-destructive">{errors.email.message}</p>
@@ -119,7 +121,7 @@ export function ContactPage() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor="category">Category</Label>
+                    <Label htmlFor="category">{t("contact.form.category")}</Label>
                     <Select
                       value={category}
                       onValueChange={(v) => setValue("category", v as ContactInput["category"])}
@@ -128,16 +130,16 @@ export function ContactPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="general">General enquiry</SelectItem>
-                        <SelectItem value="press">Press</SelectItem>
-                        <SelectItem value="partnership">Partnership</SelectItem>
-                        <SelectItem value="support">Support</SelectItem>
-                        <SelectItem value="safety">Safety report</SelectItem>
+                        <SelectItem value="general">{t("contact.form.categoryGeneral")}</SelectItem>
+                        <SelectItem value="press">{t("contact.form.categoryPress")}</SelectItem>
+                        <SelectItem value="partnership">{t("contact.form.categoryPartnership")}</SelectItem>
+                        <SelectItem value="support">{t("contact.form.categorySupport")}</SelectItem>
+                        <SelectItem value="safety">{t("contact.form.categorySafety")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="subject">Subject</Label>
+                    <Label htmlFor="subject">{t("contact.form.subject")}</Label>
                     <Input id="subject" {...register("subject")} />
                     {errors.subject && (
                       <p role="alert" className="text-xs text-destructive">{errors.subject.message}</p>
@@ -146,11 +148,11 @@ export function ContactPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="message">Message</Label>
+                  <Label htmlFor="message">{t("contact.form.message")}</Label>
                   <Textarea
                     id="message"
                     rows={6}
-                    placeholder="Tell us how we can help…"
+                    placeholder={t("contact.form.messagePlaceholder")}
                     {...register("message")}
                   />
                   {errors.message && (
@@ -162,12 +164,12 @@ export function ContactPage() {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-                      Sending…
+                      {t("contact.form.sending")}
                     </>
                   ) : (
                     <>
                       <Send className="mr-2 h-4 w-4" aria-hidden />
-                      Send message
+                      {t("contact.form.send")}
                     </>
                   )}
                 </Button>
@@ -180,7 +182,7 @@ export function ContactPage() {
         <aside className="space-y-4">
           <Card>
             <CardContent className="space-y-3 p-5 text-sm">
-              <p className="font-display font-semibold">Other ways to reach us</p>
+              <p className="font-display font-semibold">{t("contact.sidebar.otherWays")}</p>
               <ul className="space-y-2 text-muted-foreground">
                 {SUPPORT_EMAIL && (
                   <li className="flex items-center gap-2">
@@ -204,8 +206,7 @@ export function ContactPage() {
                 )}
                 {!SUPPORT_EMAIL && !SUPPORT_PHONE && !BUSINESS_ADDRESS && (
                   <li className="text-xs">
-                    Contact details will be displayed here once configured.
-                    For now, use the form above — we respond within one business day.
+                    {t("contact.sidebar.contactDetailsPending")}
                   </li>
                 )}
               </ul>
@@ -213,11 +214,11 @@ export function ContactPage() {
           </Card>
           <Card>
             <CardContent className="space-y-2 p-5 text-sm">
-              <p className="font-display font-semibold">Response times</p>
+              <p className="font-display font-semibold">{t("contact.sidebar.responseTimes")}</p>
               <ul className="space-y-1.5 text-muted-foreground">
-                <li>· General enquiries: 1 business day</li>
-                <li>· Support tickets: 4 hours</li>
-                <li>· Safety reports: 2 hours</li>
+                <li>· {t("contact.sidebar.generalEnquiries")}</li>
+                <li>· {t("contact.sidebar.supportTickets")}</li>
+                <li>· {t("contact.sidebar.safetyReports")}</li>
               </ul>
             </CardContent>
           </Card>

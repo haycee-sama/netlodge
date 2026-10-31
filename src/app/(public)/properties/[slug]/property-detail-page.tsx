@@ -22,6 +22,7 @@ import { formatNgn } from "@/lib/utils/format";
 import { useAuth } from "@/lib/auth/auth-context";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n/context";
 
 const FACILITY_LABELS: Record<string, string> = {
   wifi: "Wi-Fi", power_backup: "Power backup", water_borehole: "Borehole water",
@@ -37,6 +38,7 @@ const FACILITY_LABELS: Record<string, string> = {
 
 export function PropertyDetailPage() {
   const params = useParams<{ slug: string }>();
+  const { t } = useI18n();
   const [property, setProperty] = React.useState<PropertyWithRelations | null>(null);
   const [floors, setFloors] = React.useState<FloorWithCounts[]>([]);
   const [rooms, setRooms] = React.useState<RentableUnitWithRelations[]>([]);
@@ -79,8 +81,8 @@ export function PropertyDetailPage() {
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <EmptyState
           icon={<Building2 className="h-5 w-5" aria-hidden />}
-          title="Property not found"
-          description={error ?? "This property may have been removed or is not publicly listed."}
+          title={t("propertyDetail.notFound.title")}
+          description={error ?? t("propertyDetail.notFound.description")}
         />
       </div>
     );
@@ -163,7 +165,7 @@ export function PropertyDetailPage() {
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1 text-xs text-muted-foreground">
         <Link href="/" className="hover:text-foreground hover:underline">Home</Link>
         <ChevronRight className="h-3 w-3" aria-hidden />
-        <Link href="/properties" className="hover:text-foreground hover:underline">Properties</Link>
+        <Link href="/properties" className="hover:text-foreground hover:underline">{t("nav.properties")}</Link>
         <ChevronRight className="h-3 w-3" aria-hidden />
         <span className="truncate text-foreground">{property.name}</span>
       </nav>
@@ -201,14 +203,14 @@ export function PropertyDetailPage() {
         <StatCard label="Floors" value={property.total_floors} icon={<Layers className="h-4 w-4" aria-hidden />} />
         <StatCard label="Total units" value={property.total_units} icon={<DoorOpen className="h-4 w-4" aria-hidden />} />
         <StatCard label="Available" value={property.available_units} icon={<Home className="h-4 w-4" aria-hidden />} />
-        <StatCard label="Price from" value={formatNgn(property.price_from_kobo)} icon={<Building2 className="h-4 w-4" aria-hidden />} />
+        <StatCard label={t("propertyDetail.priceFrom")} value={formatNgn(property.price_from_kobo)} icon={<Building2 className="h-4 w-4" aria-hidden />} />
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="rooms" className="mt-8">
         <TabsList>
-          <TabsTrigger value="rooms">Available units ({availableRooms.length})</TabsTrigger>
-          <TabsTrigger value="facilities">Facilities ({facilities.length})</TabsTrigger>
+          <TabsTrigger value="rooms">{t("propertyDetail.availableRooms")} ({availableRooms.length})</TabsTrigger>
+          <TabsTrigger value="facilities">{t("propertyDetail.facilities")} ({facilities.length})</TabsTrigger>
         </TabsList>
 
         {/* Rooms */}
@@ -329,6 +331,7 @@ export function PropertyDetailPage() {
 function SaveButton({ propertyId }: { propertyId: string }) {
   const { session } = useAuth();
   const router = useRouter();
+  const { t } = useI18n();
   const [saved, setSaved] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const isSupabaseAuth = session?.authenticated === true;
@@ -366,14 +369,14 @@ function SaveButton({ propertyId }: { propertyId: string }) {
           .eq("user_id", session!.userId);
         if (error) throw new Error(error.message);
         setSaved(false);
-        toast.success("Removed from saved");
+        toast.success(t("propertyDetail.save") + " — removed");
       } else {
         const { error } = await supabase
           .from("saved_properties")
           .insert({ property_id: propertyId, user_id: session!.userId });
         if (error) throw new Error(error.message);
         setSaved(true);
-        toast.success("Saved to your shortlist");
+        toast.success(t("propertyDetail.saved"));
       }
     } catch (e) {
       toast.error("Could not update saved properties", { description: e instanceof Error ? e.message : "" });
@@ -392,10 +395,10 @@ function SaveButton({ propertyId }: { propertyId: string }) {
           ? "border-destructive/30 bg-destructive/5 text-destructive hover:bg-destructive/10"
           : "border-border bg-background text-foreground hover:bg-muted"
       }`}
-      aria-label={saved ? "Remove from saved" : "Save property"}
+      aria-label={saved ? t("propertyDetail.save") : t("propertyDetail.save")}
     >
       <Heart className={`h-4 w-4 ${saved ? "fill-current" : ""}`} aria-hidden />
-      {loading ? "…" : saved ? "Saved" : "Save"}
+      {loading ? "…" : saved ? t("propertyDetail.saved") : t("propertyDetail.save")}
     </button>
   );
 }
