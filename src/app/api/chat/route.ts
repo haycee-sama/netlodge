@@ -33,8 +33,8 @@ Rules:
 - Respond in the user's language (English, Igbo, Yoruba, or Hausa if they write in it).`;
 
 export async function POST(request: NextRequest) {
-  // Rate limit: 20 requests per minute for chat
-  const sec = await securityCheck(request, "chat", { capacity: 20, refillPerSecond: 0.5, failClosed: true });
+  // Rate limit: failClosed=false so chat works even if Redis is unreachable
+  const sec = await securityCheck(request, "chat", { capacity: 20, refillPerSecond: 0.5, failClosed: false });
   if (sec) return sec;
 
   try {
@@ -56,17 +56,38 @@ export async function POST(request: NextRequest) {
     ];
 
     // Call z-ai-web-dev-sdk
-    const ZAI = (await import("z-ai-web-dev-sdk")).default;
+    let ZAI;
+    try {
+      ZAI = (await import("z-ai-web-dev-sdk")).default;
+    } catch (importErr) {
+      console.error("[api/chat] SDK import failed:", importErr instanceof Error ? importErr.message : String(importErr));
+      throw new Error("AI service unavailable");
+    }
+
     const zai = await ZAI.create();
     const response = await zai.chat.completions.create({ messages });
 
-    const reply = response.choices?.[0]?.message?.content ?? "I'm not sure how to help with that. Try browsing our help centre at /help or contact us at /contact.";
+    const reply = response.choices?.[0]?.message?.content;
+
+    if (!reply) {
+      throw new Error("Empty response from AI");
+    }
 
     return NextResponse.json({ response: reply });
   } catch (err) {
-    console.error("[api/chat] Error:", err instanceof Error ? err.message : String(err));
-    return NextResponse.json({
-      response: "I'm having trouble responding right now. Please try again or visit /help for answers to common questions.",
-    }, { status: 200 }); // Return 200 with fallback message so the UI doesn't show an error
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[api/chat] Error:", errMsg);
+
+    // Provide helpful fallback based on error type
+    let fallback = "I'm having trouble right now. ";
+    if (errMsg.includes("unavailable") || errMsg.includes("import")) {
+      fallback += "The AI service is starting up. Please try again in a moment.";
+    } else if (errMsg.includes("rate") || errMsg.includes("limit")) {
+      fallback += "You're sending messages too fast. Please slow down a bit.";
+    } else {
+      fallback += "Please try again or visit /help for common questions.";
+    }
+
+    return NextResponse.json({ response: fallback }, { status: 200 });
   }
 }
