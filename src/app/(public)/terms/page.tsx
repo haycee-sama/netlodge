@@ -1,5 +1,5 @@
 import * as React from "react";
-import { PageHeader } from "@/components/shared/page-components";
+import { LegalPageHeader } from "@/components/public/legal-page-header";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata = {
@@ -61,10 +61,10 @@ const sections = [
 export default function TermsPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-      <PageHeader
-        eyebrow="Legal"
-        title="Terms of Service"
-        description={`Last updated: ${new Date().toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })}. These Terms govern your use of NetLodge.`}
+      <LegalPageHeader
+        eyebrowKey="legal.eyebrow"
+        titleKey="legal.terms.title"
+        descriptionKey="legal.terms.description"
       />
       <Card className="mt-8">
         <CardContent className="space-y-6 p-6 sm:p-8">

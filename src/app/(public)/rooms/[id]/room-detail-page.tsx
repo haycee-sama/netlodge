@@ -235,7 +235,7 @@ export function RoomDetailPage() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Card><CardContent className="flex items-center gap-3 p-4">
               <Users className="h-5 w-5 text-primary" aria-hidden />
-              <div><p className="text-xs text-muted-foreground">Capacity</p><p className="font-semibold">{room.capacity} {room.capacity === 1 ? "person" : "people"}</p></div>
+              <div><p className="text-xs text-muted-foreground">{t("roomDetail.capacity")}</p><p className="font-semibold">{room.capacity} {room.capacity === 1 ? t("roomDetail.person") : t("roomDetail.people")}</p></div>
             </CardContent></Card>
             <Card><CardContent className="flex items-center gap-3 p-4">
               <BedDouble className="h-5 w-5 text-primary" aria-hidden />
@@ -248,7 +248,7 @@ export function RoomDetailPage() {
             {room.size_sqm && (
               <Card><CardContent className="flex items-center gap-3 p-4">
                 <Maximize className="h-5 w-5 text-primary" aria-hidden />
-                <div><p className="text-xs text-muted-foreground">Size</p><p className="font-semibold">{room.size_sqm}m²</p></div>
+                <div><p className="text-xs text-muted-foreground">{t("roomDetail.size")}</p><p className="font-semibold">{room.size_sqm}m²</p></div>
               </CardContent></Card>
             )}
           </div>
@@ -265,7 +265,7 @@ export function RoomDetailPage() {
                   </div>
                 ))}
                 <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-3">
-                  <span className="text-sm font-medium">Furnishing:</span>
+                  <span className="text-sm font-medium">{t("roomDetail.furnishing")}:</span>
                   <span className="text-sm text-muted-foreground capitalize">{room.furnishing.replace(/_/g, " ")}</span>
                 </div>
               </div>
@@ -275,7 +275,7 @@ export function RoomDetailPage() {
           {/* Booking terms */}
           {room.booking_terms && (
             <Card>
-              <CardHeader><CardTitle className="text-base">Booking terms</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-base">{t("roomDetail.bookingTerms")}</CardTitle></CardHeader>
               <CardContent><p className="text-sm text-foreground/90 text-pretty">{room.booking_terms}</p></CardContent>
             </Card>
           )}
@@ -289,7 +289,7 @@ export function RoomDetailPage() {
               {!isAvailable && (
                 <div className="flex items-start gap-2 rounded-md bg-muted p-3 text-xs text-muted-foreground">
                   <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-                  <span>This unit is currently <strong>{room.status.replace(/_/g, " ")}</strong>.</span>
+                  <span>{t("roomDetail.unitCurrently")} <strong>{room.status.replace(/_/g, " ")}</strong>.</span>
                 </div>
               )}
 
@@ -502,6 +502,7 @@ function MediaBadge({ type }: { type?: string }) {
 }
 
 function RoomImageGallery({ images, identifier }: { images: RoomImage[]; identifier: string }) {
+  const { t } = useI18n();
   const [activeIndex, setActiveIndex] = React.useState(0);
   const sorted = [...images].sort((a, b) => a.position - b.position);
 
@@ -510,8 +511,8 @@ function RoomImageGallery({ images, identifier }: { images: RoomImage[]; identif
       <div className="mt-6 flex aspect-[16/9] items-center justify-center rounded-xl border border-border bg-muted">
         <div className="flex flex-col items-center gap-2 text-muted-foreground">
           <ImageOff className="h-8 w-8" aria-hidden />
-          <p className="text-sm">No photos available for this unit yet</p>
-          <p className="text-xs">Ask the landlord to upload photos, or schedule a visit.</p>
+          <p className="text-sm">{t("roomDetail.noPhotos.title")}</p>
+          <p className="text-xs">{t("roomDetail.noPhotos.desc")}</p>
         </div>
       </div>
     );
@@ -567,14 +568,14 @@ function RoomImageGallery({ images, identifier }: { images: RoomImage[]; identif
           <>
             <button
               onClick={goPrev}
-              aria-label="Previous"
+              aria-label={t("roomDetail.previous")}
               className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 shadow-sm backdrop-blur-sm transition-all hover:scale-110 hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <ChevronLeft className="h-5 w-5" aria-hidden />
             </button>
             <button
               onClick={goNext}
-              aria-label="Next"
+              aria-label={t("roomDetail.next")}
               className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 shadow-sm backdrop-blur-sm transition-all hover:scale-110 hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <ChevronRight className="h-5 w-5" aria-hidden />

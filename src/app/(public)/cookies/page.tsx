@@ -1,8 +1,8 @@
 import * as React from "react";
 import { Cookie } from "lucide-react";
-import { PageHeader } from "@/components/shared/page-components";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LegalPageHeader } from "@/components/public/legal-page-header";
 
 export const metadata = {
   title: "Cookie policy",
@@ -20,10 +20,10 @@ const cookies = [
 export default function CookiesPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-      <PageHeader
-        eyebrow="Legal"
-        title="Cookie Policy"
-        description="How and why NetLodge uses cookies and similar technologies."
+      <LegalPageHeader
+        eyebrowKey="legal.eyebrow"
+        titleKey="legal.cookies.title"
+        descriptionKey="legal.cookies.description"
       />
       <Card className="mt-8">
         <CardContent className="space-y-6 p-6 sm:p-8">

@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { fetchUniversities, fetchNeighbourhoods } from "@/lib/supabase/property-service";
+import { useI18n } from "@/lib/i18n/context";
 
 interface HeroSearchProps {
   className?: string;
@@ -25,6 +26,7 @@ interface HeroSearchProps {
 
 export function HeroSearch({ className, variant = "banner" }: HeroSearchProps) {
   const router = useRouter();
+  const { t } = useI18n();
   const [q, setQ] = React.useState("");
   const [universityId, setUniversityId] = React.useState<string>("");
   const [neighbourhoodId, setNeighbourhoodId] = React.useState<string>("");
@@ -66,12 +68,12 @@ export function HeroSearch({ className, variant = "banner" }: HeroSearchProps) {
         variant === "banner" && "lg:p-5",
         className,
       )}
-      aria-label="Search accommodation"
+      aria-label={t("hero.search.ariaLabel")}
     >
       <div className="grid gap-3 md:grid-cols-12">
         <div className="md:col-span-4">
           <Label htmlFor="hero-q" className="sr-only">
-            Search by name or keyword
+            {t("hero.search.placeholder")}
           </Label>
           <div className="relative">
             <Search
@@ -81,7 +83,7 @@ export function HeroSearch({ className, variant = "banner" }: HeroSearchProps) {
             <Input
               id="hero-q"
               type="search"
-              placeholder="Property name, area, or keyword"
+              placeholder={t("hero.search.placeholder")}
               className="h-11 pl-9"
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -90,12 +92,12 @@ export function HeroSearch({ className, variant = "banner" }: HeroSearchProps) {
         </div>
         <div className="md:col-span-3">
           <Label htmlFor="hero-uni" className="sr-only">
-            University
+            {t("search.university")}
           </Label>
           <Select value={universityId} onValueChange={setUniversityId}>
             <SelectTrigger id="hero-uni" className="h-11">
               <GraduationCap className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden />
-              <SelectValue placeholder="Any university" />
+              <SelectValue placeholder={t("search.anyUniversity")} />
             </SelectTrigger>
             <SelectContent>
               {universities.map((u: any) => (
@@ -108,12 +110,12 @@ export function HeroSearch({ className, variant = "banner" }: HeroSearchProps) {
         </div>
         <div className="md:col-span-3">
           <Label htmlFor="hero-nbg" className="sr-only">
-            Neighbourhood
+            {t("search.neighbourhood")}
           </Label>
           <Select value={neighbourhoodId} onValueChange={setNeighbourhoodId}>
             <SelectTrigger id="hero-nbg" className="h-11">
               <MapPin className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden />
-              <SelectValue placeholder="Any neighbourhood" />
+              <SelectValue placeholder={t("search.anyNeighbourhood")} />
             </SelectTrigger>
             <SelectContent>
               {neighbourhoods.map((n: any) => (
@@ -126,7 +128,7 @@ export function HeroSearch({ className, variant = "banner" }: HeroSearchProps) {
         </div>
         <div className="md:col-span-2">
           <Label htmlFor="hero-budget" className="sr-only">
-            Max annual rent (NGN)
+            {t("hero.search.budget")}
           </Label>
           <div className="relative">
             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
@@ -137,7 +139,7 @@ export function HeroSearch({ className, variant = "banner" }: HeroSearchProps) {
               type="number"
               min={0}
               step={50000}
-              placeholder="Budget"
+              placeholder={t("hero.search.budget")}
               className="h-11 pl-7"
               value={maxRentNgn}
               onChange={(e) => setMaxRentNgn(e.target.value)}
@@ -150,12 +152,12 @@ export function HeroSearch({ className, variant = "banner" }: HeroSearchProps) {
           href="/search"
           className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
         >
-          Advanced filters
+          {t("hero.search.advancedFilters")}
           <ChevronDown className="h-3 w-3" aria-hidden />
         </Link>
         <Button type="submit" size="lg" className="min-w-32">
           <Search className="mr-2 h-4 w-4" aria-hidden />
-          Search
+          {t("hero.search.searchButton")}
         </Button>
       </div>
     </form>

@@ -162,8 +162,8 @@ export function PropertyDetailPage() {
       )}
 
       {/* Breadcrumb */}
-      <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1 text-xs text-muted-foreground">
-        <Link href="/" className="hover:text-foreground hover:underline">Home</Link>
+      <nav aria-label={t("propertyDetail.breadcrumb")} className="mb-4 flex items-center gap-1 text-xs text-muted-foreground">
+        <Link href="/" className="hover:text-foreground hover:underline">{t("propertyDetail.home")}</Link>
         <ChevronRight className="h-3 w-3" aria-hidden />
         <Link href="/properties" className="hover:text-foreground hover:underline">{t("nav.properties")}</Link>
         <ChevronRight className="h-3 w-3" aria-hidden />
@@ -200,9 +200,9 @@ export function PropertyDetailPage() {
 
       {/* Stats */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Floors" value={property.total_floors} icon={<Layers className="h-4 w-4" aria-hidden />} />
-        <StatCard label="Total units" value={property.total_units} icon={<DoorOpen className="h-4 w-4" aria-hidden />} />
-        <StatCard label="Available" value={property.available_units} icon={<Home className="h-4 w-4" aria-hidden />} />
+        <StatCard label={t("propertyDetail.floors")} value={property.total_floors} icon={<Layers className="h-4 w-4" aria-hidden />} />
+        <StatCard label={t("propertyDetail.totalUnits")} value={property.total_units} icon={<DoorOpen className="h-4 w-4" aria-hidden />} />
+        <StatCard label={t("propertyDetail.availableUnits")} value={property.available_units} icon={<Home className="h-4 w-4" aria-hidden />} />
         <StatCard label={t("propertyDetail.priceFrom")} value={formatNgn(property.price_from_kobo)} icon={<Building2 className="h-4 w-4" aria-hidden />} />
       </div>
 
@@ -216,8 +216,7 @@ export function PropertyDetailPage() {
         {/* Rooms */}
         <TabsContent value="rooms" className="space-y-6">
           <p className="text-sm text-muted-foreground">
-            Each unit below is its own bookable entity with its own photos, facilities, and price.
-            Click a unit to see its full image gallery and booking terms.
+            {t("propertyDetail.eachUnitBookable")}
           </p>
           {floors.map((floor) => {
             const floorRooms = rooms.filter((r) => r.floor_id === floor.id);
@@ -294,8 +293,7 @@ export function PropertyDetailPage() {
         {/* Facilities */}
         <TabsContent value="facilities" className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            These are <strong>building-wide</strong> facilities shared across all units.
-            In-unit facilities are listed on each individual room page.
+            {t("propertyDetail.buildingWideFacilities")}
           </p>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {facilities.map((f) => (
@@ -320,7 +318,7 @@ export function PropertyDetailPage() {
         <CardContent className="flex items-center gap-2 p-4 text-sm">
           <Info className="h-4 w-4 text-muted-foreground" aria-hidden />
           <span className="text-muted-foreground">
-            The exact address is shared with you only after a booking is confirmed.
+            {t("propertyDetail.addressSharedAfterBooking")}
           </span>
         </CardContent>
       </Card>

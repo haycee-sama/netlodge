@@ -40,6 +40,40 @@ export type TranslationKey =
   | "nav.closeMenu"
   | "nav.navigationMenu"
   | "nav.primaryNav"
+  | "hero.search.advancedFilters"
+  | "hero.search.searchButton"
+  | "legal.eyebrow"
+  | "legal.cookies.title"
+  | "legal.cookies.description"
+  | "legal.privacy.title"
+  | "legal.privacy.description"
+  | "legal.terms.title"
+  | "legal.terms.description"
+  | "propertyDetail.floors"
+  | "propertyDetail.totalUnits"
+  | "propertyDetail.availableUnits"
+  | "propertyDetail.breadcrumb"
+  | "propertyDetail.home"
+  | "propertyDetail.eachUnitBookable"
+  | "propertyDetail.buildingWideFacilities"
+  | "propertyDetail.addressSharedAfterBooking"
+  | "roomDetail.bookingTerms"
+  | "roomDetail.unitCurrently"
+  | "roomDetail.furnishing"
+  | "roomDetail.noPhotos.title"
+  | "roomDetail.noPhotos.desc"
+  | "roomDetail.capacity"
+  | "roomDetail.size"
+  | "roomDetail.person"
+  | "roomDetail.people"
+  | "roomDetail.previous"
+  | "roomDetail.next"
+  | "error.title"
+  | "error.description"
+  | "error.retry"
+  | "hero.search.ariaLabel"
+  | "hero.search.placeholder"
+  | "hero.search.budget"
   | "common.unit"
   | "nav.agent.assignments"
   | "nav.agent.dashboard"
@@ -1730,6 +1764,42 @@ const en: Translations = {
   "shell.signingOut": "Signing out…",
   "shell.viewSite": "View site",
 
+  "legal.eyebrow": "Legal",
+  "legal.cookies.title": "Cookie Policy",
+  "legal.cookies.description": "How and why NetLodge uses cookies and similar technologies.",
+  "legal.privacy.title": "Privacy Policy",
+  "legal.privacy.description": "How NetLodge collects, uses, and protects your personal data.",
+  "legal.terms.title": "Terms of Service",
+  "legal.terms.description": "The terms and conditions for using NetLodge.",
+  "propertyDetail.floors": "Floors",
+  "propertyDetail.totalUnits": "Total units",
+  "propertyDetail.availableUnits": "Available",
+  "propertyDetail.breadcrumb": "Breadcrumb",
+  "propertyDetail.home": "Home",
+  "propertyDetail.eachUnitBookable": "Each unit below is its own bookable entity with its own photos, facilities, and price. Click a unit to see its full image gallery and booking terms.",
+  "propertyDetail.buildingWideFacilities": "These are building-wide facilities shared across all units. In-unit facilities are listed on each individual room page.",
+  "propertyDetail.addressSharedAfterBooking": "The exact address is shared with you only after a booking is confirmed.",
+  "roomDetail.bookingTerms": "Booking terms",
+  "roomDetail.unitCurrently": "This unit is currently",
+  "roomDetail.furnishing": "Furnishing",
+  "roomDetail.noPhotos.title": "No photos available for this unit yet",
+  "roomDetail.noPhotos.desc": "Ask the landlord to upload photos, or schedule a visit.",
+  "roomDetail.capacity": "Capacity",
+  "roomDetail.size": "Size",
+  "roomDetail.person": "person",
+  "roomDetail.people": "people",
+  "roomDetail.previous": "Previous",
+  "roomDetail.next": "Next",
+  "error.title": "Something went wrong",
+  "error.description": "An unexpected error occurred. Please try again.",
+  "error.retry": "Try again",
+  "hero.search.ariaLabel": "Search accommodation",
+  "hero.search.placeholder": "Property name, area, or keyword",
+  "hero.search.budget": "Budget",
+
+  "hero.search.advancedFilters": "Advanced filters",
+  "hero.search.searchButton": "Search",
+
 };
 
 // ─── Igbo ─────────────────────────────────────────────────────────────
@@ -2584,6 +2654,42 @@ const ig: Translations = {
   "shell.signOut": "Sign out",
   "shell.signingOut": "Signing out…",
   "shell.viewSite": "View site",
+
+  "legal.eyebrow": "Iwu",
+  "legal.cookies.title": "Iwu Cookie",
+  "legal.cookies.description": "Otu NetLodge si eji cookie na teknụzụ yiri ya.",
+  "legal.privacy.title": "Iwu Nzuzo",
+  "legal.privacy.description": "Otu NetLodge si anakọta, jiri ma chekwaa data gị.",
+  "legal.terms.title": "Usoro Ọrụ",
+  "legal.terms.description": "Usoro na ọnọdụ iji NetLodge.",
+  "propertyDetail.floors": "Ala",
+  "propertyDetail.totalUnits": "Mkpokọta nkeji",
+  "propertyDetail.availableUnits": "Dị",
+  "propertyDetail.breadcrumb": "Njem",
+  "propertyDetail.home": "Ụlọ",
+  "propertyDetail.eachUnitBookable": "Nkeji ọ bụla dị n'okpuru bụ ihe dị iche nke nwere ike idebe, nwere foto, ụlọ ọrụ, na ọnụahịa nke ya. Pịa nkeji iji hụ foto niile na usoro ntinye akwụkwọ.",
+  "propertyDetail.buildingWideFacilities": "Ndị a bụ ụlọ ọrụ ụlọ niile a na-kekọrịta n'ofe nkeji niile. A depụtara ụlọ ọrụ nkeji n'otu ọnụ ụlọ ọ bụla.",
+  "propertyDetail.addressSharedAfterBooking": "A na-ekerịta adreesị kpọmkwem na gị naanị mgbe a kwadoro ntinye akwụkwọ.",
+  "roomDetail.bookingTerms": "Usoro ntinye akwụkwọ",
+  "roomDetail.unitCurrently": "Nkeji a dị ugbua",
+  "roomDetail.furnishing": "Ihe e ji mee",
+  "roomDetail.noPhotos.title": "Ọ dịghị foto maka nkeji a ugbua",
+  "roomDetail.noPhotos.desc": "Rịọ onye nwe ụlọ ka ọ budata foto, ma ọ bụ hazie nlele.",
+  "roomDetail.capacity": "Ikike",
+  "roomDetail.size": "Nha",
+  "roomDetail.person": "mmadụ",
+  "roomDetail.people": "ndị mmadụ",
+  "roomDetail.previous": "Tupu",
+  "roomDetail.next": "Na-esote",
+  "error.title": "Ihe ezighị ezi mere",
+  "error.description": "Nsogbu amaghị ama mere. Biko nwaa ọzọ.",
+  "error.retry": "Nwaa ọzọ",
+  "hero.search.ariaLabel": "Chọọ ebe obibi",
+  "hero.search.placeholder": "Aha ụlọ, mpaghara, ma ọ bụ okwu",
+  "hero.search.budget": "Mmefu ego",
+
+  "hero.search.advancedFilters": "Nhọrọọzọ",
+  "hero.search.searchButton": "Chọọ",
 
 };
 
@@ -3440,6 +3546,42 @@ const yo: Translations = {
   "shell.signingOut": "Signing out…",
   "shell.viewSite": "View site",
 
+  "legal.eyebrow": "Ìlànà òfin",
+  "legal.cookies.title": "Ìlànà Cookie",
+  "legal.cookies.description": "Bí NetLodge ṣe ń lo cookie àti àwọn ohun èlò tó jọ mọ́.",
+  "legal.privacy.title": "Ìlànà Ìkọ́kọ́",
+  "legal.privacy.description": "Bí NetLodge ṣe ń kó, ń lo, àti ń dáàbọ̀ àwọn dátà rẹ.",
+  "legal.terms.title": "Ìlànà Iṣẹ́",
+  "legal.terms.description": "Àwọn ìlànà àti àwọn ọ̀rọ̀ fún ìlò NetLodge.",
+  "propertyDetail.floors": "Àwọn òkè",
+  "propertyDetail.totalUnits": "Gbogbo àwọn nkeji",
+  "propertyDetail.availableUnits": "Wà",
+  "propertyDetail.breadcrumb": "Ìtọ́sọ́nà",
+  "propertyDetail.home": "Ilé",
+  "propertyDetail.eachUnitBookable": "Nkeji kọ̀ọ̀kan ní ìsàlẹ̀ jẹ́ ohun ìṣọ̀kan tì a lè gbé, pẹ̀lú àwọn àwòrán, ohun èlò, àti owó rẹ̀. Tẹ nkeji kan láti wo gbogbo àwọn àwòrán àti àdéhùn ìdásílẹ̀.",
+  "propertyDetail.buildingWideFacilities": "Àwọn wọ̀nyí jẹ́ ohun èlò ilé gbogbo tì a ń pín káàkiri gbogbo àwọn nkeji. A ṣàfihàn àwọn ohun èlò inú nkeji lórí ojúewé yálà kọ̀ọ̀kan.",
+  "propertyDetail.addressSharedAfterBooking": "A ń pín adírẹ́ẹ̀sì òótọ́ pẹ̀lú rẹ lẹ́yìn tí a bá ti fìmọ́ ìdásílẹ̀.",
+  "roomDetail.bookingTerms": "Àdéhùn ìdásílẹ̀",
+  "roomDetail.unitCurrently": "Nkeji yìí wà báyìí",
+  "roomDetail.furnishing": "Ohun èlò",
+  "roomDetail.noPhotos.title": "Kò sí àwọn àwòrán fún nkeji yìí báyìí",
+  "roomDetail.noPhotos.desc": "Bẹ́ oní ilé kí ó gbé àwọn àwòrán, tàbí ṣètò ìyẹ̀wò.",
+  "roomDetail.capacity": "Agbára",
+  "roomDetail.size": "Iwọn",
+  "roomDetail.person": "ènìyàn",
+  "roomDetail.people": "àwọn ènìyàn",
+  "roomDetail.previous": "Ẹ̀yìn",
+  "roomDetail.next": "Èyí tó ń bọ̀",
+  "error.title": "Nkan ṣẹlẹ̀ tó kò tọ́",
+  "error.description": "Àṣìṣe kan ṣẹlẹ̀. Jọ̀wọ́ gbiyànjú lẹ́ẹ̀kansi.",
+  "error.retry": "Gbiyànjú lẹ́ẹ̀kansi",
+  "hero.search.ariaLabel": "Wá ibùgbé",
+  "hero.search.placeholder": "Orúkọ ilé, agbègbè, tàbí ọ̀rọ̀-ọ̀ṣùwọ̀n",
+  "hero.search.budget": "Owó ìpín",
+
+  "hero.search.advancedFilters": "Àwọn ìyàn tó wúlò",
+  "hero.search.searchButton": "Wáwá",
+
 };
 
 // ─── Hausa ────────────────────────────────────────────────────────────
@@ -4294,6 +4436,42 @@ const ha: Translations = {
   "shell.signOut": "Sign out",
   "shell.signingOut": "Signing out…",
   "shell.viewSite": "View site",
+
+  "legal.eyebrow": "Doka",
+  "legal.cookies.title": "Manufar Cookie",
+  "legal.cookies.description": "Yadda NetLodge ke amfani da cookie da irin fasahohin.",
+  "legal.privacy.title": "Manufar Keɓantawa",
+  "legal.privacy.description": "Yadda NetLodge ke tattara, amfani, da kare bayanan ka.",
+  "legal.terms.title": "Sharuɗɗan Sabis",
+  "legal.terms.description": "Sharuɗɗa da ƙa'idojin amfani da NetLodge.",
+  "propertyDetail.floors": "Benaye",
+  "propertyDetail.totalUnits": "Jimillar nkeji",
+  "propertyDetail.availableUnits": "Samarwa",
+  "propertyDetail.breadcrumb": "Kewayawa",
+  "propertyDetail.home": "Gida",
+  "propertyDetail.eachUnitBookable": "Kowane nkeji da ke ƙasa abu ne na musamman da za a iya booking, tare da hotunansa, kayan aikin sa, da fararsa. Danna nkeji don duba duk hotuna da sharuɗɗan booking.",
+  "propertyDetail.buildingWideFacilities": "Waɗannan kayan aikin gida ne waɗanda ake raba waɗanda ke cikin dukkan nkeji. An jera kayan aikin cikin nkeji akan kowane shafin daki.",
+  "propertyDetail.addressSharedAfterBooking": "Ana raba ainihin adireshin da ka kawai bayan an tabbatar da booking.",
+  "roomDetail.bookingTerms": "Sharuɗɗan booking",
+  "roomDetail.unitCurrently": "Wannan nkeji yanzu",
+  "roomDetail.furnishing": "Kayan daki",
+  "roomDetail.noPhotos.title": "Babu hotuna don wannan nkeji yanzu",
+  "roomDetail.noPhotos.desc": "Nemi mai gida ya sauke hotuna, ko tsara ziyara.",
+  "roomDetail.capacity": "Karɓa",
+  "roomDetail.size": "Girman",
+  "roomDetail.person": "mutum",
+  "roomDetail.people": "mutane",
+  "roomDetail.previous": "Da gab",
+  "roomDetail.next": "Na gaba",
+  "error.title": "Wani abu ya same ba daidai ba",
+  "error.description": "Kuskure ya same. Da fatan sake gwadawa.",
+  "error.retry": "Sake gwadawa",
+  "hero.search.ariaLabel": "Nemo masauki",
+  "hero.search.placeholder": "Sunan gida, unguwa, ko kalma",
+  "hero.search.budget": "Kasafin",
+
+  "hero.search.advancedFilters": "Zaɓuɓɓuka na musamman",
+  "hero.search.searchButton": "Nema",
 
 };
 
