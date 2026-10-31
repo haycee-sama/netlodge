@@ -108,13 +108,7 @@ export async function fetchProperties(params: {
 
     let query = supabase
       .from("public_properties")
-      .select(`
-        *,
-        property_images(*),
-        property_facilities(facility),
-        universities(id, name, short_name, slug),
-        neighbourhoods(id, name, slug)
-      `, { count: "exact" })
+      .select(`id, slug, name, description, type, status, verification_status, city, state, neighbourhood_id, university_id, public_address_line, price_from_kobo, total_floors, total_units, created_at, updated_at, property_images(id, storage_path, public_url, alt_text, position), property_facilities(facility), universities(id, name, short_name, slug), neighbourhoods(id, name, slug)`)
       .eq("status", "verified")
       .eq("verification_status", "approved")
       .order("created_at", { ascending: false })
@@ -142,7 +136,7 @@ export async function fetchProperties(params: {
       return { data: null, error: error.message };
     }
 
-    return { data: { items: data as PropertyWithRelations[], total: count ?? 0 }, error: null };
+    return { data: { items: data as unknown as PropertyWithRelations[], total: count ?? 0 }, error: null };
   } catch (err) {
     return { data: null, error: err instanceof Error ? err.message : "Failed to fetch properties" };
   }
@@ -156,13 +150,7 @@ export async function fetchPropertyBySlug(slug: string): Promise<ServiceResult<P
     const supabase = createClient();
     const { data, error } = await supabase
       .from("public_properties")
-      .select(`
-        *,
-        property_images(*),
-        property_facilities(facility),
-        universities(id, name, short_name, slug),
-        neighbourhoods(id, name, slug)
-      `)
+      .select(`id, slug, name, description, type, status, verification_status, city, state, neighbourhood_id, university_id, public_address_line, price_from_kobo, total_floors, total_units, created_at, updated_at, property_images(id, storage_path, public_url, alt_text, position), property_facilities(facility), universities(id, name, short_name, slug), neighbourhoods(id, name, slug)`)
       .eq("slug", slug)
       .single();
 
@@ -170,7 +158,7 @@ export async function fetchPropertyBySlug(slug: string): Promise<ServiceResult<P
       return { data: null, error: error.message };
     }
 
-    return { data: data as PropertyWithRelations, error: null };
+    return { data: data as unknown as PropertyWithRelations, error: null };
   } catch (err) {
     return { data: null, error: err instanceof Error ? err.message : "Failed to fetch property" };
   }

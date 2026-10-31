@@ -1,9 +1,25 @@
 /**
  * Server-side property data access for Server Components.
- * Uses the server Supabase client (cookie-based auth).
+ * Uses the admin (service-role) client to bypass anon GRANT restrictions
+ * (F-10 fix blocks anon SELECT on properties). Sensitive columns are
+ * stripped from the response before returning to the client.
  */
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+/** Columns to strip from public-facing responses (F-10/F-14 fix). */
+const SENSITIVE_COLS = [
+  "private_address_line", "landlord_id", "latitude", "longitude",
+  "available_units", "occupied_units", "held_units",
+];
+
+/** Remove sensitive columns from a property object. */
+function stripSensitive<T extends Record<string, unknown>>(row: T): T {
+  const out = { ...row };
+  for (const col of SENSITIVE_COLS) delete out[col];
+  return out;
+}
 
 /**
  * Server-side caching wrapper for homepage stats.
@@ -140,9 +156,9 @@ export async function fetchPropertiesServer(params: {
   pageSize?: number;
 }): Promise<{ data: any[] | null; error: string | null }> {
   try {
-    const supabase = await createClient();
-    let query = supabase
-      .from("public_properties")
+    const admin = createAdminClient();
+    let query = admin
+      .from("properties")
       .select(`*, property_images(id, storage_path, public_url, alt_text, position), property_facilities(facility), universities(id, name, short_name, slug), neighbourhoods(id, name, slug)`)
       .eq("status", "verified")
       .eq("verification_status", "approved")
@@ -160,7 +176,7 @@ export async function fetchPropertiesServer(params: {
 
     const { data, error } = await query;
     if (error) return { data: null, error: error.message };
-    return { data, error: null };
+    return { data: (data ?? []).map(stripSensitive), error: null };
   } catch (err) {
     return {
       data: null,
@@ -178,9 +194,9 @@ export async function fetchPropertyBySlugServer(
   slug: string,
 ): Promise<{ data: { name: string; slug: string; city: string; state: string; public_address_line: string; description: string | null; type: string | null } | null; error: string | null }> {
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("public_properties")
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("properties")
       .select("name, slug, city, state, public_address_line, description, type")
       .eq("slug", slug)
       .eq("status", "verified")
