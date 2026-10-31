@@ -444,6 +444,18 @@ export async function createBooking(params: {
       return { data: null, error: "Please complete your student profile before booking" };
     }
 
+    // Tier 2 KYC gate: students must have approved identity verification
+    // before they can book. This prevents fraud and ensures accountability.
+    const { data: kycApproved } = await supabase.rpc("has_kyc_tier2", {
+      p_user_id: user.id,
+    });
+    if (!kycApproved) {
+      return {
+        data: null,
+        error: "Identity verification required. Please complete Tier 2 KYC at /student/kyc before booking.",
+      };
+    }
+
     // Call the database function via RPC. Only legitimate user inputs are
     // sent — no pricing. The DB computes and stores the authoritative total.
     const { data, error } = await supabase.rpc("create_booking", {

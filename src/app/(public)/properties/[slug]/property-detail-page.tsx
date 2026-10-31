@@ -89,20 +89,36 @@ export function PropertyDetailPage() {
   const availableRooms = rooms.filter((r) => r.status === "available");
   const facilities = (property.property_facilities ?? []).map((f) => f.facility);
 
-  const heroImage = property.property_images?.[0]?.public_url;
+  const heroMedia = property.property_images?.[0];
+  const heroImage = heroMedia?.public_url;
+  const heroVideoUrl = (heroMedia as any)?.video_url as string | undefined;
+  const heroMediaType = (heroMedia as any)?.media_type as string | undefined;
   const allImages = (property.property_images ?? []).sort((a, b) => a.position - b.position);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Hero image banner with text overlay */}
+      {/* Hero media banner with text overlay (supports image + video) */}
       {heroImage && (
         <div className="relative mb-6 aspect-[21/9] w-full overflow-hidden rounded-2xl border border-border">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={heroImage}
-            alt={property.property_images?.[0]?.alt_text ?? property.name}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+          {heroMediaType === "video" && heroVideoUrl ? (
+            <video
+              src={heroVideoUrl}
+              poster={heroImage}
+              controls
+              autoPlay
+              muted
+              loop
+              className="absolute inset-0 h-full w-full object-cover"
+              aria-label={heroMedia?.alt_text ?? property.name}
+            />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={heroImage}
+              alt={heroMedia?.alt_text ?? property.name}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          )}
           {/* Gradient overlay for text readability */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           {/* Text overlay at bottom */}
