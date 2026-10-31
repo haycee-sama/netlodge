@@ -89,8 +89,60 @@ export function PropertyDetailPage() {
   const availableRooms = rooms.filter((r) => r.status === "available");
   const facilities = (property.property_facilities ?? []).map((f) => f.facility);
 
+  const heroImage = property.property_images?.[0]?.public_url;
+  const allImages = (property.property_images ?? []).sort((a, b) => a.position - b.position);
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Hero image banner with text overlay */}
+      {heroImage && (
+        <div className="relative mb-6 aspect-[21/9] w-full overflow-hidden rounded-2xl border border-border">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={heroImage}
+            alt={property.property_images?.[0]?.alt_text ?? property.name}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          {/* Gradient overlay for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          {/* Text overlay at bottom */}
+          <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <VerificationBadge status={property.verification_status as any} />
+              <Badge variant="outline" className="capitalize border-white/30 bg-white/10 text-white backdrop-blur-sm">{property.type.replace(/_/g, " ")}</Badge>
+            </div>
+            <h1 className="font-display text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+              {property.name}
+            </h1>
+            <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-white/90">
+              <span className="flex items-center gap-1.5">
+                <MapPin className="h-4 w-4" aria-hidden />
+                {property.public_address_line}, {property.city}, {property.state}
+              </span>
+              <Price kobo={property.price_from_kobo} fromLabel period="/yr" className="text-lg text-white" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* If no hero image, show the header without overlay */}
+      {!heroImage && (
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <VerificationBadge status={property.verification_status as any} />
+              <PropertyStatusBadge status={property.status as any} />
+              <Badge variant="outline" className="capitalize">{property.type.replace(/_/g, " ")}</Badge>
+            </div>
+            <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">{property.name}</h1>
+            <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4" aria-hidden />
+              {property.public_address_line}, {property.city}, {property.state}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Breadcrumb */}
       <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1 text-xs text-muted-foreground">
         <Link href="/" className="hover:text-foreground hover:underline">Home</Link>
@@ -100,24 +152,24 @@ export function PropertyDetailPage() {
         <span className="truncate text-foreground">{property.name}</span>
       </nav>
 
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <VerificationBadge status={property.verification_status as any} />
-            <PropertyStatusBadge status={property.status as any} />
-            <Badge variant="outline" className="capitalize">{property.type.replace(/_/g, " ")}</Badge>
-          </div>
-          <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">{property.name}</h1>
-          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <MapPin className="h-4 w-4" aria-hidden />
-            {property.public_address_line}, {property.city}, {property.state}
-          </p>
+      {/* Gallery thumbnails (if multiple images) */}
+      {allImages.length > 1 && (
+        <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
+          {allImages.map((img) => (
+            <div key={img.id} className="relative h-20 w-32 shrink-0 overflow-hidden rounded-lg border border-border">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={img.public_url ?? ""} alt={img.alt_text ?? ""} className="h-full w-full object-cover" />
+            </div>
+          ))}
         </div>
+      )}
+
+      {/* Stats row */}
+      <div className="mb-6 flex flex-wrap items-center gap-4">
         <div className="flex flex-col items-start gap-2 sm:items-end">
           <Price kobo={property.price_from_kobo} fromLabel period="/yr" className="text-2xl" />
           <p className="text-xs text-muted-foreground">
-            {property.available_units} of {property.total_units} units available
+            {(property.available_units ?? 0)} of {property.total_units} units available
           </p>
           <SaveButton propertyId={property.id} />
         </div>

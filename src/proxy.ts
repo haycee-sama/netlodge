@@ -56,6 +56,53 @@ export async function proxy(request: NextRequest) {
 
       const result = await supabase.auth.getUser();
       user = result.data.user;
+
+      // KYC / Onboarding gate: after authentication, check if the user has
+      // completed onboarding (profile_completed = true). If not, redirect to
+      // the role-specific onboarding page before they can access any dashboard.
+      if (user && isProtected) {
+        // Allow access to the onboarding pages themselves (don't redirect from them)
+        const onboardingPaths = ["/student/onboarding", "/landlord/onboarding", "/manager/onboarding", "/agent/onboarding"];
+        const isOnboardingPage = onboardingPaths.some((p) => pathname.startsWith(p));
+        // Allow access to settings (so they can update profile)
+        const isSettingsPage = pathname.endsWith("/settings") || pathname.endsWith("/profile");
+
+        if (!isOnboardingPage && !isSettingsPage) {
+          try {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("profile_completed")
+              .eq("id", user.id)
+              .single();
+
+            if (profile && !profile.profile_completed) {
+              // Determine onboarding route by role
+              const { data: roles } = await supabase
+                .from("user_roles")
+                .select("role")
+                .eq("user_id", user.id);
+              const role = (roles ?? [])[0]?.role ?? "student";
+              const onboardingRoute = `/student/onboarding`;
+              // Map role to onboarding route
+              const routeMap: Record<string, string> = {
+                student: "/student/onboarding",
+                landlord: "/landlord/onboarding",
+                property_manager: "/manager/onboarding",
+                agent: "/agent/onboarding",
+              };
+              const targetRoute = routeMap[role] ?? "/student/onboarding";
+
+              const url = request.nextUrl.clone();
+              url.pathname = targetRoute;
+              url.searchParams.set("redirect", pathname);
+              return NextResponse.redirect(url);
+            }
+          } catch {
+            // If profile check fails (DB unreachable), allow access — fail open
+            // rather than locking users out of their dashboard.
+          }
+        }
+      }
     }
   } catch {
     // Supabase unreachable — user stays null. Protected routes will redirect to /login.
