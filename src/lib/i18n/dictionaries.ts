@@ -128,6 +128,43 @@ export type TranslationKey =
   | "home.trust.step4.title"
   | "home.trust.step4.desc"
   | "home.featuredProperty.view"
+  | "home.featured.eyebrow"
+  | "home.featured.title"
+  | "home.featured.description"
+  | "home.featured.viewAll"
+  | "home.featured.emptyState"
+  | "home.fresh.eyebrow"
+  | "home.fresh.title"
+  | "home.fresh.description"
+  | "home.fresh.ariaLabel"
+  | "home.studentBenefits.eyebrow"
+  | "home.studentBenefits.title"
+  | "home.studentBenefits.description"
+  | "home.studentBenefits.builtForCampus.title"
+  | "home.studentBenefits.builtForCampus.desc"
+  | "home.studentBenefits.safeHolds.title"
+  | "home.studentBenefits.safeHolds.desc"
+  | "home.studentBenefits.honestListings.title"
+  | "home.studentBenefits.honestListings.desc"
+  | "home.studentBenefits.realSupport.title"
+  | "home.studentBenefits.realSupport.desc"
+  | "home.studentBenefits.createAccount"
+  | "home.landlordCta.eyebrow"
+  | "home.landlordCta.title"
+  | "home.landlordCta.description"
+  | "home.landlordCta.feature1"
+  | "home.landlordCta.feature2"
+  | "home.landlordCta.feature3"
+  | "home.landlordCta.feature4"
+  | "home.landlordCta.startListing"
+  | "home.landlordCta.guide"
+  | "home.howItWorksCta.title"
+  | "home.howItWorksCta.description"
+  | "home.howItWorksCta.browse"
+  | "home.howItWorksCta.howItWorks"
+  | "home.testimonials.eyebrow"
+  | "home.testimonials.title"
+  | "home.testimonials.description"
   // Search page
   | "search.eyebrow"
   | "search.title"
@@ -547,6 +584,43 @@ const en: Translations = {
   "home.trust.step4.title": "Verified badge",
   "home.trust.step4.desc": "Only after all checks pass does a listing earn the verified badge and become publicly bookable.",
   "home.featuredProperty.view": "View",
+  "home.featured.eyebrow": "Featured properties",
+  "home.featured.title": "Hand-picked verified listings",
+  "home.featured.description": "A selection of recently verified properties around UNILAG. Each property contains individual bookable rooms.",
+  "home.featured.viewAll": "All properties",
+  "home.featured.emptyState": "We're onboarding landlords now. Verified rooms will appear here soon.",
+  "home.fresh.eyebrow": "Fresh on NetLodge",
+  "home.fresh.title": "Recently added rooms",
+  "home.fresh.description": "Swipe through the latest verified listings.",
+  "home.fresh.ariaLabel": "Recently added properties",
+  "home.studentBenefits.eyebrow": "For students",
+  "home.studentBenefits.title": "Why students choose NetLodge",
+  "home.studentBenefits.description": "A marketplace built around how Nigerian students actually search for and secure accommodation.",
+  "home.studentBenefits.builtForCampus.title": "Built for your campus",
+  "home.studentBenefits.builtForCampus.desc": "Filter by university, neighbourhood and walking distance to class.",
+  "home.studentBenefits.safeHolds.title": "Safe holds",
+  "home.studentBenefits.safeHolds.desc": "A server-controlled hold reserves a room while you arrange payment.",
+  "home.studentBenefits.honestListings.title": "Honest listings",
+  "home.studentBenefits.honestListings.desc": "Room-level photos mean you see the actual unit, not just a pretty exterior.",
+  "home.studentBenefits.realSupport.title": "Real support",
+  "home.studentBenefits.realSupport.desc": "Open a ticket from your dashboard and a human gets back to you.",
+  "home.studentBenefits.createAccount": "Create your student account",
+  "home.landlordCta.eyebrow": "For landlords",
+  "home.landlordCta.title": "List once. Manage hundreds of rooms.",
+  "home.landlordCta.description": "The landlord dashboard handles the realities of Nigerian student housing — floor-by-floor inventory, per-room pricing, bulk operations, booking workflows, payouts and verification. Built for portfolios of 1 to 1,000 rooms.",
+  "home.landlordCta.feature1": "Multi-step property wizard with draft saving",
+  "home.landlordCta.feature2": "Floor-level default prices with per-room overrides",
+  "home.landlordCta.feature3": "Bulk-create 200 rooms in a single action",
+  "home.landlordCta.feature4": "Booking, payment and payout reconciliation in one place",
+  "home.landlordCta.startListing": "Start listing",
+  "home.landlordCta.guide": "Landlord guide",
+  "home.howItWorksCta.title": "Ready to find your student home?",
+  "home.howItWorksCta.description": "Browse verified rooms around your campus, inspect facilities online, and book the actual unit you'll live in — not just the building.",
+  "home.howItWorksCta.browse": "Browse accommodation",
+  "home.howItWorksCta.howItWorks": "How it works",
+  "home.testimonials.eyebrow": "From the NetLodge community",
+  "home.testimonials.title": "What students and landlords say",
+  "home.testimonials.description": "Real reviews from verified NetLodge users. Every testimonial is reviewed by our team before publication.",
   "search.eyebrow": "Search",
   "search.title": "Find your accommodation",
   "search.description": "Filter by university, neighbourhood, budget, unit type and facilities.",
@@ -964,6 +1038,43 @@ const ig: Translations = {
   "home.trust.step4.title": "Akara nyocha",
   "home.trust.step4.desc": "Naanị mgbe nyocha niile gafere ka edemede ga-enweta akara nyocha ma bụrụ nke a pụrụ idebe n'ihu ọha.",
   "home.featuredProperty.view": "Lee",
+  "home.featured.eyebrow": "Ụlọ pụrụ iche",
+  "home.featured.title": "Ụlọ a nyochara nke aka họpụtara",
+  "home.featured.description": "Nchịkọta nke ụlọ a nyochara nso nso a gburugburu UNILAG. Ụlọ ọ bụla nwere ọnụ ụlọ a pụrụ idebe n'ime ya.",
+  "home.featured.viewAll": "Ụlọ niile",
+  "home.featured.emptyState": "Anyị na-enye ndị nwe ụlọ ọrụ ugbu a. Ọnụ ụlọ a nyochara ga-apụta ebe a n'oge na-adịghị anya.",
+  "home.fresh.eyebrow": "Ọhụrụ na NetLodge",
+  "home.fresh.title": "Ọnụ ụlọ e depụtara nso nso a",
+  "home.fresh.description": "Pịa site na edemede a nyochara kachasị ọhụrụ.",
+  "home.fresh.ariaLabel": "Ụlọ e depụtara nso nso a",
+  "home.studentBenefits.eyebrow": "Maka ụmụ akwụkwọ",
+  "home.studentBenefits.title": "Gịnị mere ụmụ akwụkwọ ji ahọrọ NetLodge",
+  "home.studentBenefits.description": "Ahịa e mepụtara gburugburu otu ụmụ akwụkwọ Naịjirịa si achọ ma nweta ebe obibi.",
+  "home.studentBenefits.builtForCampus.title": "E mepụtara maka mahadum gị",
+  "home.studentBenefits.builtForCampus.desc": "Họrọ site na mahadum, mpaghara na anya ịga klas.",
+  "home.studentBenefits.safeHolds.title": "Njide dị nchebe",
+  "home.studentBenefits.safeHolds.desc": "Njide nke sava na-achịkwa na-edobe ọnụ ụlọ ka ị na-ahazi ịkwụ ụgwọ.",
+  "home.studentBenefits.honestListings.title": "Edemede eziokwu",
+  "home.studentBenefits.honestListings.desc": "Foto nke ọkwa ọnụ ụlọ pụtara na ị na-ahụ ọnụ ụlọ ahụ, ọ bụghị naanị ihu ụlọ mara mma.",
+  "home.studentBenefits.realSupport.title": "Nkwado dị adị",
+  "home.studentBenefits.realSupport.desc": "Mepee tiketi site na dashbọọdụ gị ma mmadụ ga-azaghachi gị.",
+  "home.studentBenefits.createAccount": "Mepụta akaụntụ ụmụ akwụkwọ gị",
+  "home.landlordCta.eyebrow": "Maka ndị nwe ụlọ",
+  "home.landlordCta.title": "Depụta otu ugboro. Jikwaa ọtụtụ narị ọnụ ụlọ.",
+  "home.landlordCta.description": "Dashbọọdụ onye nwe ụlọ na-ahụ eziokwu nke ebe obibi ụmụ akwụkwọ Naịjirịa — ndepụta kwa ala, ọnụahịa kwa ọnụ ụlọ, ọrụ ọtụtụ, usoro ntinye akwụkwọ, ịkwụ ụgwọ na nyocha. E mepụtara ya maka pọtfolio nke 1 ruo 1,000 ọnụ ụlọ.",
+  "home.landlordCta.feature1": "Wijadọtị ụlọ nwere ọtụtụ nzọụkwụ nke na-edobe akwụkwọ edepụtara",
+  "home.landlordCta.feature2": "Ọnụahịa ndabara kwa ala nwere mgbanwe kwa ọnụ ụlọ",
+  "home.landlordCta.feature3": "Mepụta ọnụ ụlọ 200 n'otu ọrụ",
+  "home.landlordCta.feature4": "Ntinye akwụkwọ, ịkwụ ụgwọ na nhazi ịkwụ ụgwọ n'otu ebe",
+  "home.landlordCta.startListing": "Malite idepụta",
+  "home.landlordCta.guide": "Nduzi onye nwe ụlọ",
+  "home.howItWorksCta.title": "Ijí chọta ebe obibi ụmụ akwụkwọ?",
+  "home.howItWorksCta.description": "Chọọ ọnụ ụlọ a nyochara gburugburu mahadum gị, nyochaa ụlọ ọrụ n'ịntanetị, ma debe ọnụ ụlọ ahụ ịchọrọ ibi — ọ bụghị naanị ụlọ.",
+  "home.howItWorksCta.browse": "Chọọ ebe obibi",
+  "home.howItWorksCta.howItWorks": "Otu ọ na-arụ ọrụ",
+  "home.testimonials.eyebrow": "Site n'obodo NetLodge",
+  "home.testimonials.title": "Ihe ụmụ akwụkwọ na ndị nwe ụlọ na-ekwu",
+  "home.testimonials.description": "Nnyocha dị adị site na ndị NetLodge nyochasịrị. A na-enyocha akụkọ ọ bụla site n'aka ndị anyị tupu ebipụta ya.",
   "search.eyebrow": "Chọọ",
   "search.title": "Chọta ebe obibi gị",
   "search.description": "Họrọ site na mahadum, mpaghara, mmefu ego, ụdị ọnụ ụlọ na ụlọ ọrụ.",
@@ -1381,6 +1492,43 @@ const yo: Translations = {
   "home.trust.step4.title": "Àmì ìfìmọ̀lẹ̀",
   "home.trust.step4.desc": "Lẹ́yìn tí gbogbo ìyẹ̀wò bá parí ni ìpolówọ́ máa gba àmì ìfìmọ̀lẹ̀ àti wà ní ìmọ̀ gbogbo gbòò fún ìdásílẹ̀.",
   "home.featuredProperty.view": "Wo",
+  "home.featured.eyebrow": "Àwọn ilé pàtàkì",
+  "home.featured.title": "Àwọn ìpolówọ́ tí a yàn",
+  "home.featured.description": "Ìyànwó àwọn ilé tí a tún fìmọ̀lẹ̀ nísálàyé ní àyíka UNILAG. Ọ̀kọ̀ọ̀kan wọn ní àwọn yálà tì a lè gbé.",
+  "home.featured.viewAll": "Gbogbo àwọn ilé",
+  "home.featured.emptyState": "A ń ṣàkóso àwọn oní ilé báyìí. Àwọn yálà tí a fìmọ̀lẹ̀ máa hàn níbí láìpẹ́.",
+  "home.fresh.eyebrow": "Tuntun lórí NetLodge",
+  "home.fresh.title": "Àwọn yálà tuntun",
+  "home.fresh.description": "Wá ká àwọn ìpolówọ́ tuntun tí a fìmọ̀lẹ̀.",
+  "home.fresh.ariaLabel": "Àwọn ilé tuntun",
+  "home.studentBenefits.eyebrow": "Fún àwọn akẹ́kọ̀ọ́",
+  "home.studentBenefits.title": "Èyíkéjì àwọn akẹ́kọ̀ọ́ fi yan NetLodge",
+  "home.studentBenefits.description": "Ọjà tí a ṣẹ̀dá nípa bí àwọn akẹ́kọ̀ọ́ Nàìjíríà ṣe ń wá àti gba ibùgbé.",
+  "home.studentBenefits.builtForCampus.title": "A ṣẹ̀dá rẹ̀ fún yunifásítì rẹ",
+  "home.studentBenefits.builtForCampus.desc": "Yan gẹ́gẹ́ bí yunifásítì, agbègbè àti ìgèékò láti gun sí klásì.",
+  "home.studentBenefits.safeHolds.title": "Ìdínà̀ ààbọ̀",
+  "home.studentBenefits.safeHolds.desc": "Ìdínà̀ tí sẹ́fà ń ṣàkóso ń pa yálà mọ́ nígbà tí o ń ṣètò owó.",
+  "home.studentBenefits.honestListings.title": "Àwọn ìpolówọ́ òótọ́",
+  "home.studentBenefits.honestListings.desc": "Àwọn àwòrán ìpele yálà túmọ̀ sí pé o rí yálà òótọ́ náà, kì í ṣe ìta ilé tó rẹwà nìkan.",
+  "home.studentBenefits.realSupport.title": "Ìtìlẹ́yìn òótọ́",
+  "home.studentBenefits.realSupport.desc": "Ṣí tíkẹ̀ẹ̀tì láti inú dashbọọdù rẹ kí ènìyàn ó dáhùn ọ́.",
+  "home.studentBenefits.createAccount": "Ṣẹ̀dá àkáǹtì akẹ́kọ̀ọ́ rẹ",
+  "home.landlordCta.eyebrow": "Fún àwọn oní ilé",
+  "home.landlordCta.title": "Foríṣọ́ lẹ́ẹ̀kan. Ṣàkóso ọgọ́rún àwọn yálà.",
+  "home.landlordCta.description": "Dashbọọdù oní ilé ń ṣàkóso ìgboyà ìbùgbé akẹ́kọ̀ọ́ Nàìjíríà — ìdámọ̀ràn ìpele òkè, owó ìpele yálà, àwọn iṣẹ́ pọ̀, àwọn ìlànà ìdásílẹ̀, àtúnṣe owó àti ìfìmọ̀lẹ̀. A ṣẹ̀dá rẹ̀ fún àwọn ìjáde láti 1 sí 1,000 yálà.",
+  "home.landlordCta.feature1": "Wizard ilé mẹ́rin-mẹ́rin pẹ̀lú ìpamọ́ àkọṣe",
+  "home.landlordCta.feature2": "Owó ìfilọ́lẹ̀ ìpele òkè pẹ̀lú àwọn àtúnṣe ìpele yálà",
+  "home.landlordCta.feature3": "Ṣẹ̀dá àwọn yálà 200 nínú iṣẹ́ kan",
+  "home.landlordCta.feature4": "Ìdásílẹ̀, owó àti àtúnṣe owó nínú ibi kan",
+  "home.landlordCta.startListing": "Bẹ̀rẹ̀ ìforíṣọ́",
+  "home.landlordCta.guide": "Ìmọ̀ràn oní ilé",
+  "home.howItWorksCta.title": "Ṣé o ti ṣetán láti rí ibùgbé akẹ́kọ̀ọ́ rẹ?",
+  "home.howItWorksCta.description": "Wá àwọn yálà tí a fìmọ̀lẹ̀ ní àyíka yunifásítì rẹ, yẹ àwọn ohun èlò wò lórí ẹ̀rọ ayélujára, kí o sì gbé yálà tí o fẹ́ — kì í ṣe ilé nìkan.",
+  "home.howItWorksCta.browse": "Wá ibùgbé",
+  "home.howItWorksCta.howItWorks": "Bí ó ṣe ń ṣiṣẹ́",
+  "home.testimonials.eyebrow": "Láti inú ìdájọ́ NetLodge",
+  "home.testimonials.title": "Ìrò àwọn akẹ́kọ̀ọ́ àti àwọn oní ilé",
+  "home.testimonials.description": "Àwọn àyèwò òótọ́ láti ọ̀dọ̀ àwọn olùlo NetLodge tí a fìmọ̀lẹ̀. A ń yẹ kìtìnni kìtìnni wò kí a tó gbé jáde.",
   "search.eyebrow": "Wáwá",
   "search.title": "Rí ibùgbé rẹ",
   "search.description": "Yan gẹ́gẹ́ bí yunifásítì, agbègbè, owó, irúfẹ́ yálà àti àwọn ohun èlò.",
@@ -1798,6 +1946,43 @@ const ha: Translations = {
   "home.trust.step4.title": "Alamar tabbatarwa",
   "home.trust.step4.desc": "Sai bayan duk dubawa ta wuce ne listing ke samun alamar tabbatarwa kuma ya zama ana iya booking da shi a bainar jama'a.",
   "home.featuredProperty.view": "Duba",
+  "home.featured.eyebrow": "Gidajen da aka fi so",
+  "home.featured.title": "Listings da aka zaɓa da hannu",
+  "home.featured.description": "Zaɓi na gidajen da aka tabbatar kwanan nan a kusa da UNILAG. Kowane gida yana ɗauke da dakuna waɗanda za a iya booking.",
+  "home.featured.viewAll": "Dukkan gidaje",
+  "home.featured.emptyState": "Muna karɓar masu gida yanzu. Dakuna da aka tabbatar za su bayyana nan ba da daɗe ba.",
+  "home.fresh.eyebrow": "Sababi akan NetLodge",
+  "home.fresh.title": "Dakuna da aka ƙara kwanan nan",
+  "home.fresh.description": "Kalar da aka tabbatar na baya-bayan nan.",
+  "home.fresh.ariaLabel": "Gidajen da aka ƙara kwanan nan",
+  "home.studentBenefits.eyebrow": "Don dalibai",
+  "home.studentBenefits.title": "Me ya sa dalibai suka zaɓi NetLodge",
+  "home.studentBenefits.description": "Kasuwa da aka gina bisa yadda daliban Najeriya ke neman da kuma samun masauki.",
+  "home.studentBenefits.builtForCampus.title": "An gina shi don jami'ar ka",
+  "home.studentBenefits.builtForCampus.desc": "Zaɓa ta jami'a, unguwa, da nisan tafiya zuwa aji.",
+  "home.studentBenefits.safeHolds.title": "Rike mai tsaro",
+  "home.studentBenefits.safeHolds.desc": "Rike da server ke kula da shi yana ajiye daki yayin da kake shirya biya.",
+  "home.studentBenefits.honestListings.title": "Listings na gaskiya",
+  "home.studentBenefits.honestListings.desc": "Hotunan matakin daki suna nufin kana ganin dakin da kansa, ba waje mai kyau kawai ba.",
+  "home.studentBenefits.realSupport.title": "Taimako na gaske",
+  "home.studentBenefits.realSupport.desc": "Bude tikiti daga dashboard ɗinka kuma mutum zai mayar maka martani.",
+  "home.studentBenefits.createAccount": "Ƙirƙiri asusun dalibin ka",
+  "home.landlordCta.eyebrow": "Don masu gida",
+  "home.landlordCta.title": "Listing ɗaya. Kula da daruruwan dakuna.",
+  "home.landlordCta.description": "Dashboard na mai gida yana kula da gaskiyar masaukin daliban Najeriya — lissafin bene-bene, farar daki, ayyuka da yawa, tsarin booking, payouts da tabbatarwa. An gina shi don foda daga 1 zuwa 1,000 dakuna.",
+  "home.landlordCta.feature1": "Wizard na gida mai matakai da adana daftarin",
+  "home.landlordCta.feature2": "Farar musamman ta bene tare da canje-canje na kowane daki",
+  "home.landlordCta.feature3": "Ƙirƙiri dakuna 200 cikin aiki ɗaya",
+  "home.landlordCta.feature4": "Booking, biya, da reconciliation na payout a wuri ɗaya",
+  "home.landlordCta.startListing": "Fara listing",
+  "home.landlordCta.guide": "Jagorar mai gida",
+  "home.howItWorksCta.title": "Shin ka shirya don neman gidan dalibin ka?",
+  "home.howItWorksCta.description": "Nemo dakuna da aka tabbatar a kusa da jami'ar ka, duba kayan aikin akan layi, kuma ka book dakin da za ka zauna — ba gini kawai.",
+  "home.howItWorksCta.browse": "Nemo masauki",
+  "home.howItWorksCta.howItWorks": "Yadda ake aiki",
+  "home.testimonials.eyebrow": "Daga al'ummar NetLodge",
+  "home.testimonials.title": "Abin da dalibai da masu gida ke faɗa",
+  "home.testimonials.description": "Bitoci na gaske daga masu amfani da NetLodge da aka tabbatar. Muna duba kowane taƙaitaccen magana kafin mu buga shi.",
   "search.eyebrow": "Nema",
   "search.title": "Nemi masaukin ka",
   "search.description": "Zaɓa ta jami'a, unguwa, kasafin kuɗi, nau'in daki, da kayan aiki.",
