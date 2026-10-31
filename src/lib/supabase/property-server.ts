@@ -28,7 +28,7 @@ export async function fetchHomepageStatsServer(): Promise<{
       { count: availableRooms },
       { count: totalBookings },
     ] = await Promise.all([
-      supabase.from("properties").select("*", { count: "exact", head: true }).eq("status", "verified").eq("verification_status", "approved"),
+      supabase.from("public_properties").select("*", { count: "exact", head: true }).eq("status", "verified").eq("verification_status", "approved"),
       supabase.from("universities").select("*", { count: "exact", head: true }).eq("active", true),
       supabase.from("neighbourhoods").select("*", { count: "exact", head: true }).eq("active", true),
       supabase.from("rentable_units").select("*", { count: "exact", head: true }).eq("status", "available"),
@@ -142,7 +142,7 @@ export async function fetchPropertiesServer(params: {
   try {
     const supabase = await createClient();
     let query = supabase
-      .from("properties")
+      .from("public_properties")
       .select(`*, property_images(id, storage_path, public_url, alt_text, position), property_facilities(facility), universities(id, name, short_name, slug), neighbourhoods(id, name, slug)`)
       .eq("status", "verified")
       .eq("verification_status", "approved")
@@ -180,7 +180,7 @@ export async function fetchPropertyBySlugServer(
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
-      .from("properties")
+      .from("public_properties")
       .select("name, slug, city, state, public_address_line, description, type")
       .eq("slug", slug)
       .eq("status", "verified")

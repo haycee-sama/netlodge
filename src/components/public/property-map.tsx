@@ -68,9 +68,9 @@ export function PropertyMap({ properties, center = [6.5157, 3.3898], zoom = 13 }
                 <div style={{ fontSize: "12px", color: "#666", marginTop: "2px" }}>
                   {p.public_address_line}, {p.city}
                 </div>
-                {p.available_units > 0 && (
+                {(p.available_units ?? 0) > 0 && (
                   <div style={{ fontSize: "12px", color: "#107a57", marginTop: "4px" }}>
-                    {p.available_units} units available
+                    {p.available_units ?? 0} units available
                   </div>
                 )}
                 <div style={{ fontSize: "14px", fontWeight: 700, marginTop: "4px" }}>

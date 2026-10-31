@@ -21,7 +21,7 @@ export function PropertyCardAdapter({ property }: { property: PropertyWithRelati
   const domainProperty: Property = {
     id: property.id,
     slug: property.slug,
-    landlordId: property.landlord_id,
+    landlordId: property.landlord_id ?? "",
     managerIds: [],
     agentIds: [],
     name: property.name,
@@ -34,17 +34,17 @@ export function PropertyCardAdapter({ property }: { property: PropertyWithRelati
     neighbourhoodId: property.neighbourhood_id ?? "",
     universityId: property.university_id ?? "",
     publicAddressLine: property.public_address_line,
-    privateAddressLine: property.private_address_line,
-    latitude: property.latitude,
-    longitude: property.longitude,
+    privateAddressLine: property.private_address_line ?? "",
+    latitude: property.latitude ?? null,
+    longitude: property.longitude ?? null,
     facilities: (property.property_facilities ?? []).map((f) => f.facility as Property["facilities"][0]),
     rules: [],
     images: [],
     totalFloors: property.total_floors,
     totalUnits: property.total_units,
-    availableUnits: property.available_units,
-    occupiedUnits: property.occupied_units,
-    heldUnits: property.held_units,
+    availableUnits: property.available_units ?? 0,
+    occupiedUnits: property.occupied_units ?? 0,
+    heldUnits: property.held_units ?? 0,
     priceFromKobo: property.price_from_kobo,
     createdAt: property.created_at,
     updatedAt: property.updated_at,
@@ -74,9 +74,9 @@ export function PropertyCardAdapter({ property }: { property: PropertyWithRelati
           )}
           <div className="absolute left-3 top-3 flex gap-1.5">
             <VerificationBadge status={domainProperty.verificationStatus} />
-            {property.available_units > 0 && (
+            {(property.available_units ?? 0) > 0 && (
               <Badge className="bg-background/90 text-foreground">
-                {property.available_units} available
+                {property.available_units ?? 0} available
               </Badge>
             )}
           </div>

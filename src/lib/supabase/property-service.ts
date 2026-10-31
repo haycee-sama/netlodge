@@ -8,7 +8,7 @@ type SupabaseClient = ReturnType<typeof createClient>;
 export interface PropertyWithRelations {
   id: string;
   slug: string;
-  landlord_id: string;
+  landlord_id?: string;
   name: string;
   description: string;
   type: string;
@@ -19,14 +19,14 @@ export interface PropertyWithRelations {
   neighbourhood_id: string | null;
   university_id: string | null;
   public_address_line: string;
-  private_address_line: string;
-  latitude: number | null;
-  longitude: number | null;
+  private_address_line?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   total_floors: number;
   total_units: number;
-  available_units: number;
-  occupied_units: number;
-  held_units: number;
+  available_units?: number;
+  occupied_units?: number;
+  held_units?: number;
   price_from_kobo: number;
   created_at: string;
   updated_at: string;
@@ -107,7 +107,7 @@ export async function fetchProperties(params: {
     const to = from + pageSize - 1;
 
     let query = supabase
-      .from("properties")
+      .from("public_properties")
       .select(`
         *,
         property_images(*),
@@ -155,7 +155,7 @@ export async function fetchPropertyBySlug(slug: string): Promise<ServiceResult<P
   try {
     const supabase = createClient();
     const { data, error } = await supabase
-      .from("properties")
+      .from("public_properties")
       .select(`
         *,
         property_images(*),
