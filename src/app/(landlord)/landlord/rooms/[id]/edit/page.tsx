@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Video, Globe } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,6 +64,7 @@ export default function EditRoomPage() {
   const [hasBalcony, setHasBalcony] = React.useState(false);
   const [bookingTerms, setBookingTerms] = React.useState("");
   const [roomImages, setRoomImages] = React.useState<UploadedFile[]>([]);
+  const [uploadingMedia, setUploadingMedia] = React.useState<"video" | "panorama" | null>(null);
 
   React.useEffect(() => {
     if (!isSupabaseAuth || !params.id) { setLoading(false); return; }
@@ -86,17 +87,20 @@ export default function EditRoomPage() {
         setHasBalcony(data.has_balcony ?? false);
         setBookingTerms(data.booking_terms ?? "");
 
-        // Load existing room images
+        // Load existing room images (including video/panorama media)
         const { data: images } = await supabase
           .from("unit_images")
-          .select("id, storage_path, public_url, alt_text, position")
+          .select("id, storage_path, public_url, alt_text, position, media_type, video_url, panorama_url")
           .eq("unit_id", params.id)
           .order("position", { ascending: true });
         if (images && images.length > 0) {
-          setRoomImages(images.map((img) => ({
+          setRoomImages(images.map((img: any) => ({
             path: img.storage_path,
             publicUrl: img.public_url ?? undefined,
             alt_text: img.alt_text ?? undefined,
+            media_type: img.media_type ?? "image",
+            video_url: img.video_url ?? undefined,
+            panorama_url: img.panorama_url ?? undefined,
           })));
         }
       }
@@ -135,17 +139,20 @@ export default function EditRoomPage() {
     if (result.error) {
       toast.error("Failed to save", { description: result.error });
     } else {
-      // Persist room images to unit_images table.
+      // Persist room images to unit_images table (including media_type).
       // First delete existing images, then insert the current set.
       const supabase = createClient();
       await supabase.from("unit_images").delete().eq("unit_id", room.id);
       if (roomImages.length > 0) {
-        const imageRows = roomImages.map((img, i) => ({
+        const imageRows = roomImages.map((img: any, i: number) => ({
           unit_id: room.id,
           storage_path: img.path,
           public_url: img.publicUrl ?? null,
           alt_text: img.alt_text ?? `Room photo ${i + 1}`,
           position: i,
+          media_type: img.media_type ?? "image",
+          video_url: img.video_url ?? null,
+          panorama_url: img.panorama_url ?? null,
         }));
         await supabase.from("unit_images").insert(imageRows);
       }
@@ -159,6 +166,44 @@ export default function EditRoomPage() {
   if (!isSupabaseAuth) return <div className="mx-auto max-w-3xl"><PageHeader title="Edit room" /><Card><CardContent className="p-6 text-center text-sm text-muted-foreground">Sign in.</CardContent></Card></div>;
   if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   if (error || !room) return <div className="mx-auto max-w-3xl space-y-4"><Button asChild variant="ghost" size="sm"><Link href="/landlord/rooms">Back</Link></Button><Card><CardContent className="p-6 text-center text-sm text-destructive">{error ?? "Not found"}</CardContent></Card></div>;
+
+  // Upload video or panorama via /api/uploads/room-media
+  async function handleMediaUpload(file: File, mediaType: "video" | "panorama") {
+    if (!params.id) return;
+    setUploadingMedia(mediaType);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("unitId", params.id);
+      formData.append("mediaType", mediaType);
+      formData.append("altText", `${mediaType} tour of room`);
+
+      const res = await fetch("/api/uploads/room-media", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error ?? "Upload failed");
+      }
+
+      const media = data.media;
+      setRoomImages((prev) => [...prev, {
+        path: media.public_url ?? media.video_url ?? media.panorama_url ?? "",
+        publicUrl: media.public_url ?? undefined,
+        alt_text: `${mediaType} tour`,
+        media_type: mediaType,
+        video_url: media.video_url ?? undefined,
+        panorama_url: media.panorama_url ?? undefined,
+      } as any]);
+      toast.success(`${mediaType === "video" ? "Video" : "360 panorama"} uploaded`);
+    } catch (e) {
+      toast.error("Upload failed", { description: e instanceof Error ? e.message : "Unknown error" });
+    } finally {
+      setUploadingMedia(null);
+    }
+  }
+
+  // Existing video and panorama media
+  const existingVideo = roomImages.find((img: any) => img.media_type === "video");
+  const existingPanorama = roomImages.find((img: any) => img.media_type === "panorama");
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -206,10 +251,78 @@ export default function EditRoomPage() {
               endpoint="/api/uploads/room-photo"
               contextField="roomId"
               contextId={params.id}
-              value={roomImages}
-              onChange={setRoomImages}
+              value={roomImages.filter((img: any) => !img.media_type || img.media_type === "image")}
+              onChange={(imgs) => {
+                // Merge image-only uploads with existing video/panorama
+                const media = roomImages.filter((img: any) => img.media_type && img.media_type !== "image");
+                setRoomImages([...imgs, ...media]);
+              }}
               maxFiles={10}
             />
+          </div>
+
+          {/* Video tour upload */}
+          <div className="space-y-2 border-t border-border pt-4">
+            <Label className="flex items-center gap-2"><Video className="h-4 w-4 text-primary" /> Video tour</Label>
+            <p className="text-xs text-muted-foreground">
+              Upload a short video tour of the room (max 50MB). Students can watch it in the gallery.
+              MP4, WebM, or MOV format.
+            </p>
+            {existingVideo ? (
+              <div className="flex items-center gap-3 rounded-lg border border-border p-3">
+                <video src={(existingVideo as any).video_url} className="h-16 w-24 rounded object-cover" muted />
+                <div className="flex-1 text-sm">
+                  <p className="font-medium">Video tour uploaded</p>
+                  <p className="text-xs text-muted-foreground">Will appear in the room gallery</p>
+                </div>
+                <Button variant="ghost" size="sm" className="text-destructive"
+                  onClick={() => setRoomImages(prev => prev.filter((_, i) => i !== roomImages.indexOf(existingVideo)))}>
+                  Remove
+                </Button>
+              </div>
+            ) : uploadingMedia === "video" ? (
+              <div className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> Uploading video…
+              </div>
+            ) : (
+              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground transition-colors hover:bg-muted">
+                <Video className="h-4 w-4" /> Choose video file
+                <input type="file" accept="video/*" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleMediaUpload(f, "video"); e.target.value = ""; }} />
+              </label>
+            )}
+          </div>
+
+          {/* 360 Panorama upload */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2"><Globe className="h-4 w-4 text-primary" /> 360° panorama</Label>
+            <p className="text-xs text-muted-foreground">
+              Upload a 360° equirectangular panorama image (max 20MB). Students can drag to look around the room.
+            </p>
+            {existingPanorama ? (
+              <div className="flex items-center gap-3 rounded-lg border border-border p-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={(existingPanorama as any).panorama_url ?? (existingPanorama as any).publicUrl ?? ""} alt="360 preview" className="h-16 w-24 rounded object-cover" />
+                <div className="flex-1 text-sm">
+                  <p className="font-medium">360° panorama uploaded</p>
+                  <p className="text-xs text-muted-foreground">Students can drag to explore</p>
+                </div>
+                <Button variant="ghost" size="sm" className="text-destructive"
+                  onClick={() => setRoomImages(prev => prev.filter((_, i) => i !== roomImages.indexOf(existingPanorama)))}>
+                  Remove
+                </Button>
+              </div>
+            ) : uploadingMedia === "panorama" ? (
+              <div className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> Uploading panorama…
+              </div>
+            ) : (
+              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground transition-colors hover:bg-muted">
+                <Globe className="h-4 w-4" /> Choose panorama image
+                <input type="file" accept="image/*" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleMediaUpload(f, "panorama"); e.target.value = ""; }} />
+              </label>
+            )}
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" asChild><Link href={`/landlord/rooms/${room.id}`}>Cancel</Link></Button>
