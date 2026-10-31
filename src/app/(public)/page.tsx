@@ -204,40 +204,66 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <div className="h-12" aria-hidden />
+      <div className="h-8" aria-hidden />
 
-      {/* ---------------------------------------------- University locations */}
-      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <SectionHeading
-          eyebrow="Around campus"
-          title="Where students are looking"
-          description="Real verified rooms around UNILAG, UNN and more. Pick a school to start."
-          action={
-            <Button asChild variant="outline" size="sm">
+      {/* ------------------------------------------------- Where we are */}
+      <section className="border-y border-border bg-card/20">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Where you'll find us
+              </p>
+              <h2 className="mt-1 font-display text-xl font-bold tracking-tight sm:text-2xl">
+                Campuses we serve
+              </h2>
+            </div>
+            <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
               <Link href="/universities">
-                All universities
+                All campuses
                 <ChevronRight className="ml-1 h-4 w-4" aria-hidden />
               </Link>
             </Button>
-          }
-        />
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {(liveUniversities ?? []).slice(0, 6).map((u) => (
-            <UniversityCard
-              key={u.id}
-              university={{
-                id: u.id,
-                name: u.name,
-                shortName: u.short_name,
-                slug: u.slug,
-                city: u.city,
-                state: u.state,
-                description: u.description ?? "",
-                popularNeighbourhoods: [],
-                totalListings: 0,
-              }}
-            />
-          ))}
+          </div>
+
+          {/* Horizontal scrollable university strip */}
+          <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
+            {(liveUniversities ?? []).map((u) => {
+              const img = u.slug === "university-of-lagos"
+                ? "/university/unilag.jpg"
+                : u.slug === "university-of-nigeria-nsukka"
+                  ? "/university/unn.jpg"
+                  : null;
+              return (
+                <Link
+                  key={u.id}
+                  href={`/universities/${u.slug}`}
+                  className="group relative h-32 w-56 shrink-0 overflow-hidden rounded-xl border border-border transition-all hover:shadow-lg hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {img ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={img} alt={u.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-card to-accent/20" />
+                  )}
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                  {/* University name at bottom */}
+                  <div className="absolute inset-x-0 bottom-0 p-3">
+                    <p className="text-xs font-bold uppercase tracking-wide text-white/90">
+                      {u.short_name}
+                    </p>
+                    <p className="text-sm font-medium text-white truncate">
+                      {u.name}
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-white/70">
+                      {u.city}, {u.state}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </section>
 
