@@ -217,9 +217,13 @@ export function RoleShell({ role, children }: RoleShellProps) {
         });
         return;
       }
-      // Success — redirect to homepage and refresh to clear server-side cache.
-      router.push("/");
-      router.refresh();
+      // Success — session is now null. The useEffect below will fire
+      // and redirect to /login via router.replace(). We do NOT call
+      // router.push() or router.refresh() here because:
+      // 1. router.push("/") conflicts with the useEffect's router.replace()
+      //    causing "This page couldn't load" errors on client-side transitions.
+      // 2. router.refresh() can race with the useEffect's navigation.
+      // The useEffect handles the redirect cleanly.
     } finally {
       setSigningOut(false);
     }

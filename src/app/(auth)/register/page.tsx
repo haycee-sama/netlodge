@@ -43,6 +43,14 @@ const roleOptions: {
 ];
 
 export default function RegisterPage() {
+  return (
+    <React.Suspense fallback={<div className="h-32 animate-pulse rounded-md bg-muted/40" />}>
+      <RegisterForm />
+    </React.Suspense>
+  );
+}
+
+function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const referralCode = searchParams.get("ref");

@@ -56,8 +56,8 @@ export function SiteHeader() {
       const result = await signOut();
       if (!result.success) {
         const { toast } = await import("sonner");
-        toast.error("Could not sign out", {
-          description: result.error ?? "Please check your connection and try again.",
+        toast.error(t("shell.couldNotSignOut"), {
+          description: result.error ?? t("shell.couldNotSignOutDesc"),
         });
         return;
       }
