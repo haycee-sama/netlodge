@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { roleLabel as formatRoleLabel } from "@/lib/types";
 import { signInWithEmail } from "@/lib/supabase/auth-service";
 import { useI18n } from "@/lib/i18n/context";
+import { useAuth } from "@/lib/auth/auth-context";
 
 export default function LoginPage() {
   return (
@@ -32,9 +33,33 @@ function LoginForm() {
   const params = useSearchParams();
   const redirect = params.get("redirect");
   const { t } = useI18n();
+  const { session, isLoading: authLoading } = useAuth();
   const [showPw, setShowPw] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const [authError, setAuthError] = React.useState<string | null>(null);
+
+  // Client-side redirect: if the user is already authenticated, send
+  // them to their dashboard (or the redirect URL). This replaces the
+  // middleware redirect that caused "This page couldn't load" errors
+  // during client-side navigation.
+  React.useEffect(() => {
+    if (!authLoading && session) {
+      const safeRedirect = redirect && redirect.startsWith("/") && !redirect.startsWith("//")
+        ? redirect
+        : homeRouteForRole(session.role);
+      router.replace(safeRedirect);
+    }
+  }, [authLoading, session, router, redirect]);
+
+  // Show a loading state while checking auth, or while redirecting
+  // an already-authenticated user.
+  if (authLoading || session) {
+    return (
+      <div className="flex h-32 items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden />
+      </div>
+    );
+  }
 
   const {
     register,

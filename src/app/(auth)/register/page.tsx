@@ -29,6 +29,8 @@ import { Logo } from "@/components/shared/logo";
 import { registerSchema, type RegisterInput } from "@/lib/validators";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth/auth-context";
+import { homeRouteForRole } from "@/lib/auth/permissions";
 
 const roleOptions: {
   role: "student" | "landlord" | "manager" | "agent";
@@ -54,9 +56,26 @@ function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const referralCode = searchParams.get("ref");
+  const { session, isLoading: authLoading } = useAuth();
   const [showPw, setShowPw] = React.useState(false);
   const [showConfirm, setShowConfirm] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
+
+  // Client-side redirect: if already authenticated, go to dashboard.
+  React.useEffect(() => {
+    if (!authLoading && session) {
+      router.replace(homeRouteForRole(session.role));
+    }
+  }, [authLoading, session, router]);
+
+  // Show loading state while checking auth.
+  if (authLoading || session) {
+    return (
+      <div className="flex h-32 items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden />
+      </div>
+    );
+  }
 
   // Log the referral click on mount if a ref code is present
   React.useEffect(() => {

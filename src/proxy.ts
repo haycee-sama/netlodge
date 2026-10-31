@@ -138,13 +138,15 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // Redirect authenticated users away from auth pages.
-  if (isAuthPage && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
-    url.searchParams.delete("redirect");
-    return NextResponse.redirect(url);
-  }
+  // NOTE: We do NOT redirect authenticated users away from auth pages
+  // in the middleware. This was previously done here but caused
+  // "This page couldn't load" errors during client-side navigation
+  // (RSC prefetch). When the router requests the RSC payload for
+  // /login, a middleware redirect response confuses the router.
+  // Instead, the client-side AuthProvider/LoginForm handles the
+  // redirect smoothly after the page renders.
+  //
+  // The redirect param validation above still runs for security.
 
   return supabaseResponse;
 }
