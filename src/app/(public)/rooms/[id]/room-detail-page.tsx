@@ -419,11 +419,11 @@ export function RoomDetailPage() {
   );
 }
 
-// ─── Room Image Gallery ──────────────────────────────────────────────
-// A simple carousel that shows all unit_images for a room. Students need
-// to see exactly what they're booking — each room differs in color, space,
-// layout, and furnishing. No external carousel library needed; this uses
-// a scroll-snap container with prev/next buttons and a thumbnail strip.
+// ─── Room Image Gallery (with video + 360 panorama support) ─────────
+// A carousel that shows all unit_images for a room. Supports three media
+// types: image (default), video (HTML5 player), and panorama (drag-to-pan
+// 360 viewer). Media type is determined by the `media_type` column added
+// in migration 0034.
 
 interface RoomImage {
   id: string;
@@ -431,6 +431,78 @@ interface RoomImage {
   storage_path: string;
   alt_text: string;
   position: number;
+  media_type?: "image" | "video" | "panorama";
+  video_url?: string | null;
+  panorama_url?: string | null;
+}
+
+// Simple drag-to-pan 360 panorama viewer (no external library needed).
+function PanoramaViewer({ src, alt }: { src: string; alt: string }) {
+  const [offset, setOffset] = React.useState(0);
+  const draggingRef = React.useRef(false);
+  const startXRef = React.useRef(0);
+  const startOffsetRef = React.useRef(0);
+
+  function onPointerDown(e: React.PointerEvent) {
+    draggingRef.current = true;
+    startXRef.current = e.clientX;
+    startOffsetRef.current = offset;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }
+  function onPointerMove(e: React.PointerEvent) {
+    if (!draggingRef.current) return;
+    const delta = e.clientX - startXRef.current;
+    const newOffset = Math.min(0, Math.max(-50, startOffsetRef.current + delta / 8));
+    setOffset(newOffset);
+  }
+  function onPointerUp() {
+    draggingRef.current = false;
+  }
+
+  return (
+    <div
+      className="relative h-full w-full overflow-hidden touch-none"
+      style={{ cursor: draggingRef.current ? "grabbing" : "grab" }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={alt}
+        className="absolute top-0 h-full select-none"
+        style={{
+          width: "200%",
+          left: 0,
+          transform: `translateX(${offset}%)`,
+          transition: draggingRef.current ? "none" : "transform 0.3s ease",
+          objectFit: "cover",
+        }}
+        draggable={false}
+      />
+      {/* Drag hint */}
+      <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-background/80 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm">
+        ← Drag to look around →
+      </div>
+    </div>
+  );
+}
+
+// Media type badge for thumbnails
+function MediaBadge({ type }: { type?: string }) {
+  if (!type || type === "image") return null;
+  const config: Record<string, { label: string; icon: string }> = {
+    video: { label: "Video", icon: "🎬" },
+    panorama: { label: "360°", icon: "🌐" },
+  };
+  const c = config[type];
+  if (!c) return null;
+  return (
+    <span className="absolute left-1 top-1 rounded bg-black/70 px-1 py-0.5 text-[9px] font-medium text-white">
+      {c.icon} {c.label}
+    </span>
+  );
 }
 
 function RoomImageGallery({ images, identifier }: { images: RoomImage[]; identifier: string }) {
@@ -450,6 +522,7 @@ function RoomImageGallery({ images, identifier }: { images: RoomImage[]; identif
   }
 
   const current = sorted[activeIndex];
+  const mediaType = current.media_type ?? "image";
 
   function goPrev() {
     setActiveIndex((i) => (i === 0 ? sorted.length - 1 : i - 1));
@@ -460,9 +533,25 @@ function RoomImageGallery({ images, identifier }: { images: RoomImage[]; identif
 
   return (
     <div className="mt-6 space-y-3">
-      {/* Main image */}
+      {/* Main media display */}
       <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-border bg-muted">
-        {current.public_url ? (
+        {mediaType === "video" && current.video_url ? (
+          // Video player
+          <video
+            src={current.video_url}
+            poster={current.public_url ?? undefined}
+            controls
+            className="h-full w-full object-cover"
+            aria-label={current.alt_text || `Unit ${identifier} — video`}
+          />
+        ) : mediaType === "panorama" && (current.panorama_url ?? current.public_url) ? (
+          // 360 panorama viewer
+          <PanoramaViewer
+            src={current.panorama_url ?? current.public_url!}
+            alt={current.alt_text || `Unit ${identifier} — 360° view`}
+          />
+        ) : current.public_url ? (
+          // Regular image
           <Image
             src={current.public_url}
             alt={current.alt_text || `Unit ${identifier} — photo ${activeIndex + 1}`}
@@ -477,19 +566,19 @@ function RoomImageGallery({ images, identifier }: { images: RoomImage[]; identif
           </div>
         )}
 
-        {/* Prev/Next buttons (only if more than 1 image) */}
-        {sorted.length > 1 && (
+        {/* Prev/Next buttons (only if more than 1 item) */}
+        {sorted.length > 1 && mediaType !== "video" && (
           <>
             <button
               onClick={goPrev}
-              aria-label="Previous photo"
+              aria-label="Previous"
               className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 shadow-sm backdrop-blur-sm transition-all hover:scale-110 hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <ChevronLeft className="h-5 w-5" aria-hidden />
             </button>
             <button
               onClick={goNext}
-              aria-label="Next photo"
+              aria-label="Next"
               className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 shadow-sm backdrop-blur-sm transition-all hover:scale-110 hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <ChevronRight className="h-5 w-5" aria-hidden />
@@ -501,38 +590,45 @@ function RoomImageGallery({ images, identifier }: { images: RoomImage[]; identif
             </div>
           </>
         )}
+
+        {/* Media type indicator (top-left) */}
+        {mediaType !== "image" && (
+          <div className="absolute left-3 top-3 rounded-md bg-background/90 px-2 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
+            {mediaType === "video" ? "🎬 Video" : "🌐 360° Tour"}
+          </div>
+        )}
       </div>
 
-      {/* Thumbnail strip (only if more than 1 image) */}
+      {/* Thumbnail strip (only if more than 1 item) */}
       {sorted.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {sorted.map((img, i) => (
-            <button
-              key={img.id}
-              onClick={() => setActiveIndex(i)}
-              aria-label={`View photo ${i + 1}`}
-              aria-pressed={i === activeIndex}
-              className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-md border-2 transition-all ${
-                i === activeIndex
-                  ? "border-primary ring-2 ring-primary/20"
-                  : "border-border opacity-60 hover:opacity-100"
-              }`}
-            >
-              {img.public_url ? (
-                <Image
-                  src={img.public_url}
-                  alt=""
-                  fill
-                  sizes="96px"
-                  className="object-cover"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center">
-                  <DoorOpen className="h-4 w-4 text-muted-foreground" aria-hidden />
-                </div>
-              )}
-            </button>
-          ))}
+          {sorted.map((img, i) => {
+            const mt = img.media_type ?? "image";
+            const thumbUrl = mt === "video" ? img.public_url : (img.panorama_url ?? img.public_url);
+            return (
+              <button
+                key={img.id}
+                onClick={() => setActiveIndex(i)}
+                aria-label={`View ${mt} ${i + 1}`}
+                aria-pressed={i === activeIndex}
+                className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-md border-2 transition-all ${
+                  i === activeIndex
+                    ? "border-primary ring-2 ring-primary/20"
+                    : "border-border opacity-60 hover:opacity-100"
+                }`}
+              >
+                {thumbUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={thumbUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <DoorOpen className="h-4 w-4 text-muted-foreground" aria-hidden />
+                  </div>
+                )}
+                <MediaBadge type={mt} />
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
