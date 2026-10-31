@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { PageHeader } from "@/components/shared/page-components";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/context";
 import { landlordProfileSchema, type LandlordProfileInput } from "@/lib/validators";
 import { initials } from "@/lib/utils/format";
 import { createClient } from "@/lib/supabase/client";
@@ -19,6 +20,7 @@ import { toast } from "sonner";
 
 export default function LandlordProfilePage() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const [loading, setLoading] = React.useState(true);
 
   const {
@@ -48,7 +50,7 @@ export default function LandlordProfilePage() {
       .then(({ data, error }) => {
         if (error && error.code !== "PGRST116") {
           // PGRST116 = no row found yet — not an error, just empty.
-          toast.error("Could not load profile", { description: error.message });
+          toast.error(t("common.profile.couldNotLoad"), { description: error.message });
         }
         if (data) {
           reset({
@@ -82,9 +84,9 @@ export default function LandlordProfilePage() {
       updated_at: new Date().toISOString(),
     });
     if (error) {
-      toast.error("Could not save profile", { description: error.message });
+      toast.error(t("common.profile.couldNotSave"), { description: error.message });
     } else {
-      toast.success("Profile saved");
+      toast.success(t("common.profile.saved"));
     }
   }
 
@@ -98,7 +100,7 @@ export default function LandlordProfilePage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <PageHeader eyebrow="Profile" title="Landlord profile" description="Your public profile visible to students when they view your listings." />
+      <PageHeader eyebrow={t("common.profile.eyebrow")} title={t("landlord.profile.title")} description={t("landlord.profile.description")} />
 
       <Card>
         <CardContent className="flex items-center gap-4 p-5">
@@ -110,38 +112,38 @@ export default function LandlordProfilePage() {
           <div className="space-y-1">
             <p className="font-display text-lg font-semibold">{session?.firstName} {session?.lastName}</p>
             <p className="text-sm text-muted-foreground">{session?.email}</p>
-            <Badge variant="outline">Landlord</Badge>
+            <Badge variant="outline">{t("landlord.profile.landlordBadge")}</Badge>
           </div>
         </CardContent>
       </Card>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Building className="h-4 w-4 text-primary" aria-hidden />Business details</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Building className="h-4 w-4 text-primary" aria-hidden />{t("landlord.profile.businessDetails")}</CardTitle></CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="displayName">Display name</Label>
+              <Label htmlFor="displayName">{t("landlord.profile.displayName")}</Label>
               <Input id="displayName" {...register("displayName")} />
               {errors.displayName && <p className="text-xs text-destructive">{errors.displayName.message}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="businessName">Business name (optional)</Label>
-              <Input id="businessName" {...register("businessName")} placeholder="e.g. Akoka Heights Ltd." />
+              <Label htmlFor="businessName">{t("landlord.profile.businessName")}</Label>
+              <Input id="businessName" {...register("businessName")} placeholder={t("landlord.profile.businessNamePlaceholder")} />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="officeAddress">Office address (optional)</Label>
-              <Input id="officeAddress" {...register("officeAddress")} placeholder="e.g. 14 St. Finbarr's College Road, Akoka, Lagos" />
+              <Label htmlFor="officeAddress">{t("landlord.profile.officeAddress")}</Label>
+              <Input id="officeAddress" {...register("officeAddress")} placeholder={t("landlord.profile.officeAddressPlaceholder")} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="rcNumber">RC number (optional)</Label>
-              <Input id="rcNumber" placeholder="e.g. RC 1234567" {...register("rcNumber")} />
+              <Label htmlFor="rcNumber">{t("landlord.profile.rcNumber")}</Label>
+              <Input id="rcNumber" placeholder={t("landlord.profile.rcNumberPlaceholder")} {...register("rcNumber")} />
             </div>
           </CardContent>
         </Card>
 
         <div className="flex justify-end">
           <Button type="submit" size="lg" disabled={isSubmitting}>
-            {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> Saving…</> : <><Save className="mr-2 h-4 w-4" aria-hidden /> Save profile</>}
+            {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> {t("common.profile.saving")}</> : <><Save className="mr-2 h-4 w-4" aria-hidden /> {t("landlord.profile.saveProfile")}</>}
           </Button>
         </div>
       </form>

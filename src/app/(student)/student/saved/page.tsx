@@ -10,6 +10,7 @@ import { PageHeader, EmptyState } from "@/components/shared/page-components";
 import { VerificationBadge } from "@/components/shared/status-badges";
 import { Price } from "@/components/shared/price";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/context";
 import { createClient } from "@/lib/supabase/client";
 import { formatNgn, formatRelativeTime } from "@/lib/utils/format";
 import { toast } from "sonner";
@@ -33,6 +34,7 @@ interface SavedPropertyRow {
 
 export default function StudentSavedPage() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const [saved, setSaved] = React.useState<SavedPropertyRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -73,18 +75,18 @@ export default function StudentSavedPage() {
         .eq("user_id", session!.userId);
       if (error) throw new Error(error.message);
       setSaved((s) => s.filter((x) => x.id !== id));
-      toast.success("Removed from saved");
+      toast.success(t("student.saved.removedToast"));
     } catch (e) {
-      toast.error("Could not remove", { description: e instanceof Error ? e.message : "" });
+      toast.error(t("student.saved.couldNotRemove"), { description: e instanceof Error ? e.message : "" });
     }
   }
 
   if (!isSupabaseAuth) {
     return (
       <div className="mx-auto max-w-7xl space-y-6">
-        <PageHeader eyebrow="Your shortlist" title="Saved properties" />
+        <PageHeader eyebrow={t("student.saved.eyebrow")} title={t("student.saved.title")} />
         <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">
-          Sign in with a real account to view your saved properties.
+          {t("student.saved.signInPrompt")}
         </CardContent></Card>
       </div>
     );
@@ -93,16 +95,16 @@ export default function StudentSavedPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader
-        eyebrow="Your shortlist"
-        title="Saved properties"
-        description="Properties you've bookmarked while browsing. Tap the heart icon on any listing to add it here."
+        eyebrow={t("student.saved.eyebrow")}
+        title={t("student.saved.title")}
+        description={t("student.saved.description")}
       />
 
       {error && (
         <Card className="border-destructive/40 bg-destructive/5">
           <CardContent className="flex items-center justify-between p-4 text-sm text-destructive">
             <span>{error}</span>
-            <Button variant="outline" size="sm" onClick={fetchSaved}>Retry</Button>
+            <Button variant="outline" size="sm" onClick={fetchSaved}>{t("common.retry")}</Button>
           </CardContent>
         </Card>
       )}
@@ -112,9 +114,9 @@ export default function StudentSavedPage() {
       ) : saved.length === 0 ? (
         <EmptyState
           icon={<Heart className="h-5 w-5" aria-hidden />}
-          title="No saved properties yet"
-          description="Tap the heart icon on any property listing to save it here."
-          action={<Button asChild><Link href="/properties"><Search className="mr-2 h-4 w-4" aria-hidden /> Browse properties</Link></Button>}
+          title={t("student.saved.noSaved.title")}
+          description={t("student.saved.noSaved.desc")}
+          action={<Button asChild><Link href="/properties"><Search className="mr-2 h-4 w-4" aria-hidden /> {t("student.dashboard.browseProperties")}</Link></Button>}
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -137,13 +139,13 @@ export default function StudentSavedPage() {
                     {p.price_from_kobo > 0 ? (
                       <Price kobo={p.price_from_kobo} />
                     ) : (
-                      <span className="text-sm text-muted-foreground">Price on request</span>
+                      <span className="text-sm text-muted-foreground">{t("student.saved.priceOnRequest")}</span>
                     )}
                     <Button variant="ghost" size="sm" onClick={() => removeItem(s.id)} className="text-destructive hover:bg-destructive/10">
-                      <Trash2 className="mr-1 h-3.5 w-3.5" aria-hidden /> Remove
+                      <Trash2 className="mr-1 h-3.5 w-3.5" aria-hidden /> {t("student.saved.remove")}
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">Saved {formatRelativeTime(s.created_at)}</p>
+                  <p className="text-xs text-muted-foreground">{t("student.saved.savedAt", { time: formatRelativeTime(s.created_at) })}</p>
                 </CardContent>
               </Card>
             );

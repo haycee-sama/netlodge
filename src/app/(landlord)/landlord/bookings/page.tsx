@@ -8,6 +8,7 @@ import { PageHeader, EmptyState } from "@/components/shared/page-components";
 import { BookingStatusBadge } from "@/components/shared/status-badges";
 import { Price } from "@/components/shared/price";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/context";
 import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime } from "@/lib/utils/format";
 
@@ -26,6 +27,7 @@ interface LandlordBooking {
 
 export default function LandlordBookingsPage() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const [bookings, setBookings] = React.useState<LandlordBooking[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -53,9 +55,9 @@ export default function LandlordBookingsPage() {
   if (!isSupabaseAuth) {
     return (
       <div className="mx-auto max-w-7xl space-y-6">
-        <PageHeader eyebrow="Bookings" title="All bookings" />
+        <PageHeader eyebrow={t("landlord.bookings.eyebrow")} title={t("landlord.bookings.title")} />
         <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">
-          Sign in with a real landlord account to view bookings.
+          {t("landlord.bookings.signInPrompt")}
         </CardContent></Card>
       </div>
     );
@@ -68,7 +70,7 @@ export default function LandlordBookingsPage() {
   if (error) {
     return (
       <div className="mx-auto max-w-7xl space-y-6">
-        <PageHeader eyebrow="Bookings" title="All bookings" />
+        <PageHeader eyebrow={t("landlord.bookings.eyebrow")} title={t("landlord.bookings.title")} />
         <Card className="border-destructive/40 bg-destructive/5">
           <CardContent className="p-4 text-sm text-destructive">{error}</CardContent>
         </Card>
@@ -79,12 +81,12 @@ export default function LandlordBookingsPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader
-        eyebrow="Bookings"
-        title="All bookings"
-        description="Every booking across all your properties — pending, confirmed, active and historical."
+        eyebrow={t("landlord.bookings.eyebrow")}
+        title={t("landlord.bookings.title")}
+        description={t("landlord.bookings.description")}
       />
       {bookings.length === 0 ? (
-        <EmptyState icon={<CalendarCheck className="h-5 w-5" aria-hidden />} title="No bookings yet" description="Bookings will appear here as students reserve rooms." />
+        <EmptyState icon={<CalendarCheck className="h-5 w-5" aria-hidden />} title={t("landlord.bookings.noBookings.title")} description={t("landlord.bookings.noBookings.desc")} />
       ) : (
         <Card>
           <CardContent className="p-0">
@@ -97,12 +99,12 @@ export default function LandlordBookingsPage() {
                       <BookingStatusBadge status={b.status as any} />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {b.reference} · {b.rentable_units?.[0]?.identifier ?? "Unit"} · {formatRelativeTime(b.created_at)}
+                      {b.reference} · {b.rentable_units?.[0]?.identifier ?? t("common.unit")} · {formatRelativeTime(b.created_at)}
                     </p>
                   </div>
                   <div className="text-right">
                     <Price kobo={b.total_kobo} />
-                    <p className="text-xs text-muted-foreground">{b.outstanding_kobo > 0 ? "Outstanding" : "Paid"}</p>
+                    <p className="text-xs text-muted-foreground">{b.outstanding_kobo > 0 ? t("student.dashboard.outstanding") : t("student.dashboard.paid")}</p>
                   </div>
                 </li>
               ))}

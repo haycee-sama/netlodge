@@ -10,10 +10,12 @@ import { PageHeader } from "@/components/shared/page-components";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/context";
 import { useNotificationPrefs } from "@/lib/hooks/use-notification-prefs";
 
 export default function StudentSettingsPage() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const { prefs, loading, error, updatePref, savingKey } = useNotificationPrefs();
 
   const notifItems: {
@@ -21,29 +23,29 @@ export default function StudentSettingsPage() {
     label: string;
     desc: string;
   }[] = [
-    { key: "email_enabled", label: "Email notifications", desc: "Booking updates, payment confirmations" },
-    { key: "sms_enabled", label: "SMS notifications", desc: "Critical alerts only (may incur charges)" },
-    { key: "push_enabled", label: "Push notifications", desc: "Real-time alerts in your browser" },
-    { key: "urgent_alerts", label: "Urgent alerts", desc: "Booking expirations, payment failures" },
-    { key: "daily_digest", label: "Daily digest", desc: "A summary of your activity each day" },
+    { key: "email_enabled", label: t("common.settings.notif.emailLabel"), desc: t("common.settings.notif.emailDesc") },
+    { key: "sms_enabled", label: t("common.settings.notif.smsLabel"), desc: t("common.settings.notif.smsDesc") },
+    { key: "push_enabled", label: t("common.settings.notif.pushLabel"), desc: t("common.settings.notif.pushDesc") },
+    { key: "urgent_alerts", label: t("common.settings.notif.urgentLabel"), desc: t("common.settings.notif.urgentDesc") },
+    { key: "daily_digest", label: t("common.settings.notif.digestLabel"), desc: t("common.settings.notif.digestDesc") },
   ];
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader
-        eyebrow="Settings"
-        title="Preferences"
-        description="Customise your NetLodge experience — appearance, notifications and locale."
+        eyebrow={t("common.settings.eyebrow")}
+        title={t("common.settings.title")}
+        description={t("common.settings.description")}
       />
 
       {/* Appearance */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Appearance</CardTitle>
+          <CardTitle className="text-base">{t("common.settings.appearance")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <Label>Colour theme</Label>
-          <p className="text-xs text-muted-foreground">Choose Light, Dark, or follow your system preference.</p>
+          <Label>{t("common.settings.colourTheme")}</Label>
+          <p className="text-xs text-muted-foreground">{t("common.settings.colourThemeDesc")}</p>
           <ThemeToggle />
         </CardContent>
       </Card>
@@ -53,14 +55,14 @@ export default function StudentSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Bell className="h-4 w-4 text-primary" aria-hidden />
-            Notifications
+            {t("common.settings.notifications")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
             <div className="flex items-start gap-2 rounded-md bg-destructive/5 p-3 text-xs text-destructive">
               <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-              <span>Could not load preferences: {error}</span>
+              <span>{t("common.settings.couldNotLoadPrefs", { error })}</span>
             </div>
           )}
           {loading ? (
@@ -91,22 +93,22 @@ export default function StudentSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Globe className="h-4 w-4 text-primary" aria-hidden />
-            Locale
+            {t("common.settings.locale")}
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="language">Language</Label>
+            <Label htmlFor="language">{t("common.settings.language")}</Label>
             <LanguageSwitcher />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="currency">Currency</Label>
+            <Label htmlFor="currency">{t("common.settings.currency")}</Label>
             <Select defaultValue="ngn">
               <SelectTrigger id="currency">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ngn">Nigerian Naira (₦)</SelectItem>
+                <SelectItem value="ngn">{t("common.settings.currencyNgn")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -118,16 +120,16 @@ export default function StudentSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Mail className="h-4 w-4 text-primary" aria-hidden />
-            Account
+            {t("common.settings.account")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Email</span>
+            <span className="text-muted-foreground">{t("common.profile.email")}</span>
             <span>{session?.email}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Role</span>
+            <span className="text-muted-foreground">{t("common.settings.role")}</span>
             <span className="capitalize">{session?.role}</span>
           </div>
         </CardContent>

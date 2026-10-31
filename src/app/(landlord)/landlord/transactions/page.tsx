@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader, EmptyState } from "@/components/shared/page-components";
 import { PaymentStatusBadge } from "@/components/shared/status-badges";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/context";
 import { fetchLandlordPayments, type LandlordPaymentWithRelations } from "@/lib/supabase/payment-service";
 import { formatNgn, formatDateTime } from "@/lib/utils/format";
 import { exportPaymentsCsv } from "@/lib/utils/csv-export";
@@ -15,6 +16,7 @@ import { downloadPaymentReceiptPdf } from "@/lib/utils/receipt-pdf";
 
 export default function LandlordTransactionsPage() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const [payments, setPayments] = React.useState<LandlordPaymentWithRelations[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -46,9 +48,9 @@ export default function LandlordTransactionsPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader
-        eyebrow="Finances"
-        title="Transactions"
-        description="Every payment received across all your properties. All statuses are backend-verified."
+        eyebrow={t("landlord.transactions.eyebrow")}
+        title={t("landlord.transactions.title")}
+        description={t("landlord.transactions.description")}
         actions={
           <Button
             variant="outline"
@@ -56,7 +58,7 @@ export default function LandlordTransactionsPage() {
             onClick={() => exportPaymentsCsv(myPayments)}
             disabled={myPayments.length === 0}
           >
-            <Download className="mr-2 h-4 w-4" aria-hidden /> Export CSV
+            <Download className="mr-2 h-4 w-4" aria-hidden /> {t("landlord.transactions.exportCsv")}
           </Button>
         }
       />
@@ -64,19 +66,19 @@ export default function LandlordTransactionsPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardContent className="space-y-1 p-5">
-            <p className="text-xs text-muted-foreground">Gross received</p>
+            <p className="text-xs text-muted-foreground">{t("landlord.transactions.grossReceived")}</p>
             <p className="font-display text-2xl font-bold">{formatNgn(total)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="space-y-1 p-5">
-            <p className="text-xs text-muted-foreground">Payment fees</p>
+            <p className="text-xs text-muted-foreground">{t("landlord.transactions.paymentFees")}</p>
             <p className="font-display text-2xl font-bold text-destructive">−{formatNgn(fees)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="space-y-1 p-5">
-            <p className="text-xs text-muted-foreground">Net (before platform fee)</p>
+            <p className="text-xs text-muted-foreground">{t("landlord.transactions.netBeforeFee")}</p>
             <p className="font-display text-2xl font-bold text-success">{formatNgn(net)}</p>
           </CardContent>
         </Card>
@@ -89,21 +91,21 @@ export default function LandlordTransactionsPage() {
       ) : !isSupabaseAuth ? (
         <EmptyState
           icon={<Receipt className="h-5 w-5" aria-hidden />}
-          title="No transactions yet"
-          description="Sign in with a real landlord account to view your transactions."
+          title={t("landlord.transactions.noTransactions.title")}
+          description={t("landlord.transactions.signInPrompt")}
         />
       ) : error ? (
         <EmptyState
           icon={<Receipt className="h-5 w-5" aria-hidden />}
-          title="Could not load transactions"
+          title={t("landlord.transactions.couldNotLoad")}
           description={error}
-          action={<Button variant="outline" onClick={() => window.location.reload()}>Retry</Button>}
+          action={<Button variant="outline" onClick={() => window.location.reload()}>{t("common.retry")}</Button>}
         />
       ) : myPayments.length === 0 ? (
         <EmptyState
           icon={<Receipt className="h-5 w-5" aria-hidden />}
-          title="No transactions yet"
-          description="Payments will appear here when students book your rooms."
+          title={t("landlord.transactions.noTransactions.title")}
+          description={t("landlord.transactions.noTransactions.desc")}
         />
       ) : (
         <Card>
@@ -118,23 +120,23 @@ export default function LandlordTransactionsPage() {
                         <p className="font-medium">{p.reference}</p>
                         <PaymentStatusBadge status={p.status} />
                         {p.confirmed_by_backend && (
-                          <Badge variant="outline" className="text-xs text-success">Backend-verified</Badge>
+                          <Badge variant="outline" className="text-xs text-success">{t("student.payments.backendVerified")}</Badge>
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {p.channel.toUpperCase()} · {formatDateTime(p.initiated_at)}
-                        {booking && ` · Booking ${booking.reference}`}
+                        {booking && ` · ${t("student.payments.bookingRef", { ref: booking.reference })}`}
                         {booking?.properties && ` · ${booking.properties.name}`}
-                        {p.gateway_reference && ` · Gateway ${p.gateway_reference}`}
+                        {p.gateway_reference && ` · ${t("student.payments.gateway", { ref: p.gateway_reference })}`}
                       </p>
                       {p.failure_reason && (
-                        <p className="text-xs text-destructive">Reason: {p.failure_reason}</p>
+                        <p className="text-xs text-destructive">{t("student.payments.reason", { reason: p.failure_reason })}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <p className="font-medium">{formatNgn(p.amount_kobo)}</p>
-                        <p className="text-xs text-muted-foreground">fee {formatNgn(p.fee_kobo)}</p>
+                        <p className="text-xs text-muted-foreground">{t("landlord.payouts.fee", { amount: formatNgn(p.fee_kobo) })}</p>
                       </div>
                       {p.status === "successful" && p.confirmed_by_backend && (
                         <Button
@@ -150,8 +152,8 @@ export default function LandlordTransactionsPage() {
                           className="shrink-0"
                         >
                           <FileDown className="mr-2 h-3.5 w-3.5" aria-hidden />
-                          <span className="hidden sm:inline">Receipt</span>
-                          <span className="sm:hidden">PDF</span>
+                          <span className="hidden sm:inline">{t("landlord.transactions.receipt")}</span>
+                          <span className="sm:hidden">{t("landlord.transactions.receiptPdf")}</span>
                         </Button>
                       )}
                     </div>

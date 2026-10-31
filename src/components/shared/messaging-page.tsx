@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { PageHeader, EmptyState } from "@/components/shared/page-components";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/context";
 import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime, initials } from "@/lib/utils/format";
 import { toast } from "sonner";
@@ -45,6 +46,7 @@ interface MessagingProps {
 export function MessagingPage({ role }: MessagingProps) {
   const router = useRouter();
   const { session } = useAuth();
+  const { t } = useI18n();
   const [conversations, setConversations] = React.useState<Conversation[]>([]);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [messages, setMessages] = React.useState<Message[]>([]);
@@ -74,7 +76,7 @@ export function MessagingPage({ role }: MessagingProps) {
       .order("last_message_at", { ascending: false });
 
     if (error) {
-      toast.error("Could not load conversations", { description: error.message });
+      toast.error(t("common.messaging.couldNotLoadConversations"), { description: error.message });
       setLoadingList(false);
       return;
     }
@@ -83,7 +85,7 @@ export function MessagingPage({ role }: MessagingProps) {
     const enriched = await Promise.all(
       (data ?? []).map(async (c: any) => {
         const other = role === "student" ? c.landlord : c.student;
-        const otherName = other ? `${other.first_name} ${other.last_name}`.trim() : "Unknown";
+        const otherName = other ? `${other.first_name} ${other.last_name}`.trim() : "—";
         const otherId = role === "student" ? c.landlord_id : c.student_id;
 
         const { data: lastMsg } = await supabase
@@ -138,7 +140,7 @@ export function MessagingPage({ role }: MessagingProps) {
       .limit(100)
       .then(({ data, error }) => {
         if (error) {
-          toast.error("Could not load messages", { description: error.message });
+          toast.error(t("common.messaging.couldNotLoadMessages"), { description: error.message });
         } else {
           setMessages((data ?? []) as Message[]);
         }
@@ -210,7 +212,7 @@ export function MessagingPage({ role }: MessagingProps) {
     });
 
     if (error) {
-      toast.error("Could not send message", { description: error.message });
+      toast.error(t("common.messaging.couldNotSend"), { description: error.message });
       setDraft(body); // restore the draft
     } else {
       // Update last_message_at on the conversation
@@ -227,9 +229,9 @@ export function MessagingPage({ role }: MessagingProps) {
   if (!isSupabaseAuth) {
     return (
       <div className="mx-auto max-w-5xl space-y-6">
-        <PageHeader eyebrow="Messages" title="In-app messaging" />
+        <PageHeader eyebrow={t("common.messaging.eyebrow")} title={t("common.messaging.title")} />
         <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">
-          Sign in to view your messages.
+          {t("common.messaging.signInPrompt")}
         </CardContent></Card>
       </div>
     );
@@ -238,18 +240,18 @@ export function MessagingPage({ role }: MessagingProps) {
   return (
     <div className="mx-auto max-w-6xl space-y-4">
       <PageHeader
-        eyebrow="Messages"
-        title="In-app messaging"
+        eyebrow={t("common.messaging.eyebrow")}
+        title={t("common.messaging.title")}
         description={role === "student"
-          ? "Chat with landlords about rooms, bookings, and maintenance."
-          : "Respond to student enquiries about your properties."}
+          ? t("common.messaging.descStudent")
+          : t("common.messaging.descLandlord")}
       />
 
       <div className="grid gap-4 lg:grid-cols-[320px_1fr] h-[600px]">
         {/* Conversation list */}
         <Card className="flex flex-col overflow-hidden">
           <div className="border-b border-border p-3">
-            <p className="text-sm font-semibold">Conversations</p>
+            <p className="text-sm font-semibold">{t("common.messaging.conversations")}</p>
           </div>
           <div className="flex-1 overflow-y-auto">
             {loadingList ? (
@@ -258,7 +260,7 @@ export function MessagingPage({ role }: MessagingProps) {
               </div>
             ) : conversations.length === 0 ? (
               <div className="p-4 text-center text-sm text-muted-foreground">
-                No conversations yet.
+                {t("common.messaging.noConversations")}
               </div>
             ) : (
               <ul className="divide-y divide-border">
@@ -286,7 +288,7 @@ export function MessagingPage({ role }: MessagingProps) {
                           <p className="truncate text-xs text-muted-foreground">{c.property_name}</p>
                         )}
                         <p className="truncate text-xs text-muted-foreground">
-                          {c.last_message ?? "No messages yet"}
+                          {c.last_message ?? t("common.messaging.noMessagesYet")}
                         </p>
                       </div>
                       {c.unread_count > 0 && (
@@ -328,7 +330,7 @@ export function MessagingPage({ role }: MessagingProps) {
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="py-8 text-center text-sm text-muted-foreground">
-                    No messages yet. Start the conversation.
+                    {t("common.messaging.noMessagesYet")}
                   </div>
                 ) : (
                   messages.map((m) => {
@@ -366,7 +368,7 @@ export function MessagingPage({ role }: MessagingProps) {
                         sendMessage();
                       }
                     }}
-                    placeholder="Type a message…"
+                    placeholder={t("common.messaging.typePlaceholder")}
                     rows={1}
                     className="flex-1 resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     style={{ maxHeight: "120px" }}
@@ -381,8 +383,8 @@ export function MessagingPage({ role }: MessagingProps) {
             <div className="flex flex-1 items-center justify-center">
               <EmptyState
                 icon={<MessageSquare className="h-5 w-5" aria-hidden />}
-                title="Select a conversation"
-                description="Choose a conversation from the list to start chatting."
+                title={t("common.messaging.selectConversation.title")}
+                description={t("common.messaging.selectConversation.desc")}
               />
             </div>
           )}

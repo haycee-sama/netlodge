@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, EmptyState } from "@/components/shared/page-components";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/context";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { toast } from "sonner";
 
@@ -32,6 +33,7 @@ const TYPE_ICON: Record<string, string> = {
 
 export default function StudentNotificationsPage() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const [items, setItems] = React.useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
@@ -57,7 +59,7 @@ export default function StudentNotificationsPage() {
       method: "POST", credentials: "include",
     });
     const data = await res.json();
-    if (!res.ok) { toast.error("Could not mark as read", { description: data.error }); return; }
+    if (!res.ok) { toast.error(t("common.notifications.couldNotMarkRead"), { description: data.error }); return; }
     setItems((arr) => arr.map((n) => n.id === id ? { ...n, read: true } : n));
     setUnreadCount((c) => Math.max(0, c - 1));
   }
@@ -67,18 +69,18 @@ export default function StudentNotificationsPage() {
       method: "POST", credentials: "include",
     });
     const data = await res.json();
-    if (!res.ok) { toast.error("Could not mark all as read", { description: data.error }); return; }
+    if (!res.ok) { toast.error(t("common.notifications.couldNotMarkAll"), { description: data.error }); return; }
     setItems((arr) => arr.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
-    toast.success("All notifications marked as read");
+    toast.success(t("common.notifications.allMarkedRead"));
   }
 
   if (!isSupabaseAuth) {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
-        <PageHeader eyebrow="Notifications" title="Your notifications" />
+        <PageHeader eyebrow={t("common.notifications.eyebrow")} title={t("common.notifications.title")} />
         <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">
-          Sign in with a real account to view notifications.
+          {t("common.notifications.signInPrompt")}
         </CardContent></Card>
       </div>
     );
@@ -87,12 +89,16 @@ export default function StudentNotificationsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader
-        eyebrow="Notifications"
-        title="Your notifications"
-        description={unreadCount > 0 ? `You have ${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}.` : "You're all caught up."}
+        eyebrow={t("common.notifications.eyebrow")}
+        title={t("common.notifications.title")}
+        description={unreadCount > 0
+          ? (unreadCount === 1
+            ? t("common.notifications.unreadDesc.singular", { n: unreadCount })
+            : t("common.notifications.unreadDesc.plural", { n: unreadCount }))
+          : t("common.notifications.allCaughtUp")}
         actions={unreadCount > 0 ? (
           <Button variant="outline" size="sm" onClick={markAllRead} disabled={loading}>
-            <CheckCheck className="mr-2 h-4 w-4" /> Mark all read
+            <CheckCheck className="mr-2 h-4 w-4" /> {t("common.notifications.markAllRead")}
           </Button>
         ) : undefined}
       />
@@ -101,7 +107,7 @@ export default function StudentNotificationsPage() {
         <Card className="border-destructive/40 bg-destructive/5">
           <CardContent className="flex items-center justify-between p-4 text-sm text-destructive">
             <span>{error}</span>
-            <Button variant="outline" size="sm" onClick={fetchNotifications}>Retry</Button>
+            <Button variant="outline" size="sm" onClick={fetchNotifications}>{t("common.retry")}</Button>
           </CardContent>
         </Card>
       )}
@@ -111,8 +117,8 @@ export default function StudentNotificationsPage() {
       ) : items.length === 0 ? (
         <EmptyState
           icon={<BellOff className="h-5 w-5" aria-hidden />}
-          title="No notifications"
-          description="You'll see updates about your bookings, payments, and support tickets here."
+          title={t("common.notifications.noNotifications.title")}
+          description={t("common.notifications.noNotifications.desc")}
         />
       ) : (
         <Card>
@@ -124,18 +130,18 @@ export default function StudentNotificationsPage() {
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex items-center gap-2">
                       <p className={`text-sm ${!n.read ? "font-semibold" : "font-medium"}`}>{n.title}</p>
-                      {!n.read && <Badge variant="outline" className="text-xs text-primary">New</Badge>}
+                      {!n.read && <Badge variant="outline" className="text-xs text-primary">{t("common.notifications.new")}</Badge>}
                     </div>
                     <p className="text-sm text-muted-foreground">{n.body}</p>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span>{formatRelativeTime(n.created_at)}</span>
                       {n.href && (
-                        <Link href={n.href} className="text-primary hover:underline">View →</Link>
+                        <Link href={n.href} className="text-primary hover:underline">{t("common.notifications.view")}</Link>
                       )}
                     </div>
                   </div>
                   {!n.read && (
-                    <Button variant="ghost" size="sm" onClick={() => markOne(n.id)} title="Mark as read">
+                    <Button variant="ghost" size="sm" onClick={() => markOne(n.id)} title={t("common.notifications.markAsRead")}>
                       <Check className="h-4 w-4" />
                     </Button>
                   )}

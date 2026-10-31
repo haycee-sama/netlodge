@@ -11,12 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { PageHeader } from "@/components/shared/page-components";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/context";
 import { createClient } from "@/lib/supabase/client";
 import { initials } from "@/lib/utils/format";
 import { toast } from "sonner";
 
 export default function StudentProfilePage() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const [profile, setProfile] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
@@ -30,7 +32,7 @@ export default function StudentProfilePage() {
       .eq("id", session!.userId)
       .single()
       .then(({ data, error }) => {
-        if (error) toast.error("Could not load profile");
+        if (error) toast.error(t("common.profile.couldNotLoad"));
         setProfile(data);
         setLoading(false);
       });
@@ -50,9 +52,9 @@ export default function StudentProfilePage() {
       updated_at: new Date().toISOString(),
     }).eq("id", session!.userId);
     if (error) {
-      toast.error("Could not save profile", { description: error.message });
+      toast.error(t("common.profile.couldNotSave"), { description: error.message });
     } else {
-      toast.success("Profile updated");
+      toast.success(t("common.profile.saved"));
     }
     setSaving(false);
   }
@@ -60,8 +62,8 @@ export default function StudentProfilePage() {
   if (!isSupabaseAuth) {
     return (
       <div className="mx-auto max-w-2xl space-y-6">
-        <PageHeader eyebrow="Account" title="Your profile" />
-        <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">Sign in to view your profile.</CardContent></Card>
+        <PageHeader eyebrow={t("common.profile.eyebrow")} title={t("common.profile.title")} />
+        <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">{t("common.profile.signInPrompt")}</CardContent></Card>
       </div>
     );
   }
@@ -70,7 +72,7 @@ export default function StudentProfilePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <PageHeader eyebrow="Account" title="Your profile" description="Update your personal information." />
+      <PageHeader eyebrow={t("common.profile.eyebrow")} title={t("common.profile.title")} description={t("common.profile.description")} />
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -89,29 +91,29 @@ export default function StudentProfilePage() {
           <form onSubmit={handleSave} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label htmlFor="firstName">First name</Label>
+                <Label htmlFor="firstName">{t("common.profile.firstName")}</Label>
                 <Input id="firstName" name="firstName" defaultValue={profile?.first_name ?? ""} />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="lastName">Last name</Label>
+                <Label htmlFor="lastName">{t("common.profile.lastName")}</Label>
                 <Input id="lastName" name="lastName" defaultValue={profile?.last_name ?? ""} />
               </div>
             </div>
             <div className="space-y-1">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("common.profile.email")}</Label>
               <Input id="email" value={profile?.email ?? ""} disabled className="bg-muted/50" />
-              <p className="text-xs text-muted-foreground">Email cannot be changed here. Use Supabase Auth settings.</p>
+              <p className="text-xs text-muted-foreground">{t("common.profile.emailHelp")}</p>
             </div>
             <div className="space-y-1">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone">{t("common.profile.phone")}</Label>
               <Input id="phone" name="phone" defaultValue={profile?.phone ?? ""} placeholder="+234..." />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea id="bio" name="bio" defaultValue={profile?.bio ?? ""} rows={3} placeholder="Tell us about yourself..." />
+              <Label htmlFor="bio">{t("common.profile.bio")}</Label>
+              <Textarea id="bio" name="bio" defaultValue={profile?.bio ?? ""} rows={3} placeholder={t("common.profile.bioPlaceholder")} />
             </div>
             <Button type="submit" disabled={saving}>
-              {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving…</> : <><Save className="mr-2 h-4 w-4" /> Save changes</>}
+              {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("common.profile.saving")}</> : <><Save className="mr-2 h-4 w-4" /> {t("common.profile.saveChanges")}</>}
             </Button>
           </form>
         </CardContent>

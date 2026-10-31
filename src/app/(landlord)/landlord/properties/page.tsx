@@ -10,11 +10,13 @@ import { PageHeader, EmptyState } from "@/components/shared/page-components";
 import { PropertyStatusBadge, VerificationBadge } from "@/components/shared/status-badges";
 import { Price } from "@/components/shared/price";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/context";
 import { fetchLandlordProperties } from "@/lib/supabase/landlord-service";
 import { formatNgn } from "@/lib/utils/format";
 
 export default function LandlordPropertiesPage() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const [properties, setProperties] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -37,16 +39,16 @@ export default function LandlordPropertiesPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader
-        eyebrow="Portfolio"
-        title="Your properties"
-        description="All properties you've listed or are preparing to list on NetLodge."
-        actions={<Button asChild><Link href="/landlord/properties/new"><Plus className="mr-2 h-4 w-4" aria-hidden />Add property</Link></Button>}
+        eyebrow={t("landlord.properties.eyebrow")}
+        title={t("landlord.properties.title")}
+        description={t("landlord.properties.description")}
+        actions={<Button asChild><Link href="/landlord/properties/new"><Plus className="mr-2 h-4 w-4" aria-hidden />{t("landlord.dashboard.addProperty")}</Link></Button>}
       />
 
       {!isSupabaseAuth && (
         <Card className="border-warning/30 bg-warning/5">
           <CardContent className="p-3 text-xs text-warning-foreground">
-            Sign in with a landlord account to manage properties.
+            {t("landlord.properties.signInPrompt")}
           </CardContent>
         </Card>
       )}
@@ -54,19 +56,19 @@ export default function LandlordPropertiesPage() {
       {loading ? (
         <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden /></div>
       ) : error ? (
-        <EmptyState icon={<Building2 className="h-5 w-5" aria-hidden />} title="Could not load properties" description={error} />
+        <EmptyState icon={<Building2 className="h-5 w-5" aria-hidden />} title={t("landlord.properties.couldNotLoad")} description={error} />
       ) : properties.length === 0 ? (
         <EmptyState
           icon={<Building2 className="h-5 w-5" aria-hidden />}
-          title="No properties yet"
-          description="Add your first property to start listing rooms."
-          action={<Button asChild><Link href="/landlord/properties/new"><Plus className="mr-2 h-4 w-4" aria-hidden />Add property</Link></Button>}
+          title={t("landlord.properties.noProperties.title")}
+          description={t("landlord.properties.noProperties.desc")}
+          action={<Button asChild><Link href="/landlord/properties/new"><Plus className="mr-2 h-4 w-4" aria-hidden />{t("landlord.dashboard.addProperty")}</Link></Button>}
         />
       ) : (
         <>
           <div className="relative max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-            <Input type="search" placeholder="Search properties…" className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} />
+            <Input type="search" placeholder={t("landlord.properties.searchPlaceholder")} className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
           <Card>
             <CardContent className="p-0">
@@ -82,9 +84,9 @@ export default function LandlordPropertiesPage() {
                         </div>
                         <p className="text-xs text-muted-foreground">{p.public_address_line}, {p.city}</p>
                         <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                          <span>{p.total_units} units</span><span>·</span>
-                          <span>{p.available_units} available</span><span>·</span>
-                          <span>{p.total_floors} floors</span>
+                          <span>{t("landlord.properties.units", { n: p.total_units })}</span><span>·</span>
+                          <span>{t("landlord.properties.available", { n: p.available_units })}</span><span>·</span>
+                          <span>{t("landlord.properties.floors", { n: p.total_floors })}</span>
                         </div>
                       </div>
                       <Price kobo={p.price_from_kobo} fromLabel period="/yr" />

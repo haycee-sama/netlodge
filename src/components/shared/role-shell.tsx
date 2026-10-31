@@ -73,6 +73,7 @@ import { Logo } from "@/components/shared/logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { NotificationBell } from "@/components/shared/notification-bell";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/context";
 import {
   roleNavGroups,
   roleNavItems,
@@ -104,6 +105,7 @@ interface RoleShellProps {
 export function RoleShell({ role, children }: RoleShellProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useI18n();
   const { session, isLoading, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [signingOut, setSigningOut] = React.useState(false);
@@ -210,8 +212,8 @@ export function RoleShell({ role, children }: RoleShellProps) {
         // server-side; redirecting would give a false sense of having signed
         // out while the session cookie persists.
         const { toast } = await import("sonner");
-        toast.error("Could not sign out", {
-          description: result.error ?? "Please check your connection and try again.",
+        toast.error(t("shell.couldNotSignOut"), {
+          description: result.error ?? t("shell.couldNotSignOutDesc"),
         });
         return;
       }
@@ -240,12 +242,12 @@ export function RoleShell({ role, children }: RoleShellProps) {
           <Logo />
         </Link>
       </div>
-      <nav className="flex-1 space-y-4 overflow-y-auto p-3" aria-label={`${roleLabel} sidebar`}>
+      <nav className="flex-1 space-y-4 overflow-y-auto p-3" aria-label={t("shell.mainNav")}>
         {groups.map((group, gi) => (
           <div key={gi} className="space-y-0.5">
             {group.label && (
               <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                {group.label}
+                {group.tKey ? t(group.tKey) : group.label}
               </p>
             )}
             {group.items.map((item) => {
@@ -263,7 +265,7 @@ export function RoleShell({ role, children }: RoleShellProps) {
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" aria-hidden />
-                  <span className="flex-1">{item.label}</span>
+                  <span className="flex-1">{item.tKey ? t(item.tKey) : item.label}</span>
                   {item.badge && <Badge variant="secondary" className="h-5 text-xs">{item.badge}</Badge>}
                 </Link>
               );
@@ -277,7 +279,7 @@ export function RoleShell({ role, children }: RoleShellProps) {
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         >
           <Home className="h-4 w-4" aria-hidden />
-          Back to site
+          {t("shell.viewSite")}
         </Link>
       </div>
     </div>
@@ -293,7 +295,7 @@ export function RoleShell({ role, children }: RoleShellProps) {
       {/* Mobile sidebar */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="w-72 p-0">
-          <SheetTitle className="sr-only">{roleLabel} navigation</SheetTitle>
+          <SheetTitle className="sr-only">{t("shell.mainNav")}</SheetTitle>
           {sidebar}
         </SheetContent>
       </Sheet>
@@ -303,7 +305,7 @@ export function RoleShell({ role, children }: RoleShellProps) {
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 overflow-x-hidden border-b border-border bg-background/85 px-4 backdrop-blur-lg sm:px-6">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden shrink-0" aria-label="Open menu">
+              <Button variant="ghost" size="icon" className="lg:hidden shrink-0" aria-label={t("shell.openMenu")}>
                 <Menu className="h-5 w-5" aria-hidden />
               </Button>
             </SheetTrigger>
@@ -325,7 +327,7 @@ export function RoleShell({ role, children }: RoleShellProps) {
             <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
               <Link href="/">
                 <Home className="mr-2 h-4 w-4" aria-hidden />
-                View site
+                {t("shell.viewSite")}
               </Link>
             </Button>
             <ThemeToggle compact />
@@ -356,19 +358,19 @@ export function RoleShell({ role, children }: RoleShellProps) {
                 <DropdownMenuItem asChild>
                   <Link href={profileHref}>
                     <User className="mr-2 h-4 w-4" aria-hidden />
-                    Profile
+                    {t("shell.profile")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href={settingsHref}>
                     <Settings className="mr-2 h-4 w-4" aria-hidden />
-                    Settings
+                    {t("shell.settings")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} disabled={signingOut} className="text-destructive focus:text-destructive">
                   <LogOut className="mr-2 h-4 w-4" aria-hidden />
-                  {signingOut ? "Signing out…" : "Sign out"}
+                  {signingOut ? t("shell.signingOut") : t("shell.signOut")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

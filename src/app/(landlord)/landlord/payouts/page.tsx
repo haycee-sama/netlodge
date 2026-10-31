@@ -7,6 +7,7 @@ import { PageHeader, EmptyState } from "@/components/shared/page-components";
 import { PayoutStatusBadge } from "@/components/shared/status-badges";
 import { Price } from "@/components/shared/price";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/context";
 import { createClient } from "@/lib/supabase/client";
 import { formatNgn, formatDateTime } from "@/lib/utils/format";
 
@@ -25,6 +26,7 @@ interface Payout {
 
 export default function LandlordPayoutsPage() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const [payouts, setPayouts] = React.useState<Payout[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -48,9 +50,9 @@ export default function LandlordPayoutsPage() {
   if (!isSupabaseAuth) {
     return (
       <div className="mx-auto max-w-7xl space-y-6">
-        <PageHeader eyebrow="Finances" title="Payouts" />
+        <PageHeader eyebrow={t("landlord.payouts.eyebrow")} title={t("landlord.payouts.title")} />
         <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">
-          Sign in with a real landlord account to view payouts.
+          {t("landlord.payouts.signInPrompt")}
         </CardContent></Card>
       </div>
     );
@@ -63,37 +65,38 @@ export default function LandlordPayoutsPage() {
   const totalGross = payouts.reduce((s, p) => s + p.gross_kobo, 0);
   const totalFees = payouts.reduce((s, p) => s + p.platform_fee_kobo, 0);
   const settledCount = payouts.filter((p) => p.status === "settled").length;
+  const inProgressCount = payouts.filter((p) => ["scheduled", "in_flight"].includes(p.status)).length;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <PageHeader eyebrow="Finances" title="Payouts" description="Your settlement history and upcoming payouts." />
+      <PageHeader eyebrow={t("landlord.payouts.eyebrow")} title={t("landlord.payouts.title")} description={t("landlord.payouts.description")} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="space-y-1 p-5">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
-              <p className="text-xs text-muted-foreground">Settled (total)</p>
+              <p className="text-xs text-muted-foreground">{t("landlord.payouts.settled")}</p>
             </div>
             <p className="font-display text-2xl font-bold text-success">{formatNgn(totalSettled)}</p>
-            <p className="text-xs text-muted-foreground">{settledCount} {settledCount === 1 ? "payout" : "payouts"}</p>
+            <p className="text-xs text-muted-foreground">{settledCount === 1 ? t("landlord.payouts.settledCount.singular", { n: settledCount }) : t("landlord.payouts.settledCount.plural", { n: settledCount })}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="space-y-1 p-5">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-warning" aria-hidden />
-              <p className="text-xs text-muted-foreground">Pending</p>
+              <p className="text-xs text-muted-foreground">{t("landlord.payouts.pending")}</p>
             </div>
             <p className="font-display text-2xl font-bold">{formatNgn(totalPending)}</p>
-            <p className="text-xs text-muted-foreground">{payouts.filter((p) => ["scheduled", "in_flight"].includes(p.status)).length} in progress</p>
+            <p className="text-xs text-muted-foreground">{t("landlord.payouts.inProgress", { n: inProgressCount })}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="space-y-1 p-5">
             <div className="flex items-center gap-2">
               <Banknote className="h-4 w-4 text-primary" aria-hidden />
-              <p className="text-xs text-muted-foreground">Gross volume</p>
+              <p className="text-xs text-muted-foreground">{t("landlord.payouts.grossVolume")}</p>
             </div>
             <p className="font-display text-2xl font-bold">{formatNgn(totalGross)}</p>
           </CardContent>
@@ -102,7 +105,7 @@ export default function LandlordPayoutsPage() {
           <CardContent className="space-y-1 p-5">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-destructive" aria-hidden />
-              <p className="text-xs text-muted-foreground">Platform fees</p>
+              <p className="text-xs text-muted-foreground">{t("landlord.payouts.platformFees")}</p>
             </div>
             <p className="font-display text-2xl font-bold text-destructive">{formatNgn(totalFees)}</p>
           </CardContent>
@@ -111,7 +114,7 @@ export default function LandlordPayoutsPage() {
       {error ? (
         <Card className="border-destructive/40 bg-destructive/5"><CardContent className="p-4 text-sm text-destructive">{error}</CardContent></Card>
       ) : payouts.length === 0 ? (
-        <EmptyState icon={<Wallet className="h-5 w-5" aria-hidden />} title="No payouts yet" description="Payouts will appear here after bookings are confirmed and settled." />
+        <EmptyState icon={<Wallet className="h-5 w-5" aria-hidden />} title={t("landlord.payouts.noPayouts.title")} description={t("landlord.payouts.noPayouts.desc")} />
       ) : (
         <Card>
           <CardContent className="p-0">
@@ -124,13 +127,13 @@ export default function LandlordPayoutsPage() {
                       <PayoutStatusBadge status={p.status as any} />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Bank {p.bank_account_masked} · Scheduled {formatDateTime(p.scheduled_for)}
-                      {p.settled_at && ` · Settled ${formatDateTime(p.settled_at)}`}
+                      {t("landlord.payouts.bank", { mask: p.bank_account_masked })} · {t("landlord.payouts.scheduled", { date: formatDateTime(p.scheduled_for) })}
+                      {p.settled_at && ` · ${t("landlord.payouts.settledAt", { date: formatDateTime(p.settled_at) })}`}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="font-medium">{formatNgn(p.net_kobo)}</p>
-                    <p className="text-xs text-muted-foreground">gross {formatNgn(p.gross_kobo)} · fee {formatNgn(p.platform_fee_kobo)}</p>
+                    <p className="text-xs text-muted-foreground">{t("landlord.payouts.gross", { amount: formatNgn(p.gross_kobo) })} · {t("landlord.payouts.fee", { amount: formatNgn(p.platform_fee_kobo) })}</p>
                   </div>
                 </li>
               ))}

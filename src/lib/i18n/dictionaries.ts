@@ -40,6 +40,405 @@ export type TranslationKey =
   | "nav.closeMenu"
   | "nav.navigationMenu"
   | "nav.primaryNav"
+  | "common.unit"
+  | "nav.agent.assignments"
+  | "nav.agent.dashboard"
+  | "nav.agent.enquiries"
+  | "nav.agent.notifications"
+  | "nav.agent.profile"
+  | "nav.agent.properties"
+  | "nav.agent.referrals"
+  | "nav.agent.settings"
+  | "nav.financeAdmin.auditTrail"
+  | "nav.financeAdmin.commissions"
+  | "nav.financeAdmin.disputes"
+  | "nav.financeAdmin.payments"
+  | "nav.financeAdmin.payouts"
+  | "nav.financeAdmin.reconciliation"
+  | "nav.financeAdmin.refunds"
+  | "nav.financeAdmin.reports"
+  | "nav.financeAdmin.transactions"
+  | "nav.group.account"
+  | "nav.group.configuration"
+  | "nav.group.marketplaceOversight"
+  | "nav.group.operations"
+  | "nav.group.platform"
+  | "nav.group.submissions"
+  | "nav.group.trustSystem"
+  | "nav.group.workspace"
+  | "nav.landlord.availability"
+  | "nav.landlord.bookings"
+  | "nav.landlord.dashboard"
+  | "nav.landlord.getStarted"
+  | "nav.landlord.notifications"
+  | "nav.landlord.payouts"
+  | "nav.landlord.pricing"
+  | "nav.landlord.profile"
+  | "nav.landlord.properties"
+  | "nav.landlord.reports"
+  | "nav.landlord.settings"
+  | "nav.landlord.staff"
+  | "nav.landlord.transactions"
+  | "nav.landlord.verification"
+  | "nav.manager.availability"
+  | "nav.manager.bookings"
+  | "nav.manager.dashboard"
+  | "nav.manager.inspections"
+  | "nav.manager.notifications"
+  | "nav.manager.profile"
+  | "nav.manager.properties"
+  | "nav.manager.rooms"
+  | "nav.manager.settings"
+  | "nav.student.bookings"
+  | "nav.student.dashboard"
+  | "nav.student.findAccommodation"
+  | "nav.student.notifications"
+  | "nav.student.payments"
+  | "nav.student.profile"
+  | "nav.student.saved"
+  | "nav.student.security"
+  | "nav.student.settings"
+  | "nav.student.support"
+  | "nav.superAdmin.announcements"
+  | "nav.superAdmin.auditLogs"
+  | "nav.superAdmin.commissions"
+  | "nav.superAdmin.facilities"
+  | "nav.superAdmin.finance"
+  | "nav.superAdmin.integrations"
+  | "nav.superAdmin.locations"
+  | "nav.superAdmin.overview"
+  | "nav.superAdmin.rolesPermissions"
+  | "nav.superAdmin.security"
+  | "nav.superAdmin.staff"
+  | "nav.superAdmin.support"
+  | "nav.superAdmin.systemHealth"
+  | "nav.superAdmin.testimonials"
+  | "nav.superAdmin.universities"
+  | "nav.superAdmin.users"
+  | "nav.superAdmin.verifications"
+  | "nav.supportStaff.conversations"
+  | "nav.supportStaff.customers"
+  | "nav.supportStaff.escalations"
+  | "nav.supportStaff.knowledgeBase"
+  | "nav.supportStaff.reports"
+  | "nav.supportStaff.tickets"
+  | "nav.verificationOfficer.decisionHistory"
+  | "nav.verificationOfficer.escalations"
+  | "nav.verificationOfficer.landlords"
+  | "nav.verificationOfficer.properties"
+  | "nav.verificationOfficer.reviewQueue"
+  | "nav.verificationOfficer.roomEvidence"
+  | "nav.verificationOfficer.studentKyc"
+  | "shell.dashboard"
+  | "shell.mainNav"
+  | "shell.openMenu"
+  | "shell.profile"
+  | "shell.settings"
+  | "shell.signOut"
+  | "shell.signingOut"
+  | "shell.viewSite"
+  | "common.maintenance.booking"
+  | "common.maintenance.cat.appliance"
+  | "common.maintenance.cat.cleanliness"
+  | "common.maintenance.cat.electrical"
+  | "common.maintenance.cat.other"
+  | "common.maintenance.cat.pestControl"
+  | "common.maintenance.cat.plumbing"
+  | "common.maintenance.cat.security"
+  | "common.maintenance.cat.structural"
+  | "common.maintenance.category"
+  | "common.maintenance.couldNotLoad"
+  | "common.maintenance.couldNotSubmit"
+  | "common.maintenance.couldNotUpdate"
+  | "common.maintenance.descLandlord"
+  | "common.maintenance.descStudent"
+  | "common.maintenance.descriptionLabel"
+  | "common.maintenance.descriptionPlaceholder"
+  | "common.maintenance.eyebrowLandlord"
+  | "common.maintenance.eyebrowStudent"
+  | "common.maintenance.fillRequired"
+  | "common.maintenance.markResolved"
+  | "common.maintenance.markedAs"
+  | "common.maintenance.newRequest"
+  | "common.maintenance.noRequests.descLandlord"
+  | "common.maintenance.noRequests.descStudentHasBooking"
+  | "common.maintenance.noRequests.descStudentNoBooking"
+  | "common.maintenance.noRequests.title"
+  | "common.maintenance.prio.high"
+  | "common.maintenance.prio.low"
+  | "common.maintenance.prio.medium"
+  | "common.maintenance.prio.urgent"
+  | "common.maintenance.priority"
+  | "common.maintenance.reportIssueDesc"
+  | "common.maintenance.reportIssueTitle"
+  | "common.maintenance.requestSubmittedDesc"
+  | "common.maintenance.requestSubmittedTitle"
+  | "common.maintenance.resolution"
+  | "common.maintenance.resolutionNotesPrompt"
+  | "common.maintenance.resolvedAt"
+  | "common.maintenance.selectBooking"
+  | "common.maintenance.selectValidBooking"
+  | "common.maintenance.startWorking"
+  | "common.maintenance.submitRequest"
+  | "common.maintenance.title"
+  | "common.maintenance.titleLabel"
+  | "common.maintenance.titlePlaceholder"
+  | "common.maintenance.urgent"
+  | "common.messaging.conversations"
+  | "common.messaging.couldNotLoadConversations"
+  | "common.messaging.couldNotLoadMessages"
+  | "common.messaging.couldNotSend"
+  | "common.messaging.descLandlord"
+  | "common.messaging.descStudent"
+  | "common.messaging.eyebrow"
+  | "common.messaging.noConversations"
+  | "common.messaging.noMessagesYet"
+  | "common.messaging.selectConversation.desc"
+  | "common.messaging.selectConversation.title"
+  | "common.messaging.signInPrompt"
+  | "common.messaging.title"
+  | "common.messaging.typePlaceholder"
+  | "common.notifications.allCaughtUp"
+  | "common.notifications.allMarkedRead"
+  | "common.notifications.couldNotMarkAll"
+  | "common.notifications.couldNotMarkRead"
+  | "common.notifications.eyebrow"
+  | "common.notifications.markAllRead"
+  | "common.notifications.markAsRead"
+  | "common.notifications.new"
+  | "common.notifications.noNotifications.desc"
+  | "common.notifications.noNotifications.title"
+  | "common.notifications.signInPrompt"
+  | "common.notifications.title"
+  | "common.notifications.unreadDesc.plural"
+  | "common.notifications.unreadDesc.singular"
+  | "common.notifications.view"
+  | "common.profile.bio"
+  | "common.profile.bioPlaceholder"
+  | "common.profile.couldNotLoad"
+  | "common.profile.couldNotSave"
+  | "common.profile.description"
+  | "common.profile.email"
+  | "common.profile.emailHelp"
+  | "common.profile.eyebrow"
+  | "common.profile.firstName"
+  | "common.profile.lastName"
+  | "common.profile.phone"
+  | "common.profile.saveChanges"
+  | "common.profile.saved"
+  | "common.profile.saving"
+  | "common.profile.signInPrompt"
+  | "common.profile.title"
+  | "common.settings.account"
+  | "common.settings.appearance"
+  | "common.settings.colourTheme"
+  | "common.settings.colourThemeDesc"
+  | "common.settings.couldNotLoadPrefs"
+  | "common.settings.currency"
+  | "common.settings.currencyNgn"
+  | "common.settings.description"
+  | "common.settings.eyebrow"
+  | "common.settings.language"
+  | "common.settings.locale"
+  | "common.settings.notif.digestDesc"
+  | "common.settings.notif.digestLabel"
+  | "common.settings.notif.emailDesc"
+  | "common.settings.notif.emailLabel"
+  | "common.settings.notif.pushDesc"
+  | "common.settings.notif.pushLabel"
+  | "common.settings.notif.smsDesc"
+  | "common.settings.notif.smsLabel"
+  | "common.settings.notif.urgentDesc"
+  | "common.settings.notif.urgentLabel"
+  | "common.settings.notifications"
+  | "common.settings.role"
+  | "common.settings.title"
+  | "landlord.bookings.description"
+  | "landlord.bookings.eyebrow"
+  | "landlord.bookings.noBookings.desc"
+  | "landlord.bookings.noBookings.title"
+  | "landlord.bookings.signInPrompt"
+  | "landlord.bookings.title"
+  | "landlord.dashboard.activity"
+  | "landlord.dashboard.addProperty"
+  | "landlord.dashboard.addPropertyDesc"
+  | "landlord.dashboard.allProperties"
+  | "landlord.dashboard.available"
+  | "landlord.dashboard.checkVerification"
+  | "landlord.dashboard.couldNotLoad"
+  | "landlord.dashboard.description"
+  | "landlord.dashboard.due"
+  | "landlord.dashboard.eyebrow"
+  | "landlord.dashboard.manageRooms"
+  | "landlord.dashboard.needsAttention"
+  | "landlord.dashboard.noBookings.desc"
+  | "landlord.dashboard.noBookings.title"
+  | "landlord.dashboard.noPendingPayments"
+  | "landlord.dashboard.noProperties.desc"
+  | "landlord.dashboard.noProperties.title"
+  | "landlord.dashboard.occupancy"
+  | "landlord.dashboard.occupancyHint"
+  | "landlord.dashboard.occupancyLabel"
+  | "landlord.dashboard.occupied"
+  | "landlord.dashboard.payoutsDesc"
+  | "landlord.dashboard.pendingBooking.plural"
+  | "landlord.dashboard.pendingBooking.singular"
+  | "landlord.dashboard.pendingRevenue"
+  | "landlord.dashboard.pendingRevenueHint"
+  | "landlord.dashboard.pendingVerification.plural"
+  | "landlord.dashboard.pendingVerification.singular"
+  | "landlord.dashboard.portfolio"
+  | "landlord.dashboard.quickActions"
+  | "landlord.dashboard.recentBookings"
+  | "landlord.dashboard.revenueHint.plural"
+  | "landlord.dashboard.revenueHint.singular"
+  | "landlord.dashboard.signInPrompt"
+  | "landlord.dashboard.title"
+  | "landlord.dashboard.total"
+  | "landlord.dashboard.totalRevenue"
+  | "landlord.dashboard.totalUnits"
+  | "landlord.dashboard.transactionsDesc"
+  | "landlord.dashboard.unitsHint.plural"
+  | "landlord.dashboard.unitsHint.singular"
+  | "landlord.dashboard.verificationDescAllVerified"
+  | "landlord.dashboard.verificationDescPending"
+  | "landlord.dashboard.viewAll"
+  | "landlord.dashboard.viewBookings"
+  | "landlord.dashboard.yourProperties"
+  | "landlord.payouts.bank"
+  | "landlord.payouts.description"
+  | "landlord.payouts.eyebrow"
+  | "landlord.payouts.fee"
+  | "landlord.payouts.gross"
+  | "landlord.payouts.grossVolume"
+  | "landlord.payouts.inProgress"
+  | "landlord.payouts.noPayouts.desc"
+  | "landlord.payouts.noPayouts.title"
+  | "landlord.payouts.pending"
+  | "landlord.payouts.platformFees"
+  | "landlord.payouts.scheduled"
+  | "landlord.payouts.settled"
+  | "landlord.payouts.settledAt"
+  | "landlord.payouts.settledCount.plural"
+  | "landlord.payouts.settledCount.singular"
+  | "landlord.payouts.signInPrompt"
+  | "landlord.payouts.title"
+  | "landlord.profile.businessDetails"
+  | "landlord.profile.businessName"
+  | "landlord.profile.businessNamePlaceholder"
+  | "landlord.profile.description"
+  | "landlord.profile.displayName"
+  | "landlord.profile.landlordBadge"
+  | "landlord.profile.officeAddress"
+  | "landlord.profile.officeAddressPlaceholder"
+  | "landlord.profile.rcNumber"
+  | "landlord.profile.rcNumberPlaceholder"
+  | "landlord.profile.saveProfile"
+  | "landlord.profile.title"
+  | "landlord.properties.available"
+  | "landlord.properties.couldNotLoad"
+  | "landlord.properties.description"
+  | "landlord.properties.eyebrow"
+  | "landlord.properties.floors"
+  | "landlord.properties.noProperties.desc"
+  | "landlord.properties.noProperties.title"
+  | "landlord.properties.searchPlaceholder"
+  | "landlord.properties.signInPrompt"
+  | "landlord.properties.title"
+  | "landlord.properties.units"
+  | "landlord.settings.dark"
+  | "landlord.settings.description"
+  | "landlord.settings.light"
+  | "landlord.settings.notif.digestDesc"
+  | "landlord.settings.notif.emailDesc"
+  | "landlord.settings.notif.pushDesc"
+  | "landlord.settings.system"
+  | "landlord.transactions.couldNotLoad"
+  | "landlord.transactions.description"
+  | "landlord.transactions.exportCsv"
+  | "landlord.transactions.eyebrow"
+  | "landlord.transactions.grossReceived"
+  | "landlord.transactions.netBeforeFee"
+  | "landlord.transactions.noTransactions.desc"
+  | "landlord.transactions.noTransactions.title"
+  | "landlord.transactions.paymentFees"
+  | "landlord.transactions.receipt"
+  | "landlord.transactions.receiptPdf"
+  | "landlord.transactions.signInPrompt"
+  | "landlord.transactions.title"
+  | "shell.couldNotSignOut"
+  | "shell.couldNotSignOutDesc"
+  | "student.bookings.bookedAt"
+  | "student.bookings.checkIn"
+  | "student.bookings.checkOut"
+  | "student.bookings.couldNotLoad"
+  | "student.bookings.description"
+  | "student.bookings.eyebrow"
+  | "student.bookings.noBookings.desc"
+  | "student.bookings.paidInFull"
+  | "student.bookings.signInPrompt"
+  | "student.bookings.title"
+  | "student.dashboard.activeBookings"
+  | "student.dashboard.allSettled"
+  | "student.dashboard.awaitingPayment"
+  | "student.dashboard.bookingAwaiting.plural"
+  | "student.dashboard.bookingAwaiting.singular"
+  | "student.dashboard.bookingAwaitingDesc.plural"
+  | "student.dashboard.bookingAwaitingDesc.singular"
+  | "student.dashboard.browseProperties"
+  | "student.dashboard.completeProfile"
+  | "student.dashboard.completeProfileAction"
+  | "student.dashboard.completeProfileDesc"
+  | "student.dashboard.couldNotLoad"
+  | "student.dashboard.eyebrow"
+  | "student.dashboard.getSupport"
+  | "student.dashboard.holdExpired"
+  | "student.dashboard.new"
+  | "student.dashboard.noBookings.desc"
+  | "student.dashboard.noBookings.title"
+  | "student.dashboard.outstanding"
+  | "student.dashboard.paid"
+  | "student.dashboard.payNow"
+  | "student.dashboard.paymentHistory"
+  | "student.dashboard.recentBookings"
+  | "student.dashboard.recentNotifications"
+  | "student.dashboard.recentPayments"
+  | "student.dashboard.savedProperties"
+  | "student.dashboard.searchAccommodation"
+  | "student.dashboard.signInPrompt"
+  | "student.dashboard.title"
+  | "student.dashboard.totalPaid"
+  | "student.dashboard.viewAll"
+  | "student.dashboard.welcome"
+  | "student.dashboard.welcomeDesc"
+  | "student.payments.awaiting"
+  | "student.payments.backendVerified"
+  | "student.payments.bookingRef"
+  | "student.payments.couldNotLoad"
+  | "student.payments.description"
+  | "student.payments.downloadReceipt"
+  | "student.payments.fee"
+  | "student.payments.gateway"
+  | "student.payments.noPayments.desc"
+  | "student.payments.noPayments.title"
+  | "student.payments.paidThisYear"
+  | "student.payments.pendingPayments"
+  | "student.payments.reason"
+  | "student.payments.signInPrompt"
+  | "student.payments.successfulPayments.plural"
+  | "student.payments.successfulPayments.singular"
+  | "student.payments.title"
+  | "student.saved.couldNotRemove"
+  | "student.saved.description"
+  | "student.saved.eyebrow"
+  | "student.saved.noSaved.desc"
+  | "student.saved.noSaved.title"
+  | "student.saved.priceOnRequest"
+  | "student.saved.remove"
+  | "student.saved.removedToast"
+  | "student.saved.savedAt"
+  | "student.saved.signInPrompt"
+  | "student.saved.title"
   // Footer
   | "footer.discover"
   | "footer.trustSafety"
@@ -930,6 +1329,407 @@ const en: Translations = {
   "auth.createOne": "Create one",
   "auth.signingIn": "Signing in…",
   "auth.invalidCredentials": "Invalid email or password.",
+  "common.maintenance.booking": "Related booking",
+  "common.maintenance.cat.appliance": "Appliance",
+  "common.maintenance.cat.cleanliness": "Cleanliness",
+  "common.maintenance.cat.electrical": "Electrical",
+  "common.maintenance.cat.other": "Other",
+  "common.maintenance.cat.pestControl": "Pest control",
+  "common.maintenance.cat.plumbing": "Plumbing",
+  "common.maintenance.cat.security": "Security",
+  "common.maintenance.cat.structural": "Structural",
+  "common.maintenance.category": "Category",
+  "common.maintenance.couldNotLoad": "Could not load maintenance requests",
+  "common.maintenance.couldNotSubmit": "Could not submit request",
+  "common.maintenance.couldNotUpdate": "Could not update request",
+  "common.maintenance.descLandlord": "Track and resolve maintenance requests from your tenants.",
+  "common.maintenance.descStudent": "Report issues with your room and track their resolution.",
+  "common.maintenance.descriptionLabel": "Description",
+  "common.maintenance.descriptionPlaceholder": "Describe the issue in detail…",
+  "common.maintenance.eyebrowLandlord": "Maintenance requests",
+  "common.maintenance.eyebrowStudent": "Maintenance",
+  "common.maintenance.fillRequired": "Please fill in all required fields",
+  "common.maintenance.markResolved": "Mark as resolved",
+  "common.maintenance.markedAs": "Marked as {status}",
+  "common.maintenance.newRequest": "New request",
+  "common.maintenance.noRequests.descLandlord": "No maintenance requests from your tenants yet.",
+  "common.maintenance.noRequests.descStudentHasBooking": "No maintenance requests yet. Report an issue if something needs fixing.",
+  "common.maintenance.noRequests.descStudentNoBooking": "You need an active booking to report a maintenance issue.",
+  "common.maintenance.noRequests.title": "No maintenance requests",
+  "common.maintenance.prio.high": "High",
+  "common.maintenance.prio.low": "Low",
+  "common.maintenance.prio.medium": "Medium",
+  "common.maintenance.prio.urgent": "Urgent",
+  "common.maintenance.priority": "Priority",
+  "common.maintenance.reportIssueDesc": "Tell us what's wrong and we'll get it sorted.",
+  "common.maintenance.reportIssueTitle": "Report an issue",
+  "common.maintenance.requestSubmittedDesc": "Your maintenance request has been submitted. We'll be in touch soon.",
+  "common.maintenance.requestSubmittedTitle": "Request submitted",
+  "common.maintenance.resolution": "Resolution",
+  "common.maintenance.resolutionNotesPrompt": "Add resolution notes (visible to the student)",
+  "common.maintenance.resolvedAt": "Resolved on",
+  "common.maintenance.selectBooking": "Select a booking",
+  "common.maintenance.selectValidBooking": "Please select a valid booking",
+  "common.maintenance.startWorking": "Start working on it",
+  "common.maintenance.submitRequest": "Submit request",
+  "common.maintenance.title": "Maintenance requests",
+  "common.maintenance.titleLabel": "Title",
+  "common.maintenance.titlePlaceholder": "e.g. Leaking tap in bathroom",
+  "common.maintenance.urgent": "Urgent",
+  "common.messaging.conversations": "Conversations",
+  "common.messaging.couldNotLoadConversations": "Could not load conversations",
+  "common.messaging.couldNotLoadMessages": "Could not load messages",
+  "common.messaging.couldNotSend": "Could not send message",
+  "common.messaging.descLandlord": "Chat with your tenants about bookings and maintenance.",
+  "common.messaging.descStudent": "Chat with your landlord about your booking or room.",
+  "common.messaging.eyebrow": "Messages",
+  "common.messaging.noConversations": "No conversations yet",
+  "common.messaging.noMessagesYet": "No messages yet",
+  "common.messaging.selectConversation.desc": "Choose a conversation from the list to view messages.",
+  "common.messaging.selectConversation.title": "Select a conversation",
+  "common.messaging.signInPrompt": "Sign in to view your messages.",
+  "common.messaging.title": "Messages",
+  "common.messaging.typePlaceholder": "Type a message…",
+  "common.notifications.allCaughtUp": "You're all caught up",
+  "common.notifications.allMarkedRead": "All notifications marked as read",
+  "common.notifications.couldNotMarkAll": "Could not mark all as read",
+  "common.notifications.couldNotMarkRead": "Could not mark as read",
+  "common.notifications.eyebrow": "Notifications",
+  "common.notifications.markAllRead": "Mark all as read",
+  "common.notifications.markAsRead": "Mark as read",
+  "common.notifications.new": "New",
+  "common.notifications.noNotifications.desc": "You'll see notifications here when there's activity on your account.",
+  "common.notifications.noNotifications.title": "No notifications",
+  "common.notifications.signInPrompt": "Sign in to view your notifications.",
+  "common.notifications.title": "Notifications",
+  "common.notifications.unreadDesc.plural": "You have {n} unread notifications",
+  "common.notifications.unreadDesc.singular": "You have {n} unread notification",
+  "common.notifications.view": "View",
+  "common.profile.bio": "Bio",
+  "common.profile.bioPlaceholder": "Tell us a bit about yourself…",
+  "common.profile.couldNotLoad": "Could not load profile",
+  "common.profile.couldNotSave": "Could not save profile",
+  "common.profile.description": "Manage your personal information.",
+  "common.profile.email": "Email",
+  "common.profile.emailHelp": "Used for notifications and account recovery.",
+  "common.profile.eyebrow": "Profile",
+  "common.profile.firstName": "First name",
+  "common.profile.lastName": "Last name",
+  "common.profile.phone": "Phone",
+  "common.profile.saveChanges": "Save changes",
+  "common.profile.saved": "Profile saved",
+  "common.profile.saving": "Saving…",
+  "common.profile.signInPrompt": "Sign in to view your profile.",
+  "common.profile.title": "Profile",
+  "common.settings.account": "Account",
+  "common.settings.appearance": "Appearance",
+  "common.settings.colourTheme": "Colour theme",
+  "common.settings.colourThemeDesc": "Choose light or dark mode, or follow your system.",
+  "common.settings.couldNotLoadPrefs": "Could not load preferences",
+  "common.settings.currency": "Currency",
+  "common.settings.currencyNgn": "Nigerian Naira (₦)",
+  "common.settings.description": "Manage your account settings and preferences.",
+  "common.settings.eyebrow": "Settings",
+  "common.settings.language": "Language",
+  "common.settings.locale": "Display language",
+  "common.settings.notif.digestDesc": "Receive a weekly summary.",
+  "common.settings.notif.digestLabel": "Weekly digest",
+  "common.settings.notif.emailDesc": "Receive notifications by email.",
+  "common.settings.notif.emailLabel": "Email notifications",
+  "common.settings.notif.pushDesc": "Receive push notifications.",
+  "common.settings.notif.pushLabel": "Push notifications",
+  "common.settings.notif.smsDesc": "Receive notifications by SMS.",
+  "common.settings.notif.smsLabel": "SMS notifications",
+  "common.settings.notif.urgentDesc": "Only receive urgent notifications.",
+  "common.settings.notif.urgentLabel": "Urgent only",
+  "common.settings.notifications": "Notifications",
+  "common.settings.role": "Role",
+  "common.settings.title": "Settings",
+  "landlord.bookings.description": "Track all bookings across your properties.",
+  "landlord.bookings.eyebrow": "Bookings",
+  "landlord.bookings.noBookings.desc": "Bookings will appear here once students start booking your rooms.",
+  "landlord.bookings.noBookings.title": "No bookings yet",
+  "landlord.bookings.signInPrompt": "Sign in to view your bookings.",
+  "landlord.bookings.title": "Bookings",
+  "landlord.dashboard.activity": "Recent activity",
+  "landlord.dashboard.addProperty": "Add property",
+  "landlord.dashboard.addPropertyDesc": "List a new property with rooms and floors.",
+  "landlord.dashboard.allProperties": "All properties",
+  "landlord.dashboard.available": "Available",
+  "landlord.dashboard.checkVerification": "Check verification",
+  "landlord.dashboard.couldNotLoad": "Could not load dashboard data",
+  "landlord.dashboard.description": "Monitor your portfolio, bookings, revenue, and verification status.",
+  "landlord.dashboard.due": "Due",
+  "landlord.dashboard.eyebrow": "Dashboard",
+  "landlord.dashboard.manageRooms": "Manage rooms",
+  "landlord.dashboard.needsAttention": "Needs attention",
+  "landlord.dashboard.noBookings.desc": "Bookings will appear here once students start booking your rooms.",
+  "landlord.dashboard.noBookings.title": "No bookings yet",
+  "landlord.dashboard.noPendingPayments": "No pending payments",
+  "landlord.dashboard.noProperties.desc": "Add your first property to start receiving bookings.",
+  "landlord.dashboard.noProperties.title": "No properties yet",
+  "landlord.dashboard.occupancy": "Occupancy",
+  "landlord.dashboard.occupancyHint": "{x} of {y} units occupied",
+  "landlord.dashboard.occupancyLabel": "Occupied",
+  "landlord.dashboard.occupied": "Occupied",
+  "landlord.dashboard.payoutsDesc": "Track your payouts",
+  "landlord.dashboard.pendingBooking.plural": "{n} pending bookings",
+  "landlord.dashboard.pendingBooking.singular": "{n} pending booking",
+  "landlord.dashboard.pendingRevenue": "Pending revenue",
+  "landlord.dashboard.pendingRevenueHint": "From bookings awaiting payment",
+  "landlord.dashboard.pendingVerification.plural": "{n} properties pending verification",
+  "landlord.dashboard.pendingVerification.singular": "{n} property pending verification",
+  "landlord.dashboard.portfolio": "Portfolio",
+  "landlord.dashboard.quickActions": "Quick actions",
+  "landlord.dashboard.recentBookings": "Recent bookings",
+  "landlord.dashboard.revenueHint.plural": "From {n} bookings",
+  "landlord.dashboard.revenueHint.singular": "From {n} booking",
+  "landlord.dashboard.signInPrompt": "Sign in to view your landlord dashboard.",
+  "landlord.dashboard.title": "Landlord dashboard",
+  "landlord.dashboard.total": "Total",
+  "landlord.dashboard.totalRevenue": "Total revenue",
+  "landlord.dashboard.totalUnits": "Total units",
+  "landlord.dashboard.transactionsDesc": "View all your transactions",
+  "landlord.dashboard.unitsHint.plural": "{n} units",
+  "landlord.dashboard.unitsHint.singular": "{n} unit",
+  "landlord.dashboard.verificationDescAllVerified": "All your properties are verified.",
+  "landlord.dashboard.verificationDescPending": "Some properties are still pending verification.",
+  "landlord.dashboard.viewAll": "View all",
+  "landlord.dashboard.viewBookings": "View bookings",
+  "landlord.dashboard.yourProperties": "Your properties",
+  "landlord.payouts.bank": "Bank",
+  "landlord.payouts.description": "Track your payouts and settlement history.",
+  "landlord.payouts.eyebrow": "Payouts",
+  "landlord.payouts.fee": "Platform fee",
+  "landlord.payouts.gross": "Gross",
+  "landlord.payouts.grossVolume": "Gross volume",
+  "landlord.payouts.inProgress": "In progress",
+  "landlord.payouts.noPayouts.desc": "Your payouts will appear here once bookings are confirmed and settled.",
+  "landlord.payouts.noPayouts.title": "No payouts yet",
+  "landlord.payouts.pending": "Pending",
+  "landlord.payouts.platformFees": "Platform fees",
+  "landlord.payouts.scheduled": "Scheduled",
+  "landlord.payouts.settled": "Settled",
+  "landlord.payouts.settledAt": "Settled on",
+  "landlord.payouts.settledCount.plural": "{n} settled payouts",
+  "landlord.payouts.settledCount.singular": "{n} settled payout",
+  "landlord.payouts.signInPrompt": "Sign in to view your payouts.",
+  "landlord.payouts.title": "Payouts",
+  "landlord.profile.businessDetails": "Business details",
+  "landlord.profile.businessName": "Business name",
+  "landlord.profile.businessNamePlaceholder": "e.g. Akoka Properties Ltd.",
+  "landlord.profile.description": "Manage your landlord profile and business details.",
+  "landlord.profile.displayName": "Display name",
+  "landlord.profile.landlordBadge": "Landlord",
+  "landlord.profile.officeAddress": "Office address",
+  "landlord.profile.officeAddressPlaceholder": "e.g. 12 Allen Avenue, Ikeja",
+  "landlord.profile.rcNumber": "RC number",
+  "landlord.profile.rcNumberPlaceholder": "e.g. RC1234567",
+  "landlord.profile.saveProfile": "Save profile",
+  "landlord.profile.title": "Landlord profile",
+  "landlord.properties.available": "Available",
+  "landlord.properties.couldNotLoad": "Could not load properties",
+  "landlord.properties.description": "Manage your property portfolio, floors, and rooms.",
+  "landlord.properties.eyebrow": "Properties",
+  "landlord.properties.floors": "Floors",
+  "landlord.properties.noProperties.desc": "Add your first property to start receiving bookings.",
+  "landlord.properties.noProperties.title": "No properties yet",
+  "landlord.properties.searchPlaceholder": "Search by name or area…",
+  "landlord.properties.signInPrompt": "Sign in to view your properties.",
+  "landlord.properties.title": "Your properties",
+  "landlord.properties.units": "Units",
+  "landlord.settings.dark": "Dark",
+  "landlord.settings.description": "Manage your landlord preferences.",
+  "landlord.settings.light": "Light",
+  "landlord.settings.notif.digestDesc": "Receive a weekly summary of activity.",
+  "landlord.settings.notif.emailDesc": "Receive booking and payment notifications by email.",
+  "landlord.settings.notif.pushDesc": "Receive push notifications in your browser.",
+  "landlord.settings.system": "System",
+  "landlord.transactions.couldNotLoad": "Could not load transactions",
+  "landlord.transactions.description": "Every transaction across your properties, with receipts.",
+  "landlord.transactions.exportCsv": "Export CSV",
+  "landlord.transactions.eyebrow": "Transactions",
+  "landlord.transactions.grossReceived": "Gross received",
+  "landlord.transactions.netBeforeFee": "Net before platform fee",
+  "landlord.transactions.noTransactions.desc": "Transactions will appear here once you start receiving bookings.",
+  "landlord.transactions.noTransactions.title": "No transactions yet",
+  "landlord.transactions.paymentFees": "Payment fees",
+  "landlord.transactions.receipt": "Receipt",
+  "landlord.transactions.receiptPdf": "Receipt (PDF)",
+  "landlord.transactions.signInPrompt": "Sign in to view your transactions.",
+  "landlord.transactions.title": "Transactions",
+  "shell.couldNotSignOut": "Could not sign out",
+  "shell.couldNotSignOutDesc": "Please check your connection and try again.",
+  "student.bookings.bookedAt": "Booked on",
+  "student.bookings.checkIn": "Check-in",
+  "student.bookings.checkOut": "Check-out",
+  "student.bookings.couldNotLoad": "Could not load bookings",
+  "student.bookings.description": "Track your active bookings, holds, and payment status.",
+  "student.bookings.eyebrow": "Bookings",
+  "student.bookings.noBookings.desc": "You haven't booked any rooms yet. Browse properties to get started.",
+  "student.bookings.paidInFull": "Paid in full",
+  "student.bookings.signInPrompt": "Sign in to view your bookings.",
+  "student.bookings.title": "Your bookings",
+  "student.dashboard.activeBookings": "Active bookings",
+  "student.dashboard.allSettled": "All settled",
+  "student.dashboard.awaitingPayment": "Awaiting payment",
+  "student.dashboard.bookingAwaiting.plural": "{n} bookings awaiting payment",
+  "student.dashboard.bookingAwaiting.singular": "{n} booking awaiting payment",
+  "student.dashboard.bookingAwaitingDesc.plural": "Complete payment to confirm your holds before they expire.",
+  "student.dashboard.bookingAwaitingDesc.singular": "Complete payment to confirm your hold before it expires.",
+  "student.dashboard.browseProperties": "Browse properties",
+  "student.dashboard.completeProfile": "Complete your student profile to start booking",
+  "student.dashboard.completeProfileAction": "Complete profile",
+  "student.dashboard.completeProfileDesc": "Add your university, matric number, and emergency contact. This takes 2 minutes.",
+  "student.dashboard.couldNotLoad": "Could not load: {items}. Please refresh.",
+  "student.dashboard.eyebrow": "Dashboard",
+  "student.dashboard.getSupport": "Get support",
+  "student.dashboard.holdExpired": "Hold expired",
+  "student.dashboard.new": "New",
+  "student.dashboard.noBookings.desc": "Browse properties and place a hold to start your first booking.",
+  "student.dashboard.noBookings.title": "No bookings yet",
+  "student.dashboard.outstanding": "Outstanding",
+  "student.dashboard.paid": "Paid",
+  "student.dashboard.payNow": "Pay now",
+  "student.dashboard.paymentHistory": "Payment history",
+  "student.dashboard.recentBookings": "Recent bookings",
+  "student.dashboard.recentNotifications": "Recent notifications",
+  "student.dashboard.recentPayments": "Recent payments",
+  "student.dashboard.savedProperties": "Saved properties",
+  "student.dashboard.searchAccommodation": "Search accommodation",
+  "student.dashboard.signInPrompt": "Sign in with a real account to view your dashboard.",
+  "student.dashboard.title": "Student dashboard",
+  "student.dashboard.totalPaid": "Total paid",
+  "student.dashboard.viewAll": "View all",
+  "student.dashboard.welcome": "Welcome, {name}",
+  "student.dashboard.welcomeDesc": "Manage your bookings, payments, saved properties, and support tickets.",
+  "student.payments.awaiting": "Awaiting confirmation",
+  "student.payments.backendVerified": "Backend verified",
+  "student.payments.bookingRef": "Booking ref",
+  "student.payments.couldNotLoad": "Could not load payments",
+  "student.payments.description": "Every payment you've made through NetLodge, with downloadable receipts.",
+  "student.payments.downloadReceipt": "Download receipt",
+  "student.payments.fee": "Fee",
+  "student.payments.gateway": "Gateway",
+  "student.payments.noPayments.desc": "Your payments will appear here once you start booking rooms.",
+  "student.payments.noPayments.title": "No payments yet",
+  "student.payments.paidThisYear": "Paid this year",
+  "student.payments.pendingPayments": "Pending payments",
+  "student.payments.reason": "Reason",
+  "student.payments.signInPrompt": "Sign in to view your payment history.",
+  "student.payments.successfulPayments.plural": "{n} successful payments",
+  "student.payments.successfulPayments.singular": "{n} successful payment",
+  "student.payments.title": "Payment history",
+  "student.saved.couldNotRemove": "Could not remove",
+  "student.saved.description": "Properties you've saved to revisit later.",
+  "student.saved.eyebrow": "Saved",
+  "student.saved.noSaved.desc": "Tap the heart icon on any property to save it here.",
+  "student.saved.noSaved.title": "No saved properties",
+  "student.saved.priceOnRequest": "Price on request",
+  "student.saved.remove": "Remove",
+  "student.saved.removedToast": "Removed from saved",
+  "student.saved.savedAt": "Saved on",
+  "student.saved.signInPrompt": "Sign in to view your saved properties.",
+  "student.saved.title": "Saved properties",
+
+  "common.unit": "Unit",
+  "nav.agent.assignments": "Assignments",
+  "nav.agent.dashboard": "Dashboard",
+  "nav.agent.enquiries": "Enquiries",
+  "nav.agent.notifications": "Notifications",
+  "nav.agent.profile": "Profile",
+  "nav.agent.properties": "Properties",
+  "nav.agent.referrals": "Referrals",
+  "nav.agent.settings": "Settings",
+  "nav.financeAdmin.auditTrail": "Audit trail",
+  "nav.financeAdmin.commissions": "Commissions",
+  "nav.financeAdmin.disputes": "Disputes",
+  "nav.financeAdmin.payments": "Payments",
+  "nav.financeAdmin.payouts": "Payouts",
+  "nav.financeAdmin.reconciliation": "Reconciliation",
+  "nav.financeAdmin.refunds": "Refunds",
+  "nav.financeAdmin.reports": "Reports",
+  "nav.financeAdmin.transactions": "Transactions",
+  "nav.group.account": "Account",
+  "nav.group.configuration": "Configuration",
+  "nav.group.marketplaceOversight": "Marketplace oversight",
+  "nav.group.operations": "Operations",
+  "nav.group.platform": "Platform",
+  "nav.group.submissions": "Submissions",
+  "nav.group.trustSystem": "Trust & system",
+  "nav.group.workspace": "Workspace",
+  "nav.landlord.availability": "Availability",
+  "nav.landlord.bookings": "Bookings",
+  "nav.landlord.dashboard": "Dashboard",
+  "nav.landlord.getStarted": "Get started",
+  "nav.landlord.notifications": "Notifications",
+  "nav.landlord.payouts": "Payouts",
+  "nav.landlord.pricing": "Pricing",
+  "nav.landlord.profile": "Profile",
+  "nav.landlord.properties": "Properties",
+  "nav.landlord.reports": "Reports",
+  "nav.landlord.settings": "Settings",
+  "nav.landlord.staff": "Staff",
+  "nav.landlord.transactions": "Transactions",
+  "nav.landlord.verification": "Verification",
+  "nav.manager.availability": "Availability",
+  "nav.manager.bookings": "Bookings",
+  "nav.manager.dashboard": "Dashboard",
+  "nav.manager.inspections": "Inspections",
+  "nav.manager.notifications": "Notifications",
+  "nav.manager.profile": "Profile",
+  "nav.manager.properties": "Properties",
+  "nav.manager.rooms": "Rooms",
+  "nav.manager.settings": "Settings",
+  "nav.student.bookings": "Bookings",
+  "nav.student.dashboard": "Dashboard",
+  "nav.student.findAccommodation": "Find accommodation",
+  "nav.student.notifications": "Notifications",
+  "nav.student.payments": "Payments",
+  "nav.student.profile": "Profile",
+  "nav.student.saved": "Saved",
+  "nav.student.security": "Security",
+  "nav.student.settings": "Settings",
+  "nav.student.support": "Support",
+  "nav.superAdmin.announcements": "Announcements",
+  "nav.superAdmin.auditLogs": "Audit logs",
+  "nav.superAdmin.commissions": "Commissions",
+  "nav.superAdmin.facilities": "Facilities",
+  "nav.superAdmin.finance": "Finance",
+  "nav.superAdmin.integrations": "Integrations",
+  "nav.superAdmin.locations": "Locations",
+  "nav.superAdmin.overview": "Overview",
+  "nav.superAdmin.rolesPermissions": "Roles & permissions",
+  "nav.superAdmin.security": "Security",
+  "nav.superAdmin.staff": "Staff",
+  "nav.superAdmin.support": "Support",
+  "nav.superAdmin.systemHealth": "System health",
+  "nav.superAdmin.testimonials": "Testimonials",
+  "nav.superAdmin.universities": "Universities",
+  "nav.superAdmin.users": "Users",
+  "nav.superAdmin.verifications": "Verifications",
+  "nav.supportStaff.conversations": "Conversations",
+  "nav.supportStaff.customers": "Customers",
+  "nav.supportStaff.escalations": "Escalations",
+  "nav.supportStaff.knowledgeBase": "Knowledge base",
+  "nav.supportStaff.reports": "Reports",
+  "nav.supportStaff.tickets": "Tickets",
+  "nav.verificationOfficer.decisionHistory": "Decision history",
+  "nav.verificationOfficer.escalations": "Escalations",
+  "nav.verificationOfficer.landlords": "Landlords",
+  "nav.verificationOfficer.properties": "Properties",
+  "nav.verificationOfficer.reviewQueue": "Review queue",
+  "nav.verificationOfficer.roomEvidence": "Room evidence",
+  "nav.verificationOfficer.studentKyc": "Student KYC",
+  "shell.dashboard": "Dashboard",
+  "shell.mainNav": "Main navigation",
+  "shell.openMenu": "Open menu",
+  "shell.profile": "Profile",
+  "shell.settings": "Settings",
+  "shell.signOut": "Sign out",
+  "shell.signingOut": "Signing out…",
+  "shell.viewSite": "View site",
+
 };
 
 // ─── Igbo ─────────────────────────────────────────────────────────────
@@ -1384,6 +2184,407 @@ const ig: Translations = {
   "auth.createOne": "Mepụta otu",
   "auth.signingIn": "Na-abanye…",
   "auth.invalidCredentials": "Email ma ọ bụ okwuntughe na-ezighị ezi.",
+  "common.maintenance.booking": "Related booking",
+  "common.maintenance.cat.appliance": "Appliance",
+  "common.maintenance.cat.cleanliness": "Cleanliness",
+  "common.maintenance.cat.electrical": "Electrical",
+  "common.maintenance.cat.other": "Other",
+  "common.maintenance.cat.pestControl": "Pest control",
+  "common.maintenance.cat.plumbing": "Plumbing",
+  "common.maintenance.cat.security": "Security",
+  "common.maintenance.cat.structural": "Structural",
+  "common.maintenance.category": "Category",
+  "common.maintenance.couldNotLoad": "Could not load maintenance requests",
+  "common.maintenance.couldNotSubmit": "Could not submit request",
+  "common.maintenance.couldNotUpdate": "Could not update request",
+  "common.maintenance.descLandlord": "Track and resolve maintenance requests from your tenants.",
+  "common.maintenance.descStudent": "Report issues with your room and track their resolution.",
+  "common.maintenance.descriptionLabel": "Description",
+  "common.maintenance.descriptionPlaceholder": "Describe the issue in detail…",
+  "common.maintenance.eyebrowLandlord": "Maintenance requests",
+  "common.maintenance.eyebrowStudent": "Maintenance",
+  "common.maintenance.fillRequired": "Please fill in all required fields",
+  "common.maintenance.markResolved": "Mark as resolved",
+  "common.maintenance.markedAs": "Marked as {status}",
+  "common.maintenance.newRequest": "New request",
+  "common.maintenance.noRequests.descLandlord": "No maintenance requests from your tenants yet.",
+  "common.maintenance.noRequests.descStudentHasBooking": "No maintenance requests yet. Report an issue if something needs fixing.",
+  "common.maintenance.noRequests.descStudentNoBooking": "You need an active booking to report a maintenance issue.",
+  "common.maintenance.noRequests.title": "No maintenance requests",
+  "common.maintenance.prio.high": "High",
+  "common.maintenance.prio.low": "Low",
+  "common.maintenance.prio.medium": "Medium",
+  "common.maintenance.prio.urgent": "Urgent",
+  "common.maintenance.priority": "Priority",
+  "common.maintenance.reportIssueDesc": "Tell us what's wrong and we'll get it sorted.",
+  "common.maintenance.reportIssueTitle": "Report an issue",
+  "common.maintenance.requestSubmittedDesc": "Your maintenance request has been submitted. We'll be in touch soon.",
+  "common.maintenance.requestSubmittedTitle": "Request submitted",
+  "common.maintenance.resolution": "Resolution",
+  "common.maintenance.resolutionNotesPrompt": "Add resolution notes (visible to the student)",
+  "common.maintenance.resolvedAt": "Resolved on",
+  "common.maintenance.selectBooking": "Select a booking",
+  "common.maintenance.selectValidBooking": "Please select a valid booking",
+  "common.maintenance.startWorking": "Start working on it",
+  "common.maintenance.submitRequest": "Submit request",
+  "common.maintenance.title": "Maintenance requests",
+  "common.maintenance.titleLabel": "Title",
+  "common.maintenance.titlePlaceholder": "e.g. Leaking tap in bathroom",
+  "common.maintenance.urgent": "Urgent",
+  "common.messaging.conversations": "Conversations",
+  "common.messaging.couldNotLoadConversations": "Could not load conversations",
+  "common.messaging.couldNotLoadMessages": "Could not load messages",
+  "common.messaging.couldNotSend": "Could not send message",
+  "common.messaging.descLandlord": "Chat with your tenants about bookings and maintenance.",
+  "common.messaging.descStudent": "Chat with your landlord about your booking or room.",
+  "common.messaging.eyebrow": "Messages",
+  "common.messaging.noConversations": "No conversations yet",
+  "common.messaging.noMessagesYet": "No messages yet",
+  "common.messaging.selectConversation.desc": "Choose a conversation from the list to view messages.",
+  "common.messaging.selectConversation.title": "Select a conversation",
+  "common.messaging.signInPrompt": "Sign in to view your messages.",
+  "common.messaging.title": "Messages",
+  "common.messaging.typePlaceholder": "Type a message…",
+  "common.notifications.allCaughtUp": "You're all caught up",
+  "common.notifications.allMarkedRead": "All notifications marked as read",
+  "common.notifications.couldNotMarkAll": "Could not mark all as read",
+  "common.notifications.couldNotMarkRead": "Could not mark as read",
+  "common.notifications.eyebrow": "Notifications",
+  "common.notifications.markAllRead": "Mark all as read",
+  "common.notifications.markAsRead": "Mark as read",
+  "common.notifications.new": "New",
+  "common.notifications.noNotifications.desc": "You'll see notifications here when there's activity on your account.",
+  "common.notifications.noNotifications.title": "No notifications",
+  "common.notifications.signInPrompt": "Sign in to view your notifications.",
+  "common.notifications.title": "Notifications",
+  "common.notifications.unreadDesc.plural": "You have {n} unread notifications",
+  "common.notifications.unreadDesc.singular": "You have {n} unread notification",
+  "common.notifications.view": "View",
+  "common.profile.bio": "Bio",
+  "common.profile.bioPlaceholder": "Tell us a bit about yourself…",
+  "common.profile.couldNotLoad": "Could not load profile",
+  "common.profile.couldNotSave": "Could not save profile",
+  "common.profile.description": "Manage your personal information.",
+  "common.profile.email": "Email",
+  "common.profile.emailHelp": "Used for notifications and account recovery.",
+  "common.profile.eyebrow": "Profile",
+  "common.profile.firstName": "First name",
+  "common.profile.lastName": "Last name",
+  "common.profile.phone": "Phone",
+  "common.profile.saveChanges": "Save changes",
+  "common.profile.saved": "Profile saved",
+  "common.profile.saving": "Saving…",
+  "common.profile.signInPrompt": "Sign in to view your profile.",
+  "common.profile.title": "Profile",
+  "common.settings.account": "Account",
+  "common.settings.appearance": "Appearance",
+  "common.settings.colourTheme": "Colour theme",
+  "common.settings.colourThemeDesc": "Choose light or dark mode, or follow your system.",
+  "common.settings.couldNotLoadPrefs": "Could not load preferences",
+  "common.settings.currency": "Currency",
+  "common.settings.currencyNgn": "Nigerian Naira (₦)",
+  "common.settings.description": "Manage your account settings and preferences.",
+  "common.settings.eyebrow": "Settings",
+  "common.settings.language": "Language",
+  "common.settings.locale": "Display language",
+  "common.settings.notif.digestDesc": "Receive a weekly summary.",
+  "common.settings.notif.digestLabel": "Weekly digest",
+  "common.settings.notif.emailDesc": "Receive notifications by email.",
+  "common.settings.notif.emailLabel": "Email notifications",
+  "common.settings.notif.pushDesc": "Receive push notifications.",
+  "common.settings.notif.pushLabel": "Push notifications",
+  "common.settings.notif.smsDesc": "Receive notifications by SMS.",
+  "common.settings.notif.smsLabel": "SMS notifications",
+  "common.settings.notif.urgentDesc": "Only receive urgent notifications.",
+  "common.settings.notif.urgentLabel": "Urgent only",
+  "common.settings.notifications": "Notifications",
+  "common.settings.role": "Role",
+  "common.settings.title": "Settings",
+  "landlord.bookings.description": "Track all bookings across your properties.",
+  "landlord.bookings.eyebrow": "Bookings",
+  "landlord.bookings.noBookings.desc": "Bookings will appear here once students start booking your rooms.",
+  "landlord.bookings.noBookings.title": "No bookings yet",
+  "landlord.bookings.signInPrompt": "Sign in to view your bookings.",
+  "landlord.bookings.title": "Bookings",
+  "landlord.dashboard.activity": "Recent activity",
+  "landlord.dashboard.addProperty": "Add property",
+  "landlord.dashboard.addPropertyDesc": "List a new property with rooms and floors.",
+  "landlord.dashboard.allProperties": "All properties",
+  "landlord.dashboard.available": "Available",
+  "landlord.dashboard.checkVerification": "Check verification",
+  "landlord.dashboard.couldNotLoad": "Could not load dashboard data",
+  "landlord.dashboard.description": "Monitor your portfolio, bookings, revenue, and verification status.",
+  "landlord.dashboard.due": "Due",
+  "landlord.dashboard.eyebrow": "Dashboard",
+  "landlord.dashboard.manageRooms": "Manage rooms",
+  "landlord.dashboard.needsAttention": "Needs attention",
+  "landlord.dashboard.noBookings.desc": "Bookings will appear here once students start booking your rooms.",
+  "landlord.dashboard.noBookings.title": "No bookings yet",
+  "landlord.dashboard.noPendingPayments": "No pending payments",
+  "landlord.dashboard.noProperties.desc": "Add your first property to start receiving bookings.",
+  "landlord.dashboard.noProperties.title": "No properties yet",
+  "landlord.dashboard.occupancy": "Occupancy",
+  "landlord.dashboard.occupancyHint": "{x} of {y} units occupied",
+  "landlord.dashboard.occupancyLabel": "Occupied",
+  "landlord.dashboard.occupied": "Occupied",
+  "landlord.dashboard.payoutsDesc": "Track your payouts",
+  "landlord.dashboard.pendingBooking.plural": "{n} pending bookings",
+  "landlord.dashboard.pendingBooking.singular": "{n} pending booking",
+  "landlord.dashboard.pendingRevenue": "Pending revenue",
+  "landlord.dashboard.pendingRevenueHint": "From bookings awaiting payment",
+  "landlord.dashboard.pendingVerification.plural": "{n} properties pending verification",
+  "landlord.dashboard.pendingVerification.singular": "{n} property pending verification",
+  "landlord.dashboard.portfolio": "Portfolio",
+  "landlord.dashboard.quickActions": "Quick actions",
+  "landlord.dashboard.recentBookings": "Recent bookings",
+  "landlord.dashboard.revenueHint.plural": "From {n} bookings",
+  "landlord.dashboard.revenueHint.singular": "From {n} booking",
+  "landlord.dashboard.signInPrompt": "Sign in to view your landlord dashboard.",
+  "landlord.dashboard.title": "Landlord dashboard",
+  "landlord.dashboard.total": "Total",
+  "landlord.dashboard.totalRevenue": "Total revenue",
+  "landlord.dashboard.totalUnits": "Total units",
+  "landlord.dashboard.transactionsDesc": "View all your transactions",
+  "landlord.dashboard.unitsHint.plural": "{n} units",
+  "landlord.dashboard.unitsHint.singular": "{n} unit",
+  "landlord.dashboard.verificationDescAllVerified": "All your properties are verified.",
+  "landlord.dashboard.verificationDescPending": "Some properties are still pending verification.",
+  "landlord.dashboard.viewAll": "View all",
+  "landlord.dashboard.viewBookings": "View bookings",
+  "landlord.dashboard.yourProperties": "Your properties",
+  "landlord.payouts.bank": "Bank",
+  "landlord.payouts.description": "Track your payouts and settlement history.",
+  "landlord.payouts.eyebrow": "Payouts",
+  "landlord.payouts.fee": "Platform fee",
+  "landlord.payouts.gross": "Gross",
+  "landlord.payouts.grossVolume": "Gross volume",
+  "landlord.payouts.inProgress": "In progress",
+  "landlord.payouts.noPayouts.desc": "Your payouts will appear here once bookings are confirmed and settled.",
+  "landlord.payouts.noPayouts.title": "No payouts yet",
+  "landlord.payouts.pending": "Pending",
+  "landlord.payouts.platformFees": "Platform fees",
+  "landlord.payouts.scheduled": "Scheduled",
+  "landlord.payouts.settled": "Settled",
+  "landlord.payouts.settledAt": "Settled on",
+  "landlord.payouts.settledCount.plural": "{n} settled payouts",
+  "landlord.payouts.settledCount.singular": "{n} settled payout",
+  "landlord.payouts.signInPrompt": "Sign in to view your payouts.",
+  "landlord.payouts.title": "Payouts",
+  "landlord.profile.businessDetails": "Business details",
+  "landlord.profile.businessName": "Business name",
+  "landlord.profile.businessNamePlaceholder": "e.g. Akoka Properties Ltd.",
+  "landlord.profile.description": "Manage your landlord profile and business details.",
+  "landlord.profile.displayName": "Display name",
+  "landlord.profile.landlordBadge": "Landlord",
+  "landlord.profile.officeAddress": "Office address",
+  "landlord.profile.officeAddressPlaceholder": "e.g. 12 Allen Avenue, Ikeja",
+  "landlord.profile.rcNumber": "RC number",
+  "landlord.profile.rcNumberPlaceholder": "e.g. RC1234567",
+  "landlord.profile.saveProfile": "Save profile",
+  "landlord.profile.title": "Landlord profile",
+  "landlord.properties.available": "Available",
+  "landlord.properties.couldNotLoad": "Could not load properties",
+  "landlord.properties.description": "Manage your property portfolio, floors, and rooms.",
+  "landlord.properties.eyebrow": "Properties",
+  "landlord.properties.floors": "Floors",
+  "landlord.properties.noProperties.desc": "Add your first property to start receiving bookings.",
+  "landlord.properties.noProperties.title": "No properties yet",
+  "landlord.properties.searchPlaceholder": "Search by name or area…",
+  "landlord.properties.signInPrompt": "Sign in to view your properties.",
+  "landlord.properties.title": "Your properties",
+  "landlord.properties.units": "Units",
+  "landlord.settings.dark": "Dark",
+  "landlord.settings.description": "Manage your landlord preferences.",
+  "landlord.settings.light": "Light",
+  "landlord.settings.notif.digestDesc": "Receive a weekly summary of activity.",
+  "landlord.settings.notif.emailDesc": "Receive booking and payment notifications by email.",
+  "landlord.settings.notif.pushDesc": "Receive push notifications in your browser.",
+  "landlord.settings.system": "System",
+  "landlord.transactions.couldNotLoad": "Could not load transactions",
+  "landlord.transactions.description": "Every transaction across your properties, with receipts.",
+  "landlord.transactions.exportCsv": "Export CSV",
+  "landlord.transactions.eyebrow": "Transactions",
+  "landlord.transactions.grossReceived": "Gross received",
+  "landlord.transactions.netBeforeFee": "Net before platform fee",
+  "landlord.transactions.noTransactions.desc": "Transactions will appear here once you start receiving bookings.",
+  "landlord.transactions.noTransactions.title": "No transactions yet",
+  "landlord.transactions.paymentFees": "Payment fees",
+  "landlord.transactions.receipt": "Receipt",
+  "landlord.transactions.receiptPdf": "Receipt (PDF)",
+  "landlord.transactions.signInPrompt": "Sign in to view your transactions.",
+  "landlord.transactions.title": "Transactions",
+  "shell.couldNotSignOut": "Could not sign out",
+  "shell.couldNotSignOutDesc": "Please check your connection and try again.",
+  "student.bookings.bookedAt": "Booked on",
+  "student.bookings.checkIn": "Check-in",
+  "student.bookings.checkOut": "Check-out",
+  "student.bookings.couldNotLoad": "Could not load bookings",
+  "student.bookings.description": "Track your active bookings, holds, and payment status.",
+  "student.bookings.eyebrow": "Bookings",
+  "student.bookings.noBookings.desc": "You haven't booked any rooms yet. Browse properties to get started.",
+  "student.bookings.paidInFull": "Paid in full",
+  "student.bookings.signInPrompt": "Sign in to view your bookings.",
+  "student.bookings.title": "Your bookings",
+  "student.dashboard.activeBookings": "Active bookings",
+  "student.dashboard.allSettled": "All settled",
+  "student.dashboard.awaitingPayment": "Awaiting payment",
+  "student.dashboard.bookingAwaiting.plural": "{n} bookings awaiting payment",
+  "student.dashboard.bookingAwaiting.singular": "{n} booking awaiting payment",
+  "student.dashboard.bookingAwaitingDesc.plural": "Complete payment to confirm your holds before they expire.",
+  "student.dashboard.bookingAwaitingDesc.singular": "Complete payment to confirm your hold before it expires.",
+  "student.dashboard.browseProperties": "Browse properties",
+  "student.dashboard.completeProfile": "Complete your student profile to start booking",
+  "student.dashboard.completeProfileAction": "Complete profile",
+  "student.dashboard.completeProfileDesc": "Add your university, matric number, and emergency contact. This takes 2 minutes.",
+  "student.dashboard.couldNotLoad": "Could not load: {items}. Please refresh.",
+  "student.dashboard.eyebrow": "Dashboard",
+  "student.dashboard.getSupport": "Get support",
+  "student.dashboard.holdExpired": "Hold expired",
+  "student.dashboard.new": "New",
+  "student.dashboard.noBookings.desc": "Browse properties and place a hold to start your first booking.",
+  "student.dashboard.noBookings.title": "No bookings yet",
+  "student.dashboard.outstanding": "Outstanding",
+  "student.dashboard.paid": "Paid",
+  "student.dashboard.payNow": "Pay now",
+  "student.dashboard.paymentHistory": "Payment history",
+  "student.dashboard.recentBookings": "Recent bookings",
+  "student.dashboard.recentNotifications": "Recent notifications",
+  "student.dashboard.recentPayments": "Recent payments",
+  "student.dashboard.savedProperties": "Saved properties",
+  "student.dashboard.searchAccommodation": "Search accommodation",
+  "student.dashboard.signInPrompt": "Sign in with a real account to view your dashboard.",
+  "student.dashboard.title": "Student dashboard",
+  "student.dashboard.totalPaid": "Total paid",
+  "student.dashboard.viewAll": "View all",
+  "student.dashboard.welcome": "Welcome, {name}",
+  "student.dashboard.welcomeDesc": "Manage your bookings, payments, saved properties, and support tickets.",
+  "student.payments.awaiting": "Awaiting confirmation",
+  "student.payments.backendVerified": "Backend verified",
+  "student.payments.bookingRef": "Booking ref",
+  "student.payments.couldNotLoad": "Could not load payments",
+  "student.payments.description": "Every payment you've made through NetLodge, with downloadable receipts.",
+  "student.payments.downloadReceipt": "Download receipt",
+  "student.payments.fee": "Fee",
+  "student.payments.gateway": "Gateway",
+  "student.payments.noPayments.desc": "Your payments will appear here once you start booking rooms.",
+  "student.payments.noPayments.title": "No payments yet",
+  "student.payments.paidThisYear": "Paid this year",
+  "student.payments.pendingPayments": "Pending payments",
+  "student.payments.reason": "Reason",
+  "student.payments.signInPrompt": "Sign in to view your payment history.",
+  "student.payments.successfulPayments.plural": "{n} successful payments",
+  "student.payments.successfulPayments.singular": "{n} successful payment",
+  "student.payments.title": "Payment history",
+  "student.saved.couldNotRemove": "Could not remove",
+  "student.saved.description": "Properties you've saved to revisit later.",
+  "student.saved.eyebrow": "Saved",
+  "student.saved.noSaved.desc": "Tap the heart icon on any property to save it here.",
+  "student.saved.noSaved.title": "No saved properties",
+  "student.saved.priceOnRequest": "Price on request",
+  "student.saved.remove": "Remove",
+  "student.saved.removedToast": "Removed from saved",
+  "student.saved.savedAt": "Saved on",
+  "student.saved.signInPrompt": "Sign in to view your saved properties.",
+  "student.saved.title": "Saved properties",
+
+  "common.unit": "Unit",
+  "nav.agent.assignments": "Assignments",
+  "nav.agent.dashboard": "Dashboard",
+  "nav.agent.enquiries": "Enquiries",
+  "nav.agent.notifications": "Notifications",
+  "nav.agent.profile": "Profile",
+  "nav.agent.properties": "Properties",
+  "nav.agent.referrals": "Referrals",
+  "nav.agent.settings": "Settings",
+  "nav.financeAdmin.auditTrail": "Audit trail",
+  "nav.financeAdmin.commissions": "Commissions",
+  "nav.financeAdmin.disputes": "Disputes",
+  "nav.financeAdmin.payments": "Payments",
+  "nav.financeAdmin.payouts": "Payouts",
+  "nav.financeAdmin.reconciliation": "Reconciliation",
+  "nav.financeAdmin.refunds": "Refunds",
+  "nav.financeAdmin.reports": "Reports",
+  "nav.financeAdmin.transactions": "Transactions",
+  "nav.group.account": "Account",
+  "nav.group.configuration": "Configuration",
+  "nav.group.marketplaceOversight": "Marketplace oversight",
+  "nav.group.operations": "Operations",
+  "nav.group.platform": "Platform",
+  "nav.group.submissions": "Submissions",
+  "nav.group.trustSystem": "Trust & system",
+  "nav.group.workspace": "Workspace",
+  "nav.landlord.availability": "Availability",
+  "nav.landlord.bookings": "Bookings",
+  "nav.landlord.dashboard": "Dashboard",
+  "nav.landlord.getStarted": "Get started",
+  "nav.landlord.notifications": "Notifications",
+  "nav.landlord.payouts": "Payouts",
+  "nav.landlord.pricing": "Pricing",
+  "nav.landlord.profile": "Profile",
+  "nav.landlord.properties": "Properties",
+  "nav.landlord.reports": "Reports",
+  "nav.landlord.settings": "Settings",
+  "nav.landlord.staff": "Staff",
+  "nav.landlord.transactions": "Transactions",
+  "nav.landlord.verification": "Verification",
+  "nav.manager.availability": "Availability",
+  "nav.manager.bookings": "Bookings",
+  "nav.manager.dashboard": "Dashboard",
+  "nav.manager.inspections": "Inspections",
+  "nav.manager.notifications": "Notifications",
+  "nav.manager.profile": "Profile",
+  "nav.manager.properties": "Properties",
+  "nav.manager.rooms": "Rooms",
+  "nav.manager.settings": "Settings",
+  "nav.student.bookings": "Bookings",
+  "nav.student.dashboard": "Dashboard",
+  "nav.student.findAccommodation": "Find accommodation",
+  "nav.student.notifications": "Notifications",
+  "nav.student.payments": "Payments",
+  "nav.student.profile": "Profile",
+  "nav.student.saved": "Saved",
+  "nav.student.security": "Security",
+  "nav.student.settings": "Settings",
+  "nav.student.support": "Support",
+  "nav.superAdmin.announcements": "Announcements",
+  "nav.superAdmin.auditLogs": "Audit logs",
+  "nav.superAdmin.commissions": "Commissions",
+  "nav.superAdmin.facilities": "Facilities",
+  "nav.superAdmin.finance": "Finance",
+  "nav.superAdmin.integrations": "Integrations",
+  "nav.superAdmin.locations": "Locations",
+  "nav.superAdmin.overview": "Overview",
+  "nav.superAdmin.rolesPermissions": "Roles & permissions",
+  "nav.superAdmin.security": "Security",
+  "nav.superAdmin.staff": "Staff",
+  "nav.superAdmin.support": "Support",
+  "nav.superAdmin.systemHealth": "System health",
+  "nav.superAdmin.testimonials": "Testimonials",
+  "nav.superAdmin.universities": "Universities",
+  "nav.superAdmin.users": "Users",
+  "nav.superAdmin.verifications": "Verifications",
+  "nav.supportStaff.conversations": "Conversations",
+  "nav.supportStaff.customers": "Customers",
+  "nav.supportStaff.escalations": "Escalations",
+  "nav.supportStaff.knowledgeBase": "Knowledge base",
+  "nav.supportStaff.reports": "Reports",
+  "nav.supportStaff.tickets": "Tickets",
+  "nav.verificationOfficer.decisionHistory": "Decision history",
+  "nav.verificationOfficer.escalations": "Escalations",
+  "nav.verificationOfficer.landlords": "Landlords",
+  "nav.verificationOfficer.properties": "Properties",
+  "nav.verificationOfficer.reviewQueue": "Review queue",
+  "nav.verificationOfficer.roomEvidence": "Room evidence",
+  "nav.verificationOfficer.studentKyc": "Student KYC",
+  "shell.dashboard": "Dashboard",
+  "shell.mainNav": "Main navigation",
+  "shell.openMenu": "Open menu",
+  "shell.profile": "Profile",
+  "shell.settings": "Settings",
+  "shell.signOut": "Sign out",
+  "shell.signingOut": "Signing out…",
+  "shell.viewSite": "View site",
+
 };
 
 // ─── Yoruba ───────────────────────────────────────────────────────────
@@ -1838,6 +3039,407 @@ const yo: Translations = {
   "auth.createOne": "Ṣẹ̀dá ọ̀kan",
   "auth.signingIn": "Ń wọlé…",
   "auth.invalidCredentials": "Ímeèlì tàbí ọ̀rọ̀-ìpamọ́ àìtó.",
+  "common.maintenance.booking": "Related booking",
+  "common.maintenance.cat.appliance": "Appliance",
+  "common.maintenance.cat.cleanliness": "Cleanliness",
+  "common.maintenance.cat.electrical": "Electrical",
+  "common.maintenance.cat.other": "Other",
+  "common.maintenance.cat.pestControl": "Pest control",
+  "common.maintenance.cat.plumbing": "Plumbing",
+  "common.maintenance.cat.security": "Security",
+  "common.maintenance.cat.structural": "Structural",
+  "common.maintenance.category": "Category",
+  "common.maintenance.couldNotLoad": "Could not load maintenance requests",
+  "common.maintenance.couldNotSubmit": "Could not submit request",
+  "common.maintenance.couldNotUpdate": "Could not update request",
+  "common.maintenance.descLandlord": "Track and resolve maintenance requests from your tenants.",
+  "common.maintenance.descStudent": "Report issues with your room and track their resolution.",
+  "common.maintenance.descriptionLabel": "Description",
+  "common.maintenance.descriptionPlaceholder": "Describe the issue in detail…",
+  "common.maintenance.eyebrowLandlord": "Maintenance requests",
+  "common.maintenance.eyebrowStudent": "Maintenance",
+  "common.maintenance.fillRequired": "Please fill in all required fields",
+  "common.maintenance.markResolved": "Mark as resolved",
+  "common.maintenance.markedAs": "Marked as {status}",
+  "common.maintenance.newRequest": "New request",
+  "common.maintenance.noRequests.descLandlord": "No maintenance requests from your tenants yet.",
+  "common.maintenance.noRequests.descStudentHasBooking": "No maintenance requests yet. Report an issue if something needs fixing.",
+  "common.maintenance.noRequests.descStudentNoBooking": "You need an active booking to report a maintenance issue.",
+  "common.maintenance.noRequests.title": "No maintenance requests",
+  "common.maintenance.prio.high": "High",
+  "common.maintenance.prio.low": "Low",
+  "common.maintenance.prio.medium": "Medium",
+  "common.maintenance.prio.urgent": "Urgent",
+  "common.maintenance.priority": "Priority",
+  "common.maintenance.reportIssueDesc": "Tell us what's wrong and we'll get it sorted.",
+  "common.maintenance.reportIssueTitle": "Report an issue",
+  "common.maintenance.requestSubmittedDesc": "Your maintenance request has been submitted. We'll be in touch soon.",
+  "common.maintenance.requestSubmittedTitle": "Request submitted",
+  "common.maintenance.resolution": "Resolution",
+  "common.maintenance.resolutionNotesPrompt": "Add resolution notes (visible to the student)",
+  "common.maintenance.resolvedAt": "Resolved on",
+  "common.maintenance.selectBooking": "Select a booking",
+  "common.maintenance.selectValidBooking": "Please select a valid booking",
+  "common.maintenance.startWorking": "Start working on it",
+  "common.maintenance.submitRequest": "Submit request",
+  "common.maintenance.title": "Maintenance requests",
+  "common.maintenance.titleLabel": "Title",
+  "common.maintenance.titlePlaceholder": "e.g. Leaking tap in bathroom",
+  "common.maintenance.urgent": "Urgent",
+  "common.messaging.conversations": "Conversations",
+  "common.messaging.couldNotLoadConversations": "Could not load conversations",
+  "common.messaging.couldNotLoadMessages": "Could not load messages",
+  "common.messaging.couldNotSend": "Could not send message",
+  "common.messaging.descLandlord": "Chat with your tenants about bookings and maintenance.",
+  "common.messaging.descStudent": "Chat with your landlord about your booking or room.",
+  "common.messaging.eyebrow": "Messages",
+  "common.messaging.noConversations": "No conversations yet",
+  "common.messaging.noMessagesYet": "No messages yet",
+  "common.messaging.selectConversation.desc": "Choose a conversation from the list to view messages.",
+  "common.messaging.selectConversation.title": "Select a conversation",
+  "common.messaging.signInPrompt": "Sign in to view your messages.",
+  "common.messaging.title": "Messages",
+  "common.messaging.typePlaceholder": "Type a message…",
+  "common.notifications.allCaughtUp": "You're all caught up",
+  "common.notifications.allMarkedRead": "All notifications marked as read",
+  "common.notifications.couldNotMarkAll": "Could not mark all as read",
+  "common.notifications.couldNotMarkRead": "Could not mark as read",
+  "common.notifications.eyebrow": "Notifications",
+  "common.notifications.markAllRead": "Mark all as read",
+  "common.notifications.markAsRead": "Mark as read",
+  "common.notifications.new": "New",
+  "common.notifications.noNotifications.desc": "You'll see notifications here when there's activity on your account.",
+  "common.notifications.noNotifications.title": "No notifications",
+  "common.notifications.signInPrompt": "Sign in to view your notifications.",
+  "common.notifications.title": "Notifications",
+  "common.notifications.unreadDesc.plural": "You have {n} unread notifications",
+  "common.notifications.unreadDesc.singular": "You have {n} unread notification",
+  "common.notifications.view": "View",
+  "common.profile.bio": "Bio",
+  "common.profile.bioPlaceholder": "Tell us a bit about yourself…",
+  "common.profile.couldNotLoad": "Could not load profile",
+  "common.profile.couldNotSave": "Could not save profile",
+  "common.profile.description": "Manage your personal information.",
+  "common.profile.email": "Email",
+  "common.profile.emailHelp": "Used for notifications and account recovery.",
+  "common.profile.eyebrow": "Profile",
+  "common.profile.firstName": "First name",
+  "common.profile.lastName": "Last name",
+  "common.profile.phone": "Phone",
+  "common.profile.saveChanges": "Save changes",
+  "common.profile.saved": "Profile saved",
+  "common.profile.saving": "Saving…",
+  "common.profile.signInPrompt": "Sign in to view your profile.",
+  "common.profile.title": "Profile",
+  "common.settings.account": "Account",
+  "common.settings.appearance": "Appearance",
+  "common.settings.colourTheme": "Colour theme",
+  "common.settings.colourThemeDesc": "Choose light or dark mode, or follow your system.",
+  "common.settings.couldNotLoadPrefs": "Could not load preferences",
+  "common.settings.currency": "Currency",
+  "common.settings.currencyNgn": "Nigerian Naira (₦)",
+  "common.settings.description": "Manage your account settings and preferences.",
+  "common.settings.eyebrow": "Settings",
+  "common.settings.language": "Language",
+  "common.settings.locale": "Display language",
+  "common.settings.notif.digestDesc": "Receive a weekly summary.",
+  "common.settings.notif.digestLabel": "Weekly digest",
+  "common.settings.notif.emailDesc": "Receive notifications by email.",
+  "common.settings.notif.emailLabel": "Email notifications",
+  "common.settings.notif.pushDesc": "Receive push notifications.",
+  "common.settings.notif.pushLabel": "Push notifications",
+  "common.settings.notif.smsDesc": "Receive notifications by SMS.",
+  "common.settings.notif.smsLabel": "SMS notifications",
+  "common.settings.notif.urgentDesc": "Only receive urgent notifications.",
+  "common.settings.notif.urgentLabel": "Urgent only",
+  "common.settings.notifications": "Notifications",
+  "common.settings.role": "Role",
+  "common.settings.title": "Settings",
+  "landlord.bookings.description": "Track all bookings across your properties.",
+  "landlord.bookings.eyebrow": "Bookings",
+  "landlord.bookings.noBookings.desc": "Bookings will appear here once students start booking your rooms.",
+  "landlord.bookings.noBookings.title": "No bookings yet",
+  "landlord.bookings.signInPrompt": "Sign in to view your bookings.",
+  "landlord.bookings.title": "Bookings",
+  "landlord.dashboard.activity": "Recent activity",
+  "landlord.dashboard.addProperty": "Add property",
+  "landlord.dashboard.addPropertyDesc": "List a new property with rooms and floors.",
+  "landlord.dashboard.allProperties": "All properties",
+  "landlord.dashboard.available": "Available",
+  "landlord.dashboard.checkVerification": "Check verification",
+  "landlord.dashboard.couldNotLoad": "Could not load dashboard data",
+  "landlord.dashboard.description": "Monitor your portfolio, bookings, revenue, and verification status.",
+  "landlord.dashboard.due": "Due",
+  "landlord.dashboard.eyebrow": "Dashboard",
+  "landlord.dashboard.manageRooms": "Manage rooms",
+  "landlord.dashboard.needsAttention": "Needs attention",
+  "landlord.dashboard.noBookings.desc": "Bookings will appear here once students start booking your rooms.",
+  "landlord.dashboard.noBookings.title": "No bookings yet",
+  "landlord.dashboard.noPendingPayments": "No pending payments",
+  "landlord.dashboard.noProperties.desc": "Add your first property to start receiving bookings.",
+  "landlord.dashboard.noProperties.title": "No properties yet",
+  "landlord.dashboard.occupancy": "Occupancy",
+  "landlord.dashboard.occupancyHint": "{x} of {y} units occupied",
+  "landlord.dashboard.occupancyLabel": "Occupied",
+  "landlord.dashboard.occupied": "Occupied",
+  "landlord.dashboard.payoutsDesc": "Track your payouts",
+  "landlord.dashboard.pendingBooking.plural": "{n} pending bookings",
+  "landlord.dashboard.pendingBooking.singular": "{n} pending booking",
+  "landlord.dashboard.pendingRevenue": "Pending revenue",
+  "landlord.dashboard.pendingRevenueHint": "From bookings awaiting payment",
+  "landlord.dashboard.pendingVerification.plural": "{n} properties pending verification",
+  "landlord.dashboard.pendingVerification.singular": "{n} property pending verification",
+  "landlord.dashboard.portfolio": "Portfolio",
+  "landlord.dashboard.quickActions": "Quick actions",
+  "landlord.dashboard.recentBookings": "Recent bookings",
+  "landlord.dashboard.revenueHint.plural": "From {n} bookings",
+  "landlord.dashboard.revenueHint.singular": "From {n} booking",
+  "landlord.dashboard.signInPrompt": "Sign in to view your landlord dashboard.",
+  "landlord.dashboard.title": "Landlord dashboard",
+  "landlord.dashboard.total": "Total",
+  "landlord.dashboard.totalRevenue": "Total revenue",
+  "landlord.dashboard.totalUnits": "Total units",
+  "landlord.dashboard.transactionsDesc": "View all your transactions",
+  "landlord.dashboard.unitsHint.plural": "{n} units",
+  "landlord.dashboard.unitsHint.singular": "{n} unit",
+  "landlord.dashboard.verificationDescAllVerified": "All your properties are verified.",
+  "landlord.dashboard.verificationDescPending": "Some properties are still pending verification.",
+  "landlord.dashboard.viewAll": "View all",
+  "landlord.dashboard.viewBookings": "View bookings",
+  "landlord.dashboard.yourProperties": "Your properties",
+  "landlord.payouts.bank": "Bank",
+  "landlord.payouts.description": "Track your payouts and settlement history.",
+  "landlord.payouts.eyebrow": "Payouts",
+  "landlord.payouts.fee": "Platform fee",
+  "landlord.payouts.gross": "Gross",
+  "landlord.payouts.grossVolume": "Gross volume",
+  "landlord.payouts.inProgress": "In progress",
+  "landlord.payouts.noPayouts.desc": "Your payouts will appear here once bookings are confirmed and settled.",
+  "landlord.payouts.noPayouts.title": "No payouts yet",
+  "landlord.payouts.pending": "Pending",
+  "landlord.payouts.platformFees": "Platform fees",
+  "landlord.payouts.scheduled": "Scheduled",
+  "landlord.payouts.settled": "Settled",
+  "landlord.payouts.settledAt": "Settled on",
+  "landlord.payouts.settledCount.plural": "{n} settled payouts",
+  "landlord.payouts.settledCount.singular": "{n} settled payout",
+  "landlord.payouts.signInPrompt": "Sign in to view your payouts.",
+  "landlord.payouts.title": "Payouts",
+  "landlord.profile.businessDetails": "Business details",
+  "landlord.profile.businessName": "Business name",
+  "landlord.profile.businessNamePlaceholder": "e.g. Akoka Properties Ltd.",
+  "landlord.profile.description": "Manage your landlord profile and business details.",
+  "landlord.profile.displayName": "Display name",
+  "landlord.profile.landlordBadge": "Landlord",
+  "landlord.profile.officeAddress": "Office address",
+  "landlord.profile.officeAddressPlaceholder": "e.g. 12 Allen Avenue, Ikeja",
+  "landlord.profile.rcNumber": "RC number",
+  "landlord.profile.rcNumberPlaceholder": "e.g. RC1234567",
+  "landlord.profile.saveProfile": "Save profile",
+  "landlord.profile.title": "Landlord profile",
+  "landlord.properties.available": "Available",
+  "landlord.properties.couldNotLoad": "Could not load properties",
+  "landlord.properties.description": "Manage your property portfolio, floors, and rooms.",
+  "landlord.properties.eyebrow": "Properties",
+  "landlord.properties.floors": "Floors",
+  "landlord.properties.noProperties.desc": "Add your first property to start receiving bookings.",
+  "landlord.properties.noProperties.title": "No properties yet",
+  "landlord.properties.searchPlaceholder": "Search by name or area…",
+  "landlord.properties.signInPrompt": "Sign in to view your properties.",
+  "landlord.properties.title": "Your properties",
+  "landlord.properties.units": "Units",
+  "landlord.settings.dark": "Dark",
+  "landlord.settings.description": "Manage your landlord preferences.",
+  "landlord.settings.light": "Light",
+  "landlord.settings.notif.digestDesc": "Receive a weekly summary of activity.",
+  "landlord.settings.notif.emailDesc": "Receive booking and payment notifications by email.",
+  "landlord.settings.notif.pushDesc": "Receive push notifications in your browser.",
+  "landlord.settings.system": "System",
+  "landlord.transactions.couldNotLoad": "Could not load transactions",
+  "landlord.transactions.description": "Every transaction across your properties, with receipts.",
+  "landlord.transactions.exportCsv": "Export CSV",
+  "landlord.transactions.eyebrow": "Transactions",
+  "landlord.transactions.grossReceived": "Gross received",
+  "landlord.transactions.netBeforeFee": "Net before platform fee",
+  "landlord.transactions.noTransactions.desc": "Transactions will appear here once you start receiving bookings.",
+  "landlord.transactions.noTransactions.title": "No transactions yet",
+  "landlord.transactions.paymentFees": "Payment fees",
+  "landlord.transactions.receipt": "Receipt",
+  "landlord.transactions.receiptPdf": "Receipt (PDF)",
+  "landlord.transactions.signInPrompt": "Sign in to view your transactions.",
+  "landlord.transactions.title": "Transactions",
+  "shell.couldNotSignOut": "Could not sign out",
+  "shell.couldNotSignOutDesc": "Please check your connection and try again.",
+  "student.bookings.bookedAt": "Booked on",
+  "student.bookings.checkIn": "Check-in",
+  "student.bookings.checkOut": "Check-out",
+  "student.bookings.couldNotLoad": "Could not load bookings",
+  "student.bookings.description": "Track your active bookings, holds, and payment status.",
+  "student.bookings.eyebrow": "Bookings",
+  "student.bookings.noBookings.desc": "You haven't booked any rooms yet. Browse properties to get started.",
+  "student.bookings.paidInFull": "Paid in full",
+  "student.bookings.signInPrompt": "Sign in to view your bookings.",
+  "student.bookings.title": "Your bookings",
+  "student.dashboard.activeBookings": "Active bookings",
+  "student.dashboard.allSettled": "All settled",
+  "student.dashboard.awaitingPayment": "Awaiting payment",
+  "student.dashboard.bookingAwaiting.plural": "{n} bookings awaiting payment",
+  "student.dashboard.bookingAwaiting.singular": "{n} booking awaiting payment",
+  "student.dashboard.bookingAwaitingDesc.plural": "Complete payment to confirm your holds before they expire.",
+  "student.dashboard.bookingAwaitingDesc.singular": "Complete payment to confirm your hold before it expires.",
+  "student.dashboard.browseProperties": "Browse properties",
+  "student.dashboard.completeProfile": "Complete your student profile to start booking",
+  "student.dashboard.completeProfileAction": "Complete profile",
+  "student.dashboard.completeProfileDesc": "Add your university, matric number, and emergency contact. This takes 2 minutes.",
+  "student.dashboard.couldNotLoad": "Could not load: {items}. Please refresh.",
+  "student.dashboard.eyebrow": "Dashboard",
+  "student.dashboard.getSupport": "Get support",
+  "student.dashboard.holdExpired": "Hold expired",
+  "student.dashboard.new": "New",
+  "student.dashboard.noBookings.desc": "Browse properties and place a hold to start your first booking.",
+  "student.dashboard.noBookings.title": "No bookings yet",
+  "student.dashboard.outstanding": "Outstanding",
+  "student.dashboard.paid": "Paid",
+  "student.dashboard.payNow": "Pay now",
+  "student.dashboard.paymentHistory": "Payment history",
+  "student.dashboard.recentBookings": "Recent bookings",
+  "student.dashboard.recentNotifications": "Recent notifications",
+  "student.dashboard.recentPayments": "Recent payments",
+  "student.dashboard.savedProperties": "Saved properties",
+  "student.dashboard.searchAccommodation": "Search accommodation",
+  "student.dashboard.signInPrompt": "Sign in with a real account to view your dashboard.",
+  "student.dashboard.title": "Student dashboard",
+  "student.dashboard.totalPaid": "Total paid",
+  "student.dashboard.viewAll": "View all",
+  "student.dashboard.welcome": "Welcome, {name}",
+  "student.dashboard.welcomeDesc": "Manage your bookings, payments, saved properties, and support tickets.",
+  "student.payments.awaiting": "Awaiting confirmation",
+  "student.payments.backendVerified": "Backend verified",
+  "student.payments.bookingRef": "Booking ref",
+  "student.payments.couldNotLoad": "Could not load payments",
+  "student.payments.description": "Every payment you've made through NetLodge, with downloadable receipts.",
+  "student.payments.downloadReceipt": "Download receipt",
+  "student.payments.fee": "Fee",
+  "student.payments.gateway": "Gateway",
+  "student.payments.noPayments.desc": "Your payments will appear here once you start booking rooms.",
+  "student.payments.noPayments.title": "No payments yet",
+  "student.payments.paidThisYear": "Paid this year",
+  "student.payments.pendingPayments": "Pending payments",
+  "student.payments.reason": "Reason",
+  "student.payments.signInPrompt": "Sign in to view your payment history.",
+  "student.payments.successfulPayments.plural": "{n} successful payments",
+  "student.payments.successfulPayments.singular": "{n} successful payment",
+  "student.payments.title": "Payment history",
+  "student.saved.couldNotRemove": "Could not remove",
+  "student.saved.description": "Properties you've saved to revisit later.",
+  "student.saved.eyebrow": "Saved",
+  "student.saved.noSaved.desc": "Tap the heart icon on any property to save it here.",
+  "student.saved.noSaved.title": "No saved properties",
+  "student.saved.priceOnRequest": "Price on request",
+  "student.saved.remove": "Remove",
+  "student.saved.removedToast": "Removed from saved",
+  "student.saved.savedAt": "Saved on",
+  "student.saved.signInPrompt": "Sign in to view your saved properties.",
+  "student.saved.title": "Saved properties",
+
+  "common.unit": "Unit",
+  "nav.agent.assignments": "Assignments",
+  "nav.agent.dashboard": "Dashboard",
+  "nav.agent.enquiries": "Enquiries",
+  "nav.agent.notifications": "Notifications",
+  "nav.agent.profile": "Profile",
+  "nav.agent.properties": "Properties",
+  "nav.agent.referrals": "Referrals",
+  "nav.agent.settings": "Settings",
+  "nav.financeAdmin.auditTrail": "Audit trail",
+  "nav.financeAdmin.commissions": "Commissions",
+  "nav.financeAdmin.disputes": "Disputes",
+  "nav.financeAdmin.payments": "Payments",
+  "nav.financeAdmin.payouts": "Payouts",
+  "nav.financeAdmin.reconciliation": "Reconciliation",
+  "nav.financeAdmin.refunds": "Refunds",
+  "nav.financeAdmin.reports": "Reports",
+  "nav.financeAdmin.transactions": "Transactions",
+  "nav.group.account": "Account",
+  "nav.group.configuration": "Configuration",
+  "nav.group.marketplaceOversight": "Marketplace oversight",
+  "nav.group.operations": "Operations",
+  "nav.group.platform": "Platform",
+  "nav.group.submissions": "Submissions",
+  "nav.group.trustSystem": "Trust & system",
+  "nav.group.workspace": "Workspace",
+  "nav.landlord.availability": "Availability",
+  "nav.landlord.bookings": "Bookings",
+  "nav.landlord.dashboard": "Dashboard",
+  "nav.landlord.getStarted": "Get started",
+  "nav.landlord.notifications": "Notifications",
+  "nav.landlord.payouts": "Payouts",
+  "nav.landlord.pricing": "Pricing",
+  "nav.landlord.profile": "Profile",
+  "nav.landlord.properties": "Properties",
+  "nav.landlord.reports": "Reports",
+  "nav.landlord.settings": "Settings",
+  "nav.landlord.staff": "Staff",
+  "nav.landlord.transactions": "Transactions",
+  "nav.landlord.verification": "Verification",
+  "nav.manager.availability": "Availability",
+  "nav.manager.bookings": "Bookings",
+  "nav.manager.dashboard": "Dashboard",
+  "nav.manager.inspections": "Inspections",
+  "nav.manager.notifications": "Notifications",
+  "nav.manager.profile": "Profile",
+  "nav.manager.properties": "Properties",
+  "nav.manager.rooms": "Rooms",
+  "nav.manager.settings": "Settings",
+  "nav.student.bookings": "Bookings",
+  "nav.student.dashboard": "Dashboard",
+  "nav.student.findAccommodation": "Find accommodation",
+  "nav.student.notifications": "Notifications",
+  "nav.student.payments": "Payments",
+  "nav.student.profile": "Profile",
+  "nav.student.saved": "Saved",
+  "nav.student.security": "Security",
+  "nav.student.settings": "Settings",
+  "nav.student.support": "Support",
+  "nav.superAdmin.announcements": "Announcements",
+  "nav.superAdmin.auditLogs": "Audit logs",
+  "nav.superAdmin.commissions": "Commissions",
+  "nav.superAdmin.facilities": "Facilities",
+  "nav.superAdmin.finance": "Finance",
+  "nav.superAdmin.integrations": "Integrations",
+  "nav.superAdmin.locations": "Locations",
+  "nav.superAdmin.overview": "Overview",
+  "nav.superAdmin.rolesPermissions": "Roles & permissions",
+  "nav.superAdmin.security": "Security",
+  "nav.superAdmin.staff": "Staff",
+  "nav.superAdmin.support": "Support",
+  "nav.superAdmin.systemHealth": "System health",
+  "nav.superAdmin.testimonials": "Testimonials",
+  "nav.superAdmin.universities": "Universities",
+  "nav.superAdmin.users": "Users",
+  "nav.superAdmin.verifications": "Verifications",
+  "nav.supportStaff.conversations": "Conversations",
+  "nav.supportStaff.customers": "Customers",
+  "nav.supportStaff.escalations": "Escalations",
+  "nav.supportStaff.knowledgeBase": "Knowledge base",
+  "nav.supportStaff.reports": "Reports",
+  "nav.supportStaff.tickets": "Tickets",
+  "nav.verificationOfficer.decisionHistory": "Decision history",
+  "nav.verificationOfficer.escalations": "Escalations",
+  "nav.verificationOfficer.landlords": "Landlords",
+  "nav.verificationOfficer.properties": "Properties",
+  "nav.verificationOfficer.reviewQueue": "Review queue",
+  "nav.verificationOfficer.roomEvidence": "Room evidence",
+  "nav.verificationOfficer.studentKyc": "Student KYC",
+  "shell.dashboard": "Dashboard",
+  "shell.mainNav": "Main navigation",
+  "shell.openMenu": "Open menu",
+  "shell.profile": "Profile",
+  "shell.settings": "Settings",
+  "shell.signOut": "Sign out",
+  "shell.signingOut": "Signing out…",
+  "shell.viewSite": "View site",
+
 };
 
 // ─── Hausa ────────────────────────────────────────────────────────────
@@ -2292,6 +3894,407 @@ const ha: Translations = {
   "auth.createOne": "Ƙirƙiri ɗaya",
   "auth.signingIn": "Ana shiga…",
   "auth.invalidCredentials": "Imel ko kalmar sirri ba daidai ba.",
+  "common.maintenance.booking": "Related booking",
+  "common.maintenance.cat.appliance": "Appliance",
+  "common.maintenance.cat.cleanliness": "Cleanliness",
+  "common.maintenance.cat.electrical": "Electrical",
+  "common.maintenance.cat.other": "Other",
+  "common.maintenance.cat.pestControl": "Pest control",
+  "common.maintenance.cat.plumbing": "Plumbing",
+  "common.maintenance.cat.security": "Security",
+  "common.maintenance.cat.structural": "Structural",
+  "common.maintenance.category": "Category",
+  "common.maintenance.couldNotLoad": "Could not load maintenance requests",
+  "common.maintenance.couldNotSubmit": "Could not submit request",
+  "common.maintenance.couldNotUpdate": "Could not update request",
+  "common.maintenance.descLandlord": "Track and resolve maintenance requests from your tenants.",
+  "common.maintenance.descStudent": "Report issues with your room and track their resolution.",
+  "common.maintenance.descriptionLabel": "Description",
+  "common.maintenance.descriptionPlaceholder": "Describe the issue in detail…",
+  "common.maintenance.eyebrowLandlord": "Maintenance requests",
+  "common.maintenance.eyebrowStudent": "Maintenance",
+  "common.maintenance.fillRequired": "Please fill in all required fields",
+  "common.maintenance.markResolved": "Mark as resolved",
+  "common.maintenance.markedAs": "Marked as {status}",
+  "common.maintenance.newRequest": "New request",
+  "common.maintenance.noRequests.descLandlord": "No maintenance requests from your tenants yet.",
+  "common.maintenance.noRequests.descStudentHasBooking": "No maintenance requests yet. Report an issue if something needs fixing.",
+  "common.maintenance.noRequests.descStudentNoBooking": "You need an active booking to report a maintenance issue.",
+  "common.maintenance.noRequests.title": "No maintenance requests",
+  "common.maintenance.prio.high": "High",
+  "common.maintenance.prio.low": "Low",
+  "common.maintenance.prio.medium": "Medium",
+  "common.maintenance.prio.urgent": "Urgent",
+  "common.maintenance.priority": "Priority",
+  "common.maintenance.reportIssueDesc": "Tell us what's wrong and we'll get it sorted.",
+  "common.maintenance.reportIssueTitle": "Report an issue",
+  "common.maintenance.requestSubmittedDesc": "Your maintenance request has been submitted. We'll be in touch soon.",
+  "common.maintenance.requestSubmittedTitle": "Request submitted",
+  "common.maintenance.resolution": "Resolution",
+  "common.maintenance.resolutionNotesPrompt": "Add resolution notes (visible to the student)",
+  "common.maintenance.resolvedAt": "Resolved on",
+  "common.maintenance.selectBooking": "Select a booking",
+  "common.maintenance.selectValidBooking": "Please select a valid booking",
+  "common.maintenance.startWorking": "Start working on it",
+  "common.maintenance.submitRequest": "Submit request",
+  "common.maintenance.title": "Maintenance requests",
+  "common.maintenance.titleLabel": "Title",
+  "common.maintenance.titlePlaceholder": "e.g. Leaking tap in bathroom",
+  "common.maintenance.urgent": "Urgent",
+  "common.messaging.conversations": "Conversations",
+  "common.messaging.couldNotLoadConversations": "Could not load conversations",
+  "common.messaging.couldNotLoadMessages": "Could not load messages",
+  "common.messaging.couldNotSend": "Could not send message",
+  "common.messaging.descLandlord": "Chat with your tenants about bookings and maintenance.",
+  "common.messaging.descStudent": "Chat with your landlord about your booking or room.",
+  "common.messaging.eyebrow": "Messages",
+  "common.messaging.noConversations": "No conversations yet",
+  "common.messaging.noMessagesYet": "No messages yet",
+  "common.messaging.selectConversation.desc": "Choose a conversation from the list to view messages.",
+  "common.messaging.selectConversation.title": "Select a conversation",
+  "common.messaging.signInPrompt": "Sign in to view your messages.",
+  "common.messaging.title": "Messages",
+  "common.messaging.typePlaceholder": "Type a message…",
+  "common.notifications.allCaughtUp": "You're all caught up",
+  "common.notifications.allMarkedRead": "All notifications marked as read",
+  "common.notifications.couldNotMarkAll": "Could not mark all as read",
+  "common.notifications.couldNotMarkRead": "Could not mark as read",
+  "common.notifications.eyebrow": "Notifications",
+  "common.notifications.markAllRead": "Mark all as read",
+  "common.notifications.markAsRead": "Mark as read",
+  "common.notifications.new": "New",
+  "common.notifications.noNotifications.desc": "You'll see notifications here when there's activity on your account.",
+  "common.notifications.noNotifications.title": "No notifications",
+  "common.notifications.signInPrompt": "Sign in to view your notifications.",
+  "common.notifications.title": "Notifications",
+  "common.notifications.unreadDesc.plural": "You have {n} unread notifications",
+  "common.notifications.unreadDesc.singular": "You have {n} unread notification",
+  "common.notifications.view": "View",
+  "common.profile.bio": "Bio",
+  "common.profile.bioPlaceholder": "Tell us a bit about yourself…",
+  "common.profile.couldNotLoad": "Could not load profile",
+  "common.profile.couldNotSave": "Could not save profile",
+  "common.profile.description": "Manage your personal information.",
+  "common.profile.email": "Email",
+  "common.profile.emailHelp": "Used for notifications and account recovery.",
+  "common.profile.eyebrow": "Profile",
+  "common.profile.firstName": "First name",
+  "common.profile.lastName": "Last name",
+  "common.profile.phone": "Phone",
+  "common.profile.saveChanges": "Save changes",
+  "common.profile.saved": "Profile saved",
+  "common.profile.saving": "Saving…",
+  "common.profile.signInPrompt": "Sign in to view your profile.",
+  "common.profile.title": "Profile",
+  "common.settings.account": "Account",
+  "common.settings.appearance": "Appearance",
+  "common.settings.colourTheme": "Colour theme",
+  "common.settings.colourThemeDesc": "Choose light or dark mode, or follow your system.",
+  "common.settings.couldNotLoadPrefs": "Could not load preferences",
+  "common.settings.currency": "Currency",
+  "common.settings.currencyNgn": "Nigerian Naira (₦)",
+  "common.settings.description": "Manage your account settings and preferences.",
+  "common.settings.eyebrow": "Settings",
+  "common.settings.language": "Language",
+  "common.settings.locale": "Display language",
+  "common.settings.notif.digestDesc": "Receive a weekly summary.",
+  "common.settings.notif.digestLabel": "Weekly digest",
+  "common.settings.notif.emailDesc": "Receive notifications by email.",
+  "common.settings.notif.emailLabel": "Email notifications",
+  "common.settings.notif.pushDesc": "Receive push notifications.",
+  "common.settings.notif.pushLabel": "Push notifications",
+  "common.settings.notif.smsDesc": "Receive notifications by SMS.",
+  "common.settings.notif.smsLabel": "SMS notifications",
+  "common.settings.notif.urgentDesc": "Only receive urgent notifications.",
+  "common.settings.notif.urgentLabel": "Urgent only",
+  "common.settings.notifications": "Notifications",
+  "common.settings.role": "Role",
+  "common.settings.title": "Settings",
+  "landlord.bookings.description": "Track all bookings across your properties.",
+  "landlord.bookings.eyebrow": "Bookings",
+  "landlord.bookings.noBookings.desc": "Bookings will appear here once students start booking your rooms.",
+  "landlord.bookings.noBookings.title": "No bookings yet",
+  "landlord.bookings.signInPrompt": "Sign in to view your bookings.",
+  "landlord.bookings.title": "Bookings",
+  "landlord.dashboard.activity": "Recent activity",
+  "landlord.dashboard.addProperty": "Add property",
+  "landlord.dashboard.addPropertyDesc": "List a new property with rooms and floors.",
+  "landlord.dashboard.allProperties": "All properties",
+  "landlord.dashboard.available": "Available",
+  "landlord.dashboard.checkVerification": "Check verification",
+  "landlord.dashboard.couldNotLoad": "Could not load dashboard data",
+  "landlord.dashboard.description": "Monitor your portfolio, bookings, revenue, and verification status.",
+  "landlord.dashboard.due": "Due",
+  "landlord.dashboard.eyebrow": "Dashboard",
+  "landlord.dashboard.manageRooms": "Manage rooms",
+  "landlord.dashboard.needsAttention": "Needs attention",
+  "landlord.dashboard.noBookings.desc": "Bookings will appear here once students start booking your rooms.",
+  "landlord.dashboard.noBookings.title": "No bookings yet",
+  "landlord.dashboard.noPendingPayments": "No pending payments",
+  "landlord.dashboard.noProperties.desc": "Add your first property to start receiving bookings.",
+  "landlord.dashboard.noProperties.title": "No properties yet",
+  "landlord.dashboard.occupancy": "Occupancy",
+  "landlord.dashboard.occupancyHint": "{x} of {y} units occupied",
+  "landlord.dashboard.occupancyLabel": "Occupied",
+  "landlord.dashboard.occupied": "Occupied",
+  "landlord.dashboard.payoutsDesc": "Track your payouts",
+  "landlord.dashboard.pendingBooking.plural": "{n} pending bookings",
+  "landlord.dashboard.pendingBooking.singular": "{n} pending booking",
+  "landlord.dashboard.pendingRevenue": "Pending revenue",
+  "landlord.dashboard.pendingRevenueHint": "From bookings awaiting payment",
+  "landlord.dashboard.pendingVerification.plural": "{n} properties pending verification",
+  "landlord.dashboard.pendingVerification.singular": "{n} property pending verification",
+  "landlord.dashboard.portfolio": "Portfolio",
+  "landlord.dashboard.quickActions": "Quick actions",
+  "landlord.dashboard.recentBookings": "Recent bookings",
+  "landlord.dashboard.revenueHint.plural": "From {n} bookings",
+  "landlord.dashboard.revenueHint.singular": "From {n} booking",
+  "landlord.dashboard.signInPrompt": "Sign in to view your landlord dashboard.",
+  "landlord.dashboard.title": "Landlord dashboard",
+  "landlord.dashboard.total": "Total",
+  "landlord.dashboard.totalRevenue": "Total revenue",
+  "landlord.dashboard.totalUnits": "Total units",
+  "landlord.dashboard.transactionsDesc": "View all your transactions",
+  "landlord.dashboard.unitsHint.plural": "{n} units",
+  "landlord.dashboard.unitsHint.singular": "{n} unit",
+  "landlord.dashboard.verificationDescAllVerified": "All your properties are verified.",
+  "landlord.dashboard.verificationDescPending": "Some properties are still pending verification.",
+  "landlord.dashboard.viewAll": "View all",
+  "landlord.dashboard.viewBookings": "View bookings",
+  "landlord.dashboard.yourProperties": "Your properties",
+  "landlord.payouts.bank": "Bank",
+  "landlord.payouts.description": "Track your payouts and settlement history.",
+  "landlord.payouts.eyebrow": "Payouts",
+  "landlord.payouts.fee": "Platform fee",
+  "landlord.payouts.gross": "Gross",
+  "landlord.payouts.grossVolume": "Gross volume",
+  "landlord.payouts.inProgress": "In progress",
+  "landlord.payouts.noPayouts.desc": "Your payouts will appear here once bookings are confirmed and settled.",
+  "landlord.payouts.noPayouts.title": "No payouts yet",
+  "landlord.payouts.pending": "Pending",
+  "landlord.payouts.platformFees": "Platform fees",
+  "landlord.payouts.scheduled": "Scheduled",
+  "landlord.payouts.settled": "Settled",
+  "landlord.payouts.settledAt": "Settled on",
+  "landlord.payouts.settledCount.plural": "{n} settled payouts",
+  "landlord.payouts.settledCount.singular": "{n} settled payout",
+  "landlord.payouts.signInPrompt": "Sign in to view your payouts.",
+  "landlord.payouts.title": "Payouts",
+  "landlord.profile.businessDetails": "Business details",
+  "landlord.profile.businessName": "Business name",
+  "landlord.profile.businessNamePlaceholder": "e.g. Akoka Properties Ltd.",
+  "landlord.profile.description": "Manage your landlord profile and business details.",
+  "landlord.profile.displayName": "Display name",
+  "landlord.profile.landlordBadge": "Landlord",
+  "landlord.profile.officeAddress": "Office address",
+  "landlord.profile.officeAddressPlaceholder": "e.g. 12 Allen Avenue, Ikeja",
+  "landlord.profile.rcNumber": "RC number",
+  "landlord.profile.rcNumberPlaceholder": "e.g. RC1234567",
+  "landlord.profile.saveProfile": "Save profile",
+  "landlord.profile.title": "Landlord profile",
+  "landlord.properties.available": "Available",
+  "landlord.properties.couldNotLoad": "Could not load properties",
+  "landlord.properties.description": "Manage your property portfolio, floors, and rooms.",
+  "landlord.properties.eyebrow": "Properties",
+  "landlord.properties.floors": "Floors",
+  "landlord.properties.noProperties.desc": "Add your first property to start receiving bookings.",
+  "landlord.properties.noProperties.title": "No properties yet",
+  "landlord.properties.searchPlaceholder": "Search by name or area…",
+  "landlord.properties.signInPrompt": "Sign in to view your properties.",
+  "landlord.properties.title": "Your properties",
+  "landlord.properties.units": "Units",
+  "landlord.settings.dark": "Dark",
+  "landlord.settings.description": "Manage your landlord preferences.",
+  "landlord.settings.light": "Light",
+  "landlord.settings.notif.digestDesc": "Receive a weekly summary of activity.",
+  "landlord.settings.notif.emailDesc": "Receive booking and payment notifications by email.",
+  "landlord.settings.notif.pushDesc": "Receive push notifications in your browser.",
+  "landlord.settings.system": "System",
+  "landlord.transactions.couldNotLoad": "Could not load transactions",
+  "landlord.transactions.description": "Every transaction across your properties, with receipts.",
+  "landlord.transactions.exportCsv": "Export CSV",
+  "landlord.transactions.eyebrow": "Transactions",
+  "landlord.transactions.grossReceived": "Gross received",
+  "landlord.transactions.netBeforeFee": "Net before platform fee",
+  "landlord.transactions.noTransactions.desc": "Transactions will appear here once you start receiving bookings.",
+  "landlord.transactions.noTransactions.title": "No transactions yet",
+  "landlord.transactions.paymentFees": "Payment fees",
+  "landlord.transactions.receipt": "Receipt",
+  "landlord.transactions.receiptPdf": "Receipt (PDF)",
+  "landlord.transactions.signInPrompt": "Sign in to view your transactions.",
+  "landlord.transactions.title": "Transactions",
+  "shell.couldNotSignOut": "Could not sign out",
+  "shell.couldNotSignOutDesc": "Please check your connection and try again.",
+  "student.bookings.bookedAt": "Booked on",
+  "student.bookings.checkIn": "Check-in",
+  "student.bookings.checkOut": "Check-out",
+  "student.bookings.couldNotLoad": "Could not load bookings",
+  "student.bookings.description": "Track your active bookings, holds, and payment status.",
+  "student.bookings.eyebrow": "Bookings",
+  "student.bookings.noBookings.desc": "You haven't booked any rooms yet. Browse properties to get started.",
+  "student.bookings.paidInFull": "Paid in full",
+  "student.bookings.signInPrompt": "Sign in to view your bookings.",
+  "student.bookings.title": "Your bookings",
+  "student.dashboard.activeBookings": "Active bookings",
+  "student.dashboard.allSettled": "All settled",
+  "student.dashboard.awaitingPayment": "Awaiting payment",
+  "student.dashboard.bookingAwaiting.plural": "{n} bookings awaiting payment",
+  "student.dashboard.bookingAwaiting.singular": "{n} booking awaiting payment",
+  "student.dashboard.bookingAwaitingDesc.plural": "Complete payment to confirm your holds before they expire.",
+  "student.dashboard.bookingAwaitingDesc.singular": "Complete payment to confirm your hold before it expires.",
+  "student.dashboard.browseProperties": "Browse properties",
+  "student.dashboard.completeProfile": "Complete your student profile to start booking",
+  "student.dashboard.completeProfileAction": "Complete profile",
+  "student.dashboard.completeProfileDesc": "Add your university, matric number, and emergency contact. This takes 2 minutes.",
+  "student.dashboard.couldNotLoad": "Could not load: {items}. Please refresh.",
+  "student.dashboard.eyebrow": "Dashboard",
+  "student.dashboard.getSupport": "Get support",
+  "student.dashboard.holdExpired": "Hold expired",
+  "student.dashboard.new": "New",
+  "student.dashboard.noBookings.desc": "Browse properties and place a hold to start your first booking.",
+  "student.dashboard.noBookings.title": "No bookings yet",
+  "student.dashboard.outstanding": "Outstanding",
+  "student.dashboard.paid": "Paid",
+  "student.dashboard.payNow": "Pay now",
+  "student.dashboard.paymentHistory": "Payment history",
+  "student.dashboard.recentBookings": "Recent bookings",
+  "student.dashboard.recentNotifications": "Recent notifications",
+  "student.dashboard.recentPayments": "Recent payments",
+  "student.dashboard.savedProperties": "Saved properties",
+  "student.dashboard.searchAccommodation": "Search accommodation",
+  "student.dashboard.signInPrompt": "Sign in with a real account to view your dashboard.",
+  "student.dashboard.title": "Student dashboard",
+  "student.dashboard.totalPaid": "Total paid",
+  "student.dashboard.viewAll": "View all",
+  "student.dashboard.welcome": "Welcome, {name}",
+  "student.dashboard.welcomeDesc": "Manage your bookings, payments, saved properties, and support tickets.",
+  "student.payments.awaiting": "Awaiting confirmation",
+  "student.payments.backendVerified": "Backend verified",
+  "student.payments.bookingRef": "Booking ref",
+  "student.payments.couldNotLoad": "Could not load payments",
+  "student.payments.description": "Every payment you've made through NetLodge, with downloadable receipts.",
+  "student.payments.downloadReceipt": "Download receipt",
+  "student.payments.fee": "Fee",
+  "student.payments.gateway": "Gateway",
+  "student.payments.noPayments.desc": "Your payments will appear here once you start booking rooms.",
+  "student.payments.noPayments.title": "No payments yet",
+  "student.payments.paidThisYear": "Paid this year",
+  "student.payments.pendingPayments": "Pending payments",
+  "student.payments.reason": "Reason",
+  "student.payments.signInPrompt": "Sign in to view your payment history.",
+  "student.payments.successfulPayments.plural": "{n} successful payments",
+  "student.payments.successfulPayments.singular": "{n} successful payment",
+  "student.payments.title": "Payment history",
+  "student.saved.couldNotRemove": "Could not remove",
+  "student.saved.description": "Properties you've saved to revisit later.",
+  "student.saved.eyebrow": "Saved",
+  "student.saved.noSaved.desc": "Tap the heart icon on any property to save it here.",
+  "student.saved.noSaved.title": "No saved properties",
+  "student.saved.priceOnRequest": "Price on request",
+  "student.saved.remove": "Remove",
+  "student.saved.removedToast": "Removed from saved",
+  "student.saved.savedAt": "Saved on",
+  "student.saved.signInPrompt": "Sign in to view your saved properties.",
+  "student.saved.title": "Saved properties",
+
+  "common.unit": "Unit",
+  "nav.agent.assignments": "Assignments",
+  "nav.agent.dashboard": "Dashboard",
+  "nav.agent.enquiries": "Enquiries",
+  "nav.agent.notifications": "Notifications",
+  "nav.agent.profile": "Profile",
+  "nav.agent.properties": "Properties",
+  "nav.agent.referrals": "Referrals",
+  "nav.agent.settings": "Settings",
+  "nav.financeAdmin.auditTrail": "Audit trail",
+  "nav.financeAdmin.commissions": "Commissions",
+  "nav.financeAdmin.disputes": "Disputes",
+  "nav.financeAdmin.payments": "Payments",
+  "nav.financeAdmin.payouts": "Payouts",
+  "nav.financeAdmin.reconciliation": "Reconciliation",
+  "nav.financeAdmin.refunds": "Refunds",
+  "nav.financeAdmin.reports": "Reports",
+  "nav.financeAdmin.transactions": "Transactions",
+  "nav.group.account": "Account",
+  "nav.group.configuration": "Configuration",
+  "nav.group.marketplaceOversight": "Marketplace oversight",
+  "nav.group.operations": "Operations",
+  "nav.group.platform": "Platform",
+  "nav.group.submissions": "Submissions",
+  "nav.group.trustSystem": "Trust & system",
+  "nav.group.workspace": "Workspace",
+  "nav.landlord.availability": "Availability",
+  "nav.landlord.bookings": "Bookings",
+  "nav.landlord.dashboard": "Dashboard",
+  "nav.landlord.getStarted": "Get started",
+  "nav.landlord.notifications": "Notifications",
+  "nav.landlord.payouts": "Payouts",
+  "nav.landlord.pricing": "Pricing",
+  "nav.landlord.profile": "Profile",
+  "nav.landlord.properties": "Properties",
+  "nav.landlord.reports": "Reports",
+  "nav.landlord.settings": "Settings",
+  "nav.landlord.staff": "Staff",
+  "nav.landlord.transactions": "Transactions",
+  "nav.landlord.verification": "Verification",
+  "nav.manager.availability": "Availability",
+  "nav.manager.bookings": "Bookings",
+  "nav.manager.dashboard": "Dashboard",
+  "nav.manager.inspections": "Inspections",
+  "nav.manager.notifications": "Notifications",
+  "nav.manager.profile": "Profile",
+  "nav.manager.properties": "Properties",
+  "nav.manager.rooms": "Rooms",
+  "nav.manager.settings": "Settings",
+  "nav.student.bookings": "Bookings",
+  "nav.student.dashboard": "Dashboard",
+  "nav.student.findAccommodation": "Find accommodation",
+  "nav.student.notifications": "Notifications",
+  "nav.student.payments": "Payments",
+  "nav.student.profile": "Profile",
+  "nav.student.saved": "Saved",
+  "nav.student.security": "Security",
+  "nav.student.settings": "Settings",
+  "nav.student.support": "Support",
+  "nav.superAdmin.announcements": "Announcements",
+  "nav.superAdmin.auditLogs": "Audit logs",
+  "nav.superAdmin.commissions": "Commissions",
+  "nav.superAdmin.facilities": "Facilities",
+  "nav.superAdmin.finance": "Finance",
+  "nav.superAdmin.integrations": "Integrations",
+  "nav.superAdmin.locations": "Locations",
+  "nav.superAdmin.overview": "Overview",
+  "nav.superAdmin.rolesPermissions": "Roles & permissions",
+  "nav.superAdmin.security": "Security",
+  "nav.superAdmin.staff": "Staff",
+  "nav.superAdmin.support": "Support",
+  "nav.superAdmin.systemHealth": "System health",
+  "nav.superAdmin.testimonials": "Testimonials",
+  "nav.superAdmin.universities": "Universities",
+  "nav.superAdmin.users": "Users",
+  "nav.superAdmin.verifications": "Verifications",
+  "nav.supportStaff.conversations": "Conversations",
+  "nav.supportStaff.customers": "Customers",
+  "nav.supportStaff.escalations": "Escalations",
+  "nav.supportStaff.knowledgeBase": "Knowledge base",
+  "nav.supportStaff.reports": "Reports",
+  "nav.supportStaff.tickets": "Tickets",
+  "nav.verificationOfficer.decisionHistory": "Decision history",
+  "nav.verificationOfficer.escalations": "Escalations",
+  "nav.verificationOfficer.landlords": "Landlords",
+  "nav.verificationOfficer.properties": "Properties",
+  "nav.verificationOfficer.reviewQueue": "Review queue",
+  "nav.verificationOfficer.roomEvidence": "Room evidence",
+  "nav.verificationOfficer.studentKyc": "Student KYC",
+  "shell.dashboard": "Dashboard",
+  "shell.mainNav": "Main navigation",
+  "shell.openMenu": "Open menu",
+  "shell.profile": "Profile",
+  "shell.settings": "Settings",
+  "shell.signOut": "Sign out",
+  "shell.signingOut": "Signing out…",
+  "shell.viewSite": "View site",
+
 };
 
 export const dictionaries: Record<Locale, Translations> = { en, ig, yo, ha };

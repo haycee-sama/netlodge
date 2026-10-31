@@ -10,12 +10,14 @@ import { PageHeader, EmptyState } from "@/components/shared/page-components";
 import { PaymentStatusBadge } from "@/components/shared/status-badges";
 import { Price } from "@/components/shared/price";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/context";
 import { fetchStudentPayments, type PaymentWithBooking } from "@/lib/supabase/payment-service";
 import { formatNgn, formatDateTime } from "@/lib/utils/format";
 import { downloadPaymentReceiptPdf } from "@/lib/utils/receipt-pdf";
 
 export default function StudentPaymentsPage() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const [payments, setPayments] = React.useState<PaymentWithBooking[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -57,9 +59,9 @@ export default function StudentPaymentsPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <PageHeader
-        eyebrow="Payments"
-        title="Payment history"
-        description="Every payment you've made through NetLodge — amounts, fees, and backend-verified statuses."
+        eyebrow={t("nav.student.payments")}
+        title={t("student.payments.title")}
+        description={t("student.payments.description")}
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -67,27 +69,27 @@ export default function StudentPaymentsPage() {
           <CardContent className="space-y-1 p-5">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-success" aria-hidden />
-              <p className="text-xs text-muted-foreground">Paid this year</p>
+              <p className="text-xs text-muted-foreground">{t("student.payments.paidThisYear")}</p>
             </div>
             <p className="font-display text-2xl font-bold text-success">{formatNgn(paidThisYear)}</p>
-            <p className="text-xs text-muted-foreground">{successful.length} successful {successful.length === 1 ? "payment" : "payments"}</p>
+            <p className="text-xs text-muted-foreground">{successful.length === 1 ? t("student.payments.successfulPayments.singular", { n: successful.length }) : t("student.payments.successfulPayments.plural", { n: successful.length })}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="space-y-1 p-5">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-warning" aria-hidden />
-              <p className="text-xs text-muted-foreground">Pending payments</p>
+              <p className="text-xs text-muted-foreground">{t("student.payments.pendingPayments")}</p>
             </div>
             <p className="font-display text-2xl font-bold text-warning">{pending.length}</p>
-            {totalPending > 0 && <p className="text-xs text-muted-foreground">{formatNgn(totalPending)} awaiting</p>}
+            {totalPending > 0 && <p className="text-xs text-muted-foreground">{t("student.payments.awaiting", { amount: formatNgn(totalPending) })}</p>}
           </CardContent>
         </Card>
         <Card>
           <CardContent className="space-y-1 p-5">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden />
-              <p className="text-xs text-muted-foreground">Backend-verified</p>
+              <p className="text-xs text-muted-foreground">{t("student.payments.backendVerified")}</p>
             </div>
             <p className="font-display text-2xl font-bold">
               {successful.filter((p) => p.confirmed_by_backend).length}
@@ -103,23 +105,23 @@ export default function StudentPaymentsPage() {
       ) : !isSupabaseAuth ? (
         <EmptyState
           icon={<CreditCard className="h-5 w-5" aria-hidden />}
-          title="No payments yet"
-          description="Sign in with a real account to view your payment history."
-          action={<Button asChild><Link href="/login">Sign in</Link></Button>}
+          title={t("student.payments.noPayments.title")}
+          description={t("student.payments.signInPrompt")}
+          action={<Button asChild><Link href="/login">{t("common.signIn")}</Link></Button>}
         />
       ) : error ? (
         <EmptyState
           icon={<CreditCard className="h-5 w-5" aria-hidden />}
-          title="Could not load payments"
+          title={t("student.payments.couldNotLoad")}
           description={error}
-          action={<Button variant="outline" onClick={() => window.location.reload()}>Retry</Button>}
+          action={<Button variant="outline" onClick={() => window.location.reload()}>{t("common.retry")}</Button>}
         />
       ) : payments.length === 0 ? (
         <EmptyState
           icon={<CreditCard className="h-5 w-5" aria-hidden />}
-          title="No payments yet"
-          description="When you make your first booking, your payment history will appear here."
-          action={<Button asChild><Link href="/properties">Browse properties</Link></Button>}
+          title={t("student.payments.noPayments.title")}
+          description={t("student.payments.noPayments.desc")}
+          action={<Button asChild><Link href="/properties">{t("student.dashboard.browseProperties")}</Link></Button>}
         />
       ) : (
         <Card>
@@ -134,22 +136,22 @@ export default function StudentPaymentsPage() {
                         <p className="font-medium">{p.reference}</p>
                         <PaymentStatusBadge status={p.status} />
                         {p.confirmed_by_backend && (
-                          <Badge variant="outline" className="text-xs text-success">Backend-verified</Badge>
+                          <Badge variant="outline" className="text-xs text-success">{t("student.payments.backendVerified")}</Badge>
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {p.channel.toUpperCase()} · {formatDateTime(p.initiated_at)}
-                        {p.gateway_reference && ` · Gateway: ${p.gateway_reference}`}
+                        {p.gateway_reference && ` · ${t("student.payments.gateway", { ref: p.gateway_reference })}`}
                       </p>
                       {p.failure_reason && (
-                        <p className="text-xs text-destructive">Reason: {p.failure_reason}</p>
+                        <p className="text-xs text-destructive">{t("student.payments.reason", { reason: p.failure_reason })}</p>
                       )}
                       {booking && (
                         <Link
                           href={`/student/bookings/${booking.id}`}
                           className="inline-block text-xs text-primary hover:underline"
                         >
-                          Booking {booking.reference}
+                          {t("student.payments.bookingRef", { ref: booking.reference })}
                           {booking.properties ? ` · ${booking.properties.name}` : ""}
                         </Link>
                       )}
@@ -158,7 +160,7 @@ export default function StudentPaymentsPage() {
                       <div className="text-right">
                         <Price kobo={p.amount_kobo} />
                         <p className="text-xs text-muted-foreground">
-                          Fee: {formatNgn(p.fee_kobo)}
+                          {t("student.payments.fee", { amount: formatNgn(p.fee_kobo) })}
                         </p>
                       </div>
                       {p.status === "successful" && p.confirmed_by_backend && (
@@ -168,7 +170,7 @@ export default function StudentPaymentsPage() {
                           onClick={() => downloadReceipt(p)}
                         >
                           <Download className="mr-2 h-3.5 w-3.5" aria-hidden />
-                          Download Receipt
+                          {t("student.payments.downloadReceipt")}
                         </Button>
                       )}
                     </div>

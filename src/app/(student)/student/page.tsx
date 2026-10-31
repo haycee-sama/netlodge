@@ -14,6 +14,7 @@ import { PageHeader, StatCard, EmptyState, SectionHeading } from "@/components/s
 import { BookingStatusBadge } from "@/components/shared/status-badges";
 import { Price } from "@/components/shared/price";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/context";
 import { useOnboardingGate } from "@/lib/hooks/use-onboarding-gate";
 import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime, formatNgn } from "@/lib/utils/format";
@@ -53,6 +54,7 @@ interface StudentPayment {
 
 export default function StudentDashboardPage() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const { completed: onboardingCompleted } = useOnboardingGate();
   const [bookings, setBookings] = React.useState<StudentBooking[]>([]);
   const [notifications, setNotifications] = React.useState<StudentNotification[]>([]);
@@ -112,7 +114,7 @@ export default function StudentDashboardPage() {
       }
 
       if (errors.length > 0) {
-        setError(`Could not load: ${errors.join(", ")}. Please refresh.`);
+        setError(t("student.dashboard.couldNotLoad", { items: errors.join(", ") }));
       }
       setLoading(false);
     });
@@ -121,9 +123,9 @@ export default function StudentDashboardPage() {
   if (!isSupabaseAuth) {
     return (
       <div className="mx-auto max-w-7xl space-y-6">
-        <PageHeader eyebrow="Dashboard" title="Student dashboard" />
+        <PageHeader eyebrow={t("student.dashboard.eyebrow")} title={t("student.dashboard.title")} />
         <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">
-          Sign in with a real account to view your dashboard.
+          {t("student.dashboard.signInPrompt")}
         </CardContent></Card>
       </div>
     );
@@ -142,9 +144,9 @@ export default function StudentDashboardPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader
-        eyebrow="Dashboard"
-        title={`Welcome, ${session?.firstName}`}
-        description="Manage your bookings, payments, saved properties, and support tickets."
+        eyebrow={t("student.dashboard.eyebrow")}
+        title={t("student.dashboard.welcome", { name: session?.firstName ?? "" })}
+        description={t("student.dashboard.welcomeDesc")}
       />
 
       {/* Onboarding gate banner */}
@@ -156,15 +158,15 @@ export default function StudentDashboardPage() {
                 <AlertCircle className="h-5 w-5" aria-hidden />
               </div>
               <div>
-                <p className="font-medium">Complete your student profile to start booking</p>
+                <p className="font-medium">{t("student.dashboard.completeProfile")}</p>
                 <p className="text-sm text-muted-foreground">
-                  Add your university, matric number, and emergency contact. This takes 2 minutes.
+                  {t("student.dashboard.completeProfileDesc")}
                 </p>
               </div>
             </div>
             <Button asChild size="sm" className="shrink-0">
               <Link href="/student/onboarding">
-                Complete profile
+                {t("student.dashboard.completeProfileAction")}
                 <ArrowRight className="ml-2 h-3.5 w-3.5" aria-hidden />
               </Link>
             </Button>
@@ -192,16 +194,20 @@ export default function StudentDashboardPage() {
                 </div>
                 <div>
                   <p className="font-medium">
-                    {pendingPaymentBookings.length} {pendingPaymentBookings.length === 1 ? "booking" : "bookings"} awaiting payment
+                    {pendingPaymentBookings.length === 1
+                      ? t("student.dashboard.bookingAwaiting.singular", { n: pendingPaymentBookings.length })
+                      : t("student.dashboard.bookingAwaiting.plural", { n: pendingPaymentBookings.length })}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Complete payment to confirm your {pendingPaymentBookings.length === 1 ? "hold" : "holds"} before it {pendingPaymentBookings.length === 1 ? "expires" : "expire"}.
+                    {pendingPaymentBookings.length === 1
+                      ? t("student.dashboard.bookingAwaitingDesc.singular")
+                      : t("student.dashboard.bookingAwaitingDesc.plural")}
                   </p>
                 </div>
               </div>
               <Button asChild size="sm" className="shrink-0">
                 <Link href={`/student/bookings/${pendingPaymentBookings[0].id}`}>
-                  Pay now
+                  {t("student.dashboard.payNow")}
                   <ArrowRight className="ml-2 h-3.5 w-3.5" aria-hidden />
                 </Link>
               </Button>
@@ -213,23 +219,23 @@ export default function StudentDashboardPage() {
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Active bookings"
+          label={t("student.dashboard.activeBookings")}
           value={activeBookings.length}
           icon={<CalendarCheck className="h-4 w-4" aria-hidden />}
         />
         <StatCard
-          label="Outstanding"
+          label={t("student.dashboard.outstanding")}
           value={totalOutstanding > 0 ? formatNgn(totalOutstanding) : "₦0"}
           icon={<Wallet className="h-4 w-4" aria-hidden />}
-          hint={totalOutstanding > 0 ? "Awaiting payment" : "All settled"}
+          hint={totalOutstanding > 0 ? t("student.dashboard.awaitingPayment") : t("student.dashboard.allSettled")}
         />
         <StatCard
-          label="Total paid"
+          label={t("student.dashboard.totalPaid")}
           value={formatNgn(totalPaid)}
           icon={<CreditCard className="h-4 w-4" aria-hidden />}
         />
         <StatCard
-          label="Saved properties"
+          label={t("student.dashboard.savedProperties")}
           value={savedCount}
           icon={<Heart className="h-4 w-4" aria-hidden />}
         />
@@ -238,16 +244,16 @@ export default function StudentDashboardPage() {
       {/* Recent bookings */}
       <section>
         <SectionHeading
-          title="Recent bookings"
-          action={<Button asChild variant="ghost" size="sm"><Link href="/student/bookings">View all</Link></Button>}
+          title={t("student.dashboard.recentBookings")}
+          action={<Button asChild variant="ghost" size="sm"><Link href="/student/bookings">{t("student.dashboard.viewAll")}</Link></Button>}
         />
         {bookings.length === 0 ? (
           <EmptyState
             className="mt-4"
             icon={<CalendarCheck className="h-5 w-5" aria-hidden />}
-            title="No bookings yet"
-            description="Browse properties and place a hold to start your first booking."
-            action={<Button asChild><Link href="/properties">Browse properties</Link></Button>}
+            title={t("student.dashboard.noBookings.title")}
+            description={t("student.dashboard.noBookings.desc")}
+            action={<Button asChild><Link href="/properties">{t("student.dashboard.browseProperties")}</Link></Button>}
           />
         ) : (
           <Card className="mt-4">
@@ -270,7 +276,7 @@ export default function StudentDashboardPage() {
                           <div className="text-right">
                             <Price kobo={b.total_kobo} />
                             <p className={`text-xs ${isExpired ? "text-destructive" : "text-muted-foreground"}`}>
-                              {isExpired ? "Hold expired" : b.outstanding_kobo > 0 ? "Outstanding" : "Paid"}
+                              {isExpired ? t("student.dashboard.holdExpired") : b.outstanding_kobo > 0 ? t("student.dashboard.outstanding") : t("student.dashboard.paid")}
                             </p>
                           </div>
                           <BookingStatusBadge status={b.status as any} />
@@ -292,8 +298,8 @@ export default function StudentDashboardPage() {
         {notifications.length > 0 && (
           <section>
             <SectionHeading
-              title="Recent notifications"
-              action={<Button asChild variant="ghost" size="sm"><Link href="/student/notifications">View all</Link></Button>}
+              title={t("student.dashboard.recentNotifications")}
+              action={<Button asChild variant="ghost" size="sm"><Link href="/student/notifications">{t("student.dashboard.viewAll")}</Link></Button>}
             />
             <Card className="mt-4">
               <CardContent className="p-0">
@@ -305,7 +311,7 @@ export default function StudentDashboardPage() {
                         <p className="text-xs text-muted-foreground line-clamp-2">{n.body}</p>
                         <p className="text-xs text-muted-foreground">{formatRelativeTime(n.created_at)}</p>
                       </div>
-                      {!n.read && <Badge variant="outline" className="text-xs text-primary">New</Badge>}
+                      {!n.read && <Badge variant="outline" className="text-xs text-primary">{t("student.dashboard.new")}</Badge>}
                     </li>
                   ))}
                 </ul>
@@ -318,8 +324,8 @@ export default function StudentDashboardPage() {
         {payments.length > 0 && (
           <section>
             <SectionHeading
-              title="Recent payments"
-              action={<Button asChild variant="ghost" size="sm"><Link href="/student/payments">View all</Link></Button>}
+              title={t("student.dashboard.recentPayments")}
+              action={<Button asChild variant="ghost" size="sm"><Link href="/student/payments">{t("student.dashboard.viewAll")}</Link></Button>}
             />
             <Card className="mt-4">
               <CardContent className="p-0">
@@ -351,10 +357,10 @@ export default function StudentDashboardPage() {
       {/* Quick links */}
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { href: "/student/search", icon: Search, label: "Search accommodation" },
-          { href: "/student/saved", icon: Heart, label: "Saved properties" },
-          { href: "/student/payments", icon: CreditCard, label: "Payment history" },
-          { href: "/student/support", icon: LifeBuoy, label: "Get support" },
+          { href: "/student/search", icon: Search, label: t("student.dashboard.searchAccommodation") },
+          { href: "/student/saved", icon: Heart, label: t("student.dashboard.savedProperties") },
+          { href: "/student/payments", icon: CreditCard, label: t("student.dashboard.paymentHistory") },
+          { href: "/student/support", icon: LifeBuoy, label: t("student.dashboard.getSupport") },
         ].map((q) => (
           <Link key={q.href} href={q.href}>
             <Card className="h-full transition-all hover:shadow-md hover:-translate-y-0.5">

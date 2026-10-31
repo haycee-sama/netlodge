@@ -10,11 +10,13 @@ import { PageHeader, EmptyState } from "@/components/shared/page-components";
 import { BookingStatusBadge } from "@/components/shared/status-badges";
 import { Price } from "@/components/shared/price";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/context";
 import { fetchStudentBookings } from "@/lib/supabase/property-service";
 import { formatRelativeTime, formatDate, formatNgn } from "@/lib/utils/format";
 
 export default function StudentBookingsPage() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const [bookings, setBookings] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -42,9 +44,9 @@ export default function StudentBookingsPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader
-        eyebrow="Booking history"
-        title="Your bookings"
-        description="Every booking from holds to completed stays — with full payment and status history."
+        eyebrow={t("student.bookings.eyebrow")}
+        title={t("student.bookings.title")}
+        description={t("student.bookings.description")}
       />
 
       {loading ? (
@@ -54,23 +56,23 @@ export default function StudentBookingsPage() {
       ) : !isSupabaseAuth ? (
         <EmptyState
           icon={<CalendarCheck className="h-5 w-5" aria-hidden />}
-          title="No bookings yet"
-          description="Sign in with a real account to view and create bookings."
-          action={<Button asChild><Link href="/login">Sign in</Link></Button>}
+          title={t("student.dashboard.noBookings.title")}
+          description={t("student.bookings.signInPrompt")}
+          action={<Button asChild><Link href="/login">{t("common.signIn")}</Link></Button>}
         />
       ) : error ? (
         <EmptyState
           icon={<CalendarCheck className="h-5 w-5" aria-hidden />}
-          title="Could not load bookings"
+          title={t("student.bookings.couldNotLoad")}
           description={error}
-          action={<Button variant="outline" onClick={() => window.location.reload()}>Retry</Button>}
+          action={<Button variant="outline" onClick={() => window.location.reload()}>{t("common.retry")}</Button>}
         />
       ) : bookings.length === 0 ? (
         <EmptyState
           icon={<CalendarCheck className="h-5 w-5" aria-hidden />}
-          title="No bookings yet"
-          description="Find a verified room and place a hold to start your first booking."
-          action={<Button asChild><Link href="/properties">Browse properties</Link></Button>}
+          title={t("student.dashboard.noBookings.title")}
+          description={t("student.bookings.noBookings.desc")}
+          action={<Button asChild><Link href="/properties">{t("student.dashboard.browseProperties")}</Link></Button>}
         />
       ) : (
         <Card>
@@ -88,16 +90,16 @@ export default function StudentBookingsPage() {
                         <BookingStatusBadge status={b.status} />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {b.reference} · Booked {formatRelativeTime(b.created_at)}
+                        {b.reference} · {t("student.bookings.bookedAt", { time: formatRelativeTime(b.created_at) })}
                       </p>
                       <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                        <span>Check-in: {formatDate(b.check_in)}</span>
+                        <span>{t("student.bookings.checkIn", { date: formatDate(b.check_in) })}</span>
                         <span>·</span>
-                        <span>Check-out: {formatDate(b.check_out)}</span>
+                        <span>{t("student.bookings.checkOut", { date: formatDate(b.check_out) })}</span>
                         {b.rentable_units && (
                           <>
                             <span>·</span>
-                            <span>Unit {b.rentable_units.identifier}</span>
+                            <span>{t("common.unit")} {b.rentable_units.identifier}</span>
                           </>
                         )}
                       </div>
@@ -106,7 +108,7 @@ export default function StudentBookingsPage() {
                       <div className="text-right">
                         <Price kobo={b.total_kobo} />
                         <p className="text-xs text-muted-foreground">
-                          {b.outstanding_kobo > 0 ? "Outstanding" : "Paid in full"}
+                          {b.outstanding_kobo > 0 ? t("student.dashboard.outstanding") : t("student.bookings.paidInFull")}
                         </p>
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />

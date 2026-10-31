@@ -14,11 +14,13 @@ import { PageHeader, StatCard, EmptyState, SectionHeading } from "@/components/s
 import { PropertyStatusBadge, VerificationBadge, BookingStatusBadge } from "@/components/shared/status-badges";
 import { Price } from "@/components/shared/price";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/context";
 import { fetchLandlordProperties, fetchLandlordBookings, fetchLandlordVerificationCases } from "@/lib/supabase/landlord-service";
 import { formatNgn, formatRelativeTime } from "@/lib/utils/format";
 
 export default function LandlordDashboardPage() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const [properties, setProperties] = React.useState<any[]>([]);
   const [bookings, setBookings] = React.useState<any[]>([]);
   const [verification, setVerification] = React.useState<any[]>([]);
@@ -57,7 +59,7 @@ export default function LandlordDashboardPage() {
       }
 
       if (errors.length > 0) {
-        setError(`Could not load: ${errors.join(", ")}. Please refresh.`);
+        setError(t("landlord.dashboard.couldNotLoad", { items: errors.join(", ") }));
       }
       setLoading(false);
     });
@@ -81,14 +83,14 @@ export default function LandlordDashboardPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader
-        eyebrow={`Welcome${session ? `, ${session.firstName}` : ""}`}
-        title="Landlord dashboard"
-        description="Your portfolio at a glance — properties, rooms, bookings and finances."
+        eyebrow={t("landlord.dashboard.eyebrow", { name: session?.firstName ?? "" })}
+        title={t("landlord.dashboard.title")}
+        description={t("landlord.dashboard.description")}
         actions={
           <Button asChild>
             <Link href="/landlord/properties/new">
               <Plus className="mr-2 h-4 w-4" aria-hidden />
-              Add property
+              {t("landlord.dashboard.addProperty")}
             </Link>
           </Button>
         }
@@ -98,7 +100,7 @@ export default function LandlordDashboardPage() {
         <Card className="border-warning/30 bg-warning/5">
           <CardContent className="flex items-start gap-2 p-3 text-xs text-warning-foreground">
             <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-            <span>Sign in with a landlord account to manage your properties.</span>
+            <span>{t("landlord.dashboard.signInPrompt")}</span>
           </CardContent>
         </Card>
       )}
@@ -128,13 +130,13 @@ export default function LandlordDashboardPage() {
                       <Clock className="h-5 w-5" aria-hidden />
                     </div>
                     <div className="space-y-1">
-                      <p className="font-medium">Needs your attention</p>
+                      <p className="font-medium">{t("landlord.dashboard.needsAttention")}</p>
                       <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                         {pendingBookings.length > 0 && (
-                          <span>{pendingBookings.length} pending {pendingBookings.length === 1 ? "booking" : "bookings"}</span>
+                          <span>{pendingBookings.length === 1 ? t("landlord.dashboard.pendingBooking.singular", { n: pendingBookings.length }) : t("landlord.dashboard.pendingBooking.plural", { n: pendingBookings.length })}</span>
                         )}
                         {pendingVerification.length > 0 && (
-                          <span>{pendingVerification.length} pending {pendingVerification.length === 1 ? "verification" : "verifications"}</span>
+                          <span>{pendingVerification.length === 1 ? t("landlord.dashboard.pendingVerification.singular", { n: pendingVerification.length }) : t("landlord.dashboard.pendingVerification.plural", { n: pendingVerification.length })}</span>
                         )}
                       </div>
                     </div>
@@ -142,12 +144,12 @@ export default function LandlordDashboardPage() {
                   <div className="flex gap-2">
                     {pendingBookings.length > 0 && (
                       <Button asChild size="sm" variant="outline" className="shrink-0">
-                        <Link href="/landlord/bookings">View bookings</Link>
+                        <Link href="/landlord/bookings">{t("landlord.dashboard.viewBookings")}</Link>
                       </Button>
                     )}
                     {pendingVerification.length > 0 && (
                       <Button asChild size="sm" className="shrink-0">
-                        <Link href="/landlord/verification">Check verification</Link>
+                        <Link href="/landlord/verification">{t("landlord.dashboard.checkVerification")}</Link>
                       </Button>
                     )}
                   </div>
@@ -159,45 +161,45 @@ export default function LandlordDashboardPage() {
           {/* Stats */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
-              label="Total revenue"
+              label={t("landlord.dashboard.totalRevenue")}
               value={formatNgn(totalRevenue)}
               icon={<Banknote className="h-4 w-4" aria-hidden />}
-              hint={`From ${confirmedBookings.length} confirmed ${confirmedBookings.length === 1 ? "booking" : "bookings"}`}
+              hint={confirmedBookings.length === 1 ? t("landlord.dashboard.revenueHint.singular", { n: confirmedBookings.length }) : t("landlord.dashboard.revenueHint.plural", { n: confirmedBookings.length })}
             />
             <StatCard
-              label="Pending revenue"
+              label={t("landlord.dashboard.pendingRevenue")}
               value={pendingRevenue > 0 ? formatNgn(pendingRevenue) : "₦0"}
               icon={<Wallet className="h-4 w-4" aria-hidden />}
-              hint={pendingRevenue > 0 ? `${pendingBookings.length} awaiting payment` : "No pending payments"}
+              hint={pendingRevenue > 0 ? t("landlord.dashboard.pendingRevenueHint", { n: pendingBookings.length }) : t("landlord.dashboard.noPendingPayments")}
             />
             <StatCard
-              label="Occupancy"
+              label={t("landlord.dashboard.occupancy")}
               value={`${occupancyRate}%`}
               icon={<Percent className="h-4 w-4" aria-hidden />}
-              hint={`${occupiedUnits} occupied · ${heldUnits} held · ${availableUnits} available`}
+              hint={t("landlord.dashboard.occupancyHint", { occupied: occupiedUnits, held: heldUnits, available: availableUnits })}
             />
             <StatCard
-              label="Total units"
+              label={t("landlord.dashboard.totalUnits")}
               value={totalUnits}
               icon={<DoorOpen className="h-4 w-4" aria-hidden />}
-              hint={`Across ${properties.length} ${properties.length === 1 ? "property" : "properties"}`}
+              hint={properties.length === 1 ? t("landlord.dashboard.unitsHint.singular", { n: properties.length }) : t("landlord.dashboard.unitsHint.plural", { n: properties.length })}
             />
           </div>
 
           {/* Properties */}
           <section>
             <SectionHeading
-              eyebrow="Portfolio"
-              title="Your properties"
-              action={<Button asChild variant="ghost" size="sm"><Link href="/landlord/properties">All properties</Link></Button>}
+              eyebrow={t("landlord.dashboard.portfolio")}
+              title={t("landlord.dashboard.yourProperties")}
+              action={<Button asChild variant="ghost" size="sm"><Link href="/landlord/properties">{t("landlord.dashboard.allProperties")}</Link></Button>}
             />
             {properties.length === 0 ? (
               <EmptyState
                 className="mt-4"
                 icon={<Building2 className="h-5 w-5" aria-hidden />}
-                title="No properties yet"
-                description="Add your first property to start listing rooms."
-                action={<Button asChild size="sm"><Link href="/landlord/properties/new"><Plus className="mr-2 h-4 w-4" aria-hidden />Add property</Link></Button>}
+                title={t("landlord.dashboard.noProperties.title")}
+                description={t("landlord.dashboard.noProperties.desc")}
+                action={<Button asChild size="sm"><Link href="/landlord/properties/new"><Plus className="mr-2 h-4 w-4" aria-hidden />{t("landlord.dashboard.addProperty")}</Link></Button>}
               />
             ) : (
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -224,7 +226,7 @@ export default function LandlordDashboardPage() {
                         {/* Occupancy bar */}
                         <div className="space-y-1.5">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="text-muted-foreground">Occupancy</span>
+                            <span className="text-muted-foreground">{t("landlord.dashboard.occupancyLabel")}</span>
                             <span className="font-medium">{propOccRate}%</span>
                           </div>
                           <div className="h-2 overflow-hidden rounded-full bg-muted">
@@ -238,20 +240,20 @@ export default function LandlordDashboardPage() {
                         <div className="grid grid-cols-3 gap-2 text-center text-xs">
                           <div className="rounded-md bg-muted/40 p-2">
                             <p className="font-semibold text-foreground">{propUnits}</p>
-                            <p className="text-muted-foreground">Total</p>
+                            <p className="text-muted-foreground">{t("landlord.dashboard.total")}</p>
                           </div>
                           <div className="rounded-md bg-success/10 p-2">
                             <p className="font-semibold text-success">{propAvail}</p>
-                            <p className="text-muted-foreground">Available</p>
+                            <p className="text-muted-foreground">{t("landlord.dashboard.available")}</p>
                           </div>
                           <div className="rounded-md bg-info/10 p-2">
                             <p className="font-semibold text-info">{propOccupied}</p>
-                            <p className="text-muted-foreground">Occupied</p>
+                            <p className="text-muted-foreground">{t("landlord.dashboard.occupied")}</p>
                           </div>
                         </div>
                         <div className="mt-auto flex items-center justify-between text-xs pt-1">
                           <Price kobo={p.price_from_kobo} fromLabel period="/yr" />
-                          <Link href={`/landlord/properties/${p.id}/rooms`} className="text-primary hover:underline">Manage rooms →</Link>
+                          <Link href={`/landlord/properties/${p.id}/rooms`} className="text-primary hover:underline">{t("landlord.dashboard.manageRooms")} →</Link>
                         </div>
                       </CardContent>
                     </Card>
@@ -266,16 +268,16 @@ export default function LandlordDashboardPage() {
             {/* Recent bookings */}
             <section className="lg:col-span-2">
               <SectionHeading
-                eyebrow="Activity"
-                title="Recent bookings"
-                action={bookings.length > 0 ? <Button asChild variant="ghost" size="sm"><Link href="/landlord/bookings">View all</Link></Button> : undefined}
+                eyebrow={t("landlord.dashboard.activity")}
+                title={t("landlord.dashboard.recentBookings")}
+                action={bookings.length > 0 ? <Button asChild variant="ghost" size="sm"><Link href="/landlord/bookings">{t("landlord.dashboard.viewAll")}</Link></Button> : undefined}
               />
               {bookings.length === 0 ? (
                 <EmptyState
                   className="mt-4"
                   icon={<CalendarCheck className="h-5 w-5" aria-hidden />}
-                  title="No bookings yet"
-                  description="Once students book your rooms, they'll appear here."
+                  title={t("landlord.dashboard.noBookings.title")}
+                  description={t("landlord.dashboard.noBookings.desc")}
                 />
               ) : (
                 <Card className="mt-4">
@@ -298,7 +300,7 @@ export default function LandlordDashboardPage() {
                               <div className="text-right">
                                 <Price kobo={b.total_kobo} compact />
                                 {b.outstanding_kobo > 0 && (
-                                  <p className="text-xs text-warning">{formatNgn(b.outstanding_kobo)} due</p>
+                                  <p className="text-xs text-warning">{formatNgn(b.outstanding_kobo)} {t("landlord.dashboard.due")}</p>
                                 )}
                               </div>
                               <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
@@ -314,13 +316,13 @@ export default function LandlordDashboardPage() {
 
             {/* Quick actions */}
             <section>
-              <SectionHeading title="Quick actions" />
+              <SectionHeading title={t("landlord.dashboard.quickActions")} />
               <div className="mt-4 space-y-3">
                 {[
-                  { href: "/landlord/properties/new", icon: Plus, label: "Add property", desc: "List a new building" },
-                  { href: "/landlord/payouts", icon: Banknote, label: "Payouts", desc: "View withdrawal history" },
-                  { href: "/landlord/transactions", icon: TrendingUp, label: "Transactions", desc: "All financial activity" },
-                  { href: "/landlord/verification", icon: CheckCircle2, label: "Verification", desc: pendingVerification.length > 0 ? `${pendingVerification.length} pending` : "All verified" },
+                  { href: "/landlord/properties/new", icon: Plus, label: t("landlord.dashboard.addProperty"), desc: t("landlord.dashboard.addPropertyDesc") },
+                  { href: "/landlord/payouts", icon: Banknote, label: t("nav.landlord.payouts"), desc: t("landlord.dashboard.payoutsDesc") },
+                  { href: "/landlord/transactions", icon: TrendingUp, label: t("nav.landlord.transactions"), desc: t("landlord.dashboard.transactionsDesc") },
+                  { href: "/landlord/verification", icon: CheckCircle2, label: t("nav.landlord.verification"), desc: pendingVerification.length > 0 ? t("landlord.dashboard.verificationDescPending", { n: pendingVerification.length }) : t("landlord.dashboard.verificationDescAllVerified") },
                 ].map((q) => (
                   <Link key={q.href} href={q.href}>
                     <Card className="transition-all hover:shadow-md hover:-translate-y-0.5">

@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { PageHeader, EmptyState } from "@/components/shared/page-components";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useI18n } from "@/lib/i18n/context";
+import type { TranslationKey } from "@/lib/i18n/dictionaries";
 import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime, generateReference } from "@/lib/utils/format";
 import { toast } from "sonner";
@@ -35,26 +37,27 @@ interface MaintenanceRequest {
   rentable_units: { identifier: string }[] | null;
 }
 
-const CATEGORIES = [
-  { value: "plumbing", label: "Plumbing" },
-  { value: "electrical", label: "Electrical" },
-  { value: "structural", label: "Structural" },
-  { value: "appliance", label: "Appliance" },
-  { value: "pest_control", label: "Pest Control" },
-  { value: "security", label: "Security" },
-  { value: "cleanliness", label: "Cleanliness" },
-  { value: "other", label: "Other" },
+const CATEGORIES: { value: string; tKey: TranslationKey }[] = [
+  { value: "plumbing", tKey: "common.maintenance.cat.plumbing" },
+  { value: "electrical", tKey: "common.maintenance.cat.electrical" },
+  { value: "structural", tKey: "common.maintenance.cat.structural" },
+  { value: "appliance", tKey: "common.maintenance.cat.appliance" },
+  { value: "pest_control", tKey: "common.maintenance.cat.pestControl" },
+  { value: "security", tKey: "common.maintenance.cat.security" },
+  { value: "cleanliness", tKey: "common.maintenance.cat.cleanliness" },
+  { value: "other", tKey: "common.maintenance.cat.other" },
 ];
 
-const PRIORITIES = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
-  { value: "urgent", label: "Urgent" },
+const PRIORITIES: { value: string; tKey: TranslationKey }[] = [
+  { value: "low", tKey: "common.maintenance.prio.low" },
+  { value: "medium", tKey: "common.maintenance.prio.medium" },
+  { value: "high", tKey: "common.maintenance.prio.high" },
+  { value: "urgent", tKey: "common.maintenance.prio.urgent" },
 ];
 
 export function MaintenancePage({ role }: { role: "student" | "landlord" }) {
   const { session } = useAuth();
+  const { t } = useI18n();
   const [requests, setRequests] = React.useState<MaintenanceRequest[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -128,14 +131,14 @@ export function MaintenancePage({ role }: { role: "student" | "landlord" }) {
 
   async function submitRequest() {
     if (!selectedBooking || !title.trim() || !description.trim()) {
-      toast.error("Please fill in all required fields");
+      toast.error(t("common.maintenance.fillRequired"));
       return;
     }
     setSubmitting(true);
     try {
       const booking = bookings.find((b) => b.id === selectedBooking);
       if (!booking) {
-        toast.error("Select a valid booking");
+        toast.error(t("common.maintenance.selectValidBooking"));
         setSubmitting(false);
         return;
       }
@@ -153,15 +156,15 @@ export function MaintenancePage({ role }: { role: "student" | "landlord" }) {
       });
       if (insertError) throw new Error(insertError.message);
 
-      toast.success("Request submitted", {
-        description: "Your landlord will be notified. You can track the status here.",
+      toast.success(t("common.maintenance.requestSubmittedTitle"), {
+        description: t("common.maintenance.requestSubmittedDesc"),
       });
       setShowForm(false);
       setTitle(""); setDescription(""); setSelectedBooking("");
       fetchRequests();
     } catch (e) {
-      toast.error("Could not submit request", {
-        description: e instanceof Error ? e.message : "Please try again.",
+      toast.error(t("common.maintenance.couldNotSubmit"), {
+        description: e instanceof Error ? e.message : undefined,
       });
     } finally {
       setSubmitting(false);
@@ -181,9 +184,9 @@ export function MaintenancePage({ role }: { role: "student" | "landlord" }) {
     }
     const { error } = await supabase.from("maintenance_requests").update(update).eq("id", reqId);
     if (error) {
-      toast.error("Could not update status", { description: error.message });
+      toast.error(t("common.maintenance.couldNotUpdate"), { description: error.message });
     } else {
-      toast.success(`Marked as ${status}`);
+      toast.success(t("common.maintenance.markedAs", { status }));
       fetchRequests();
     }
   }
@@ -196,30 +199,30 @@ export function MaintenancePage({ role }: { role: "student" | "landlord" }) {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <PageHeader
-        eyebrow={role === "student" ? "Support" : "Operations"}
-        title="Maintenance requests"
+        eyebrow={role === "student" ? t("common.maintenance.eyebrowStudent") : t("common.maintenance.eyebrowLandlord")}
+        title={t("common.maintenance.title")}
         description={role === "student"
-          ? "Report issues with your accommodation — plumbing, electrical, appliances, and more."
-          : "Track and resolve maintenance issues reported by students at your properties."}
+          ? t("common.maintenance.descStudent")
+          : t("common.maintenance.descLandlord")}
         actions={role === "student" && bookings.length > 0 ? (
           <Dialog open={showForm} onOpenChange={setShowForm}>
             <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" aria-hidden /> New request</Button>
+              <Button><Plus className="mr-2 h-4 w-4" aria-hidden /> {t("common.maintenance.newRequest")}</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Report a maintenance issue</DialogTitle>
-                <DialogDescription>Describe the problem and we'll notify your landlord.</DialogDescription>
+                <DialogTitle>{t("common.maintenance.reportIssueTitle")}</DialogTitle>
+                <DialogDescription>{t("common.maintenance.reportIssueDesc")}</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label>Booking *</Label>
+                  <Label>{t("common.maintenance.booking")} *</Label>
                   <Select value={selectedBooking} onValueChange={setSelectedBooking}>
-                    <SelectTrigger><SelectValue placeholder="Select your booking" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("common.maintenance.selectBooking")} /></SelectTrigger>
                     <SelectContent>
                       {bookings.map((b) => (
                         <SelectItem key={b.id} value={b.id}>
-                          {b.property_name} — Unit {b.unit_identifier}
+                          {b.property_name} — {t("common.unit")} {b.unit_identifier}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -227,38 +230,38 @@ export function MaintenancePage({ role }: { role: "student" | "landlord" }) {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label>Category</Label>
+                    <Label>{t("common.maintenance.category")}</Label>
                     <Select value={category} onValueChange={setCategory}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                        {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{t(c.tKey)}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Priority</Label>
+                    <Label>{t("common.maintenance.priority")}</Label>
                     <Select value={priority} onValueChange={setPriority}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {PRIORITIES.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                        {PRIORITIES.map((p) => <SelectItem key={p.value} value={p.value}>{t(p.tKey)}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="title">Title *</Label>
-                  <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. AC not cooling" />
+                  <Label htmlFor="title">{t("common.maintenance.titleLabel")} *</Label>
+                  <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("common.maintenance.titlePlaceholder")} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="description">Description *</Label>
-                  <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={4} placeholder="Describe the issue in detail…" />
+                  <Label htmlFor="description">{t("common.maintenance.descriptionLabel")} *</Label>
+                  <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={4} placeholder={t("common.maintenance.descriptionPlaceholder")} />
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setShowForm(false)}>{t("common.cancel")}</Button>
                 <Button onClick={submitRequest} disabled={submitting}>
                   {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : null}
-                  Submit request
+                  {t("common.maintenance.submitRequest")}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -269,14 +272,14 @@ export function MaintenancePage({ role }: { role: "student" | "landlord" }) {
       {loading ? (
         <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden /></div>
       ) : error ? (
-        <EmptyState icon={<AlertCircle className="h-5 w-5" aria-hidden />} title="Could not load requests" description={error} action={<Button variant="outline" onClick={fetchRequests}>Retry</Button>} />
+        <EmptyState icon={<AlertCircle className="h-5 w-5" aria-hidden />} title={t("common.maintenance.couldNotLoad")} description={error} action={<Button variant="outline" onClick={fetchRequests}>{t("common.retry")}</Button>} />
       ) : requests.length === 0 ? (
         <EmptyState
           icon={<Wrench className="h-5 w-5" aria-hidden />}
-          title="No maintenance requests"
+          title={t("common.maintenance.noRequests.title")}
           description={role === "student"
-            ? bookings.length > 0 ? "Report an issue and your landlord will be notified." : "You need an active booking to report maintenance issues."
-            : "Student-reported issues will appear here."}
+            ? bookings.length > 0 ? t("common.maintenance.noRequests.descStudentHasBooking") : t("common.maintenance.noRequests.descStudentNoBooking")
+            : t("common.maintenance.noRequests.descLandlord")}
         />
       ) : (
         <div className="space-y-3">
@@ -288,34 +291,34 @@ export function MaintenancePage({ role }: { role: "student" | "landlord" }) {
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{r.title}</p>
                       {statusBadge(r.status)}
-                      {r.priority === "urgent" && <Badge variant="destructive" className="text-xs">Urgent</Badge>}
+                      {r.priority === "urgent" && <Badge variant="destructive" className="text-xs">{t("common.maintenance.urgent")}</Badge>}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {r.reference} · {r.properties?.[0]?.name ?? "—"} · Unit {r.rentable_units?.[0]?.identifier ?? "—"} · {formatRelativeTime(r.created_at)}
+                      {r.reference} · {r.properties?.[0]?.name ?? "—"} · {t("common.unit")} {r.rentable_units?.[0]?.identifier ?? "—"} · {formatRelativeTime(r.created_at)}
                     </p>
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground">{r.description}</p>
                 {r.resolution_notes && (
                   <div className="rounded-lg bg-success/5 p-3">
-                    <p className="text-xs font-semibold text-success">Resolution</p>
+                    <p className="text-xs font-semibold text-success">{t("common.maintenance.resolution")}</p>
                     <p className="mt-1 text-sm">{r.resolution_notes}</p>
-                    {r.resolved_at && <p className="mt-1 text-xs text-muted-foreground">Resolved {formatRelativeTime(r.resolved_at)}</p>}
+                    {r.resolved_at && <p className="mt-1 text-xs text-muted-foreground">{t("common.maintenance.resolvedAt", { time: formatRelativeTime(r.resolved_at) })}</p>}
                   </div>
                 )}
                 {role === "landlord" && r.status !== "resolved" && r.status !== "cancelled" && (
                   <div className="flex gap-2 pt-1">
                     {r.status === "open" && (
                       <Button size="sm" variant="outline" onClick={() => updateStatus(r.id, "in_progress")}>
-                        Start working
+                        {t("common.maintenance.startWorking")}
                       </Button>
                     )}
                     <Button size="sm" variant="outline" className="border-success/40 text-success hover:bg-success/10" onClick={() => {
-                      const notes = prompt("Resolution notes (optional):");
+                      const notes = prompt(t("common.maintenance.resolutionNotesPrompt"));
                       updateStatus(r.id, "resolved", notes ?? undefined);
                     }}>
                       <CheckCircle2 className="mr-1 h-3.5 w-3.5" aria-hidden />
-                      Mark resolved
+                      {t("common.maintenance.markResolved")}
                     </Button>
                   </div>
                 )}
