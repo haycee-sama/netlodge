@@ -108,7 +108,7 @@ export async function fetchProperties(params: {
 
     let query = supabase
       .from("public_properties")
-      .select(`id, slug, name, description, type, status, verification_status, city, state, neighbourhood_id, university_id, public_address_line, price_from_kobo, total_floors, total_units, created_at, updated_at, property_images(id, storage_path, public_url, alt_text, position), property_facilities(facility), universities(id, name, short_name, slug), neighbourhoods(id, name, slug)`)
+      .select(`id, slug, name, description, type, status, verification_status, city, state, neighbourhood_id, university_id, public_address_line, price_from_kobo, total_floors, total_units, created_at, updated_at, property_images(id, storage_path, public_url, alt_text, position), property_facilities(facility), universities(id, name, short_name, slug), neighbourhoods(id, name, slug)`, { count: "exact" })
       .eq("status", "verified")
       .eq("verification_status", "approved")
       .order("created_at", { ascending: false })
