@@ -35,7 +35,7 @@ export async function fetchHomepageStatsServer(): Promise<{
   error: string | null;
 }> {
   try {
-    const supabase = await createClient();
+    const admin = createAdminClient();
 
     const [
       { count: verifiedProperties },
@@ -44,11 +44,11 @@ export async function fetchHomepageStatsServer(): Promise<{
       { count: availableRooms },
       { count: totalBookings },
     ] = await Promise.all([
-      supabase.from("public_properties").select("*", { count: "exact", head: true }).eq("status", "verified").eq("verification_status", "approved"),
-      supabase.from("universities").select("*", { count: "exact", head: true }).eq("active", true),
-      supabase.from("neighbourhoods").select("*", { count: "exact", head: true }).eq("active", true),
-      supabase.from("rentable_units").select("*", { count: "exact", head: true }).eq("status", "available"),
-      supabase.from("bookings").select("*", { count: "exact", head: true }).in("status", ["confirmed", "active", "completed"]),
+      admin.from("properties").select("*", { count: "exact", head: true }).eq("status", "verified").eq("verification_status", "approved"),
+      admin.from("universities").select("*", { count: "exact", head: true }).eq("active", true),
+      admin.from("neighbourhoods").select("*", { count: "exact", head: true }).eq("active", true),
+      admin.from("rentable_units").select("*", { count: "exact", head: true }).eq("status", "available"),
+      admin.from("bookings").select("*", { count: "exact", head: true }).in("status", ["confirmed", "active", "completed"]),
     ]);
 
     return {
@@ -81,15 +81,33 @@ export async function fetchUniversitiesServer(): Promise<{
   error: string | null;
 }> {
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
+    const admin = createAdminClient();
+    const { data, error } = await admin
       .from("universities")
       .select("id, name, short_name, slug, city, state, description")
       .eq("active", true)
       .order("name");
 
     if (error) return { data: null, error: error.message };
-    return { data: data as UniversitySummary[], error: null };
+
+    // Fetch property counts per university
+    const { data: propCounts } = await admin
+      .from("properties")
+      .select("university_id")
+      .eq("status", "verified")
+      .eq("verification_status", "approved");
+
+    const countMap: Record<string, number> = {};
+    for (const p of propCounts ?? []) {
+      if (p.university_id) countMap[p.university_id] = (countMap[p.university_id] ?? 0) + 1;
+    }
+
+    const universities = (data ?? []).map((u: any) => ({
+      ...u,
+      totalListings: countMap[u.id] ?? 0,
+    }));
+
+    return { data: universities as UniversitySummary[], error: null };
   } catch (err) {
     return {
       data: null,

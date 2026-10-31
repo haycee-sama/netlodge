@@ -43,7 +43,7 @@ export default async function UniversitiesPage() {
                 state: u.state,
                 description: u.description ?? "",
                 popularNeighbourhoods: [],
-                totalListings: 0,
+                totalListings: (u as any).totalListings ?? 0,
               }}
             />
           ))}
